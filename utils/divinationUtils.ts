@@ -1,150 +1,514 @@
-import type { JuyeokReading, Hexagram, LineType } from '../types';
 
-// The I_CHING_HEXAGRAMS object has been completely rebuilt with validated data.
-// The previous version contained numerous duplicate keys and incorrect line data that caused build failures.
-// This corrected version ensures all 64 hexagrams have a unique key derived from their line data, resolving all errors.
-const I_CHING_HEXAGRAMS: { [key: string]: { name: string, lines: LineType[] } } = {
-    "111111": { name: "건위천 (乾爲天)", lines: ['yang', 'yang', 'yang', 'yang', 'yang', 'yang'] },
-    "000000": { name: "곤위지 (坤爲地)", lines: ['yin', 'yin', 'yin', 'yin', 'yin', 'yin'] },
-    "010001": { name: "수뢰둔 (水雷屯)", lines: ['yang', 'yin', 'yin', 'yin', 'yang', 'yin'] },
-    "100010": { name: "산수몽 (山水蒙)", lines: ['yin', 'yang', 'yin', 'yin', 'yin', 'yang'] },
-    "010111": { name: "수천수 (水天需)", lines: ['yang', 'yang', 'yang', 'yin', 'yang', 'yin'] },
-    "111010": { name: "천수송 (天水訟)", lines: ['yin', 'yang', 'yin', 'yang', 'yang', 'yang'] },
-    "000010": { name: "지수사 (地水師)", lines: ['yin', 'yang', 'yin', 'yin', 'yin', 'yin'] },
-    "010000": { name: "수지비 (水地比)", lines: ['yin', 'yin', 'yin', 'yin', 'yang', 'yin'] },
-    "011111": { name: "풍천소축 (風天小畜)", lines: ['yang', 'yang', 'yang', 'yang', 'yang', 'yin'] },
-    "111011": { name: "천택리 (天澤履)", lines: ['yang', 'yang', 'yin', 'yang', 'yang', 'yang'] },
-    "000111": { name: "지천태 (地天泰)", lines: ['yang', 'yang', 'yang', 'yin', 'yin', 'yin'] },
-    "111000": { name: "천지비 (天地否)", lines: ['yin', 'yin', 'yin', 'yang', 'yang', 'yang'] },
-    "111101": { name: "천화동인 (天火同人)", lines: ['yang', 'yin', 'yang', 'yang', 'yang', 'yang'] },
-    "101111": { name: "화천대유 (火天大有)", lines: ['yang', 'yang', 'yang', 'yang', 'yin', 'yang'] },
-    "000100": { name: "지산겸 (地山謙)", lines: ['yin', 'yin', 'yang', 'yin', 'yin', 'yin'] },
-    "001000": { name: "뇌지예 (雷地豫)", lines: ['yin', 'yin', 'yin', 'yang', 'yin', 'yin'] },
-    "110001": { name: "택뢰수 (澤雷隨)", lines: ['yang', 'yin', 'yin', 'yin', 'yang', 'yang'] },
-    "100110": { name: "산풍고 (山風蠱)", lines: ['yin', 'yang', 'yang', 'yin', 'yin', 'yang'] },
-    "000011": { name: "지택림 (地澤臨)", lines: ['yang', 'yang', 'yin', 'yin', 'yin', 'yin'] },
-    "011000": { name: "풍지관 (風地觀)", lines: ['yin', 'yin', 'yin', 'yang', 'yang', 'yin'] },
-    "101001": { name: "화뢰서합 (火雷噬嗑)", lines: ['yang', 'yin', 'yin', 'yang', 'yin', 'yang'] },
-    "100101": { name: "산화비 (山火賁)", lines: ['yang', 'yin', 'yang', 'yin', 'yin', 'yang'] },
-    "100000": { name: "산지박 (山地剝)", lines: ['yin', 'yin', 'yin', 'yin', 'yin', 'yang'] },
-    "000001": { name: "지뢰복 (地雷復)", lines: ['yang', 'yin', 'yin', 'yin', 'yin', 'yin'] },
-    "111001": { name: "천뢰무망 (天雷無妄)", lines: ['yang', 'yin', 'yin', 'yang', 'yang', 'yang'] },
-    "100111": { name: "산천대축 (山天大畜)", lines: ['yang', 'yang', 'yang', 'yin', 'yin', 'yang'] },
-    "100001": { name: "산뢰이 (山雷頤)", lines: ['yang', 'yin', 'yin', 'yin', 'yin', 'yang'] },
-    "011110": { name: "택풍대과 (澤風大過)", lines: ['yin', 'yang', 'yang', 'yang', 'yang', 'yin'] },
-    "010010": { name: "감위수 (坎爲水)", lines: ['yin', 'yang', 'yin', 'yin', 'yang', 'yin'] },
-    "101101": { name: "이위화 (離爲火)", lines: ['yang', 'yin', 'yang', 'yang', 'yin', 'yang'] },
-    "110100": { name: "택산함 (澤山咸)", lines: ['yin', 'yin', 'yang', 'yin', 'yang', 'yang'] },
-    "001110": { name: "뇌풍항 (雷風恒)", lines: ['yin', 'yang', 'yang', 'yang', 'yin', 'yin'] },
-    "111100": { name: "천산돈 (天山遯)", lines: ['yin', 'yin', 'yang', 'yang', 'yang', 'yang'] },
-    "001111": { name: "뇌천대장 (雷天大壯)", lines: ['yang', 'yang', 'yang', 'yang', 'yin', 'yin'] },
-    "101000": { name: "화지진 (火地晉)", lines: ['yin', 'yin', 'yin', 'yang', 'yin', 'yang'] },
-    "000101": { name: "지화명이 (地火明夷)", lines: ['yang', 'yin', 'yang', 'yin', 'yin', 'yin'] },
-    "011101": { name: "풍화가인 (風火家人)", lines: ['yang', 'yin', 'yang', 'yang', 'yang', 'yin'] },
-    "101011": { name: "화택규 (火澤睽)", lines: ['yang', 'yang', 'yin', 'yang', 'yin', 'yang'] },
-    "010100": { name: "수산건 (水山蹇)", lines: ['yin', 'yin', 'yang', 'yin', 'yang', 'yin'] },
-    "001010": { name: "뇌수해 (雷水解)", lines: ['yin', 'yang', 'yin', 'yang', 'yin', 'yin'] },
-    "100011": { name: "산택손 (山澤損)", lines: ['yang', 'yang', 'yin', 'yin', 'yin', 'yang'] },
-    "011001": { name: "풍뢰익 (風雷益)", lines: ['yang', 'yin', 'yin', 'yang', 'yang', 'yin'] },
-    "011111-2": { name: "택천쾌 (澤天夬)", lines: ['yang', 'yang', 'yang', 'yang', 'yang', 'yin'] },
-    "111110": { name: "천풍구 (天風姤)", lines: ['yin', 'yang', 'yang', 'yang', 'yang', 'yang'] },
-    "111000-2": { name: "택지췌 (澤地萃)", lines: ['yin', 'yin', 'yin', 'yin', 'yang', 'yang'] },
-    "000110": { name: "지풍승 (地風升)", lines: ['yin', 'yang', 'yang', 'yin', 'yin', 'yin'] },
-    "110010": { name: "택수곤 (澤水困)", lines: ['yin', 'yang', 'yin', 'yin', 'yang', 'yang'] },
-    "010110": { name: "수풍정 (水風井)", lines: ['yin', 'yang', 'yang', 'yin', 'yang', 'yin'] },
-    "110101": { name: "택화혁 (澤火革)", lines: ['yang', 'yin', 'yang', 'yin', 'yang', 'yang'] },
-    "101110": { name: "화풍정 (火風鼎)", lines: ['yin', 'yang', 'yang', 'yang', 'yin', 'yang'] },
-    "001001": { name: "진위뢰 (震爲雷)", lines: ['yang', 'yin', 'yin', 'yang', 'yin', 'yin'] },
-    "100100": { name: "간위산 (艮爲山)", lines: ['yin', 'yin', 'yang', 'yin', 'yin', 'yang'] },
-    "011100": { name: "풍산점 (風山漸)", lines: ['yin', 'yin', 'yang', 'yang', 'yang', 'yin'] },
-    "001011": { name: "뇌택귀매 (雷澤歸妹)", lines: ['yang', 'yang', 'yin', 'yang', 'yin', 'yin'] },
-    "001101": { name: "뇌화풍 (雷火豊)", lines: ['yang', 'yin', 'yang', 'yang', 'yin', 'yin'] },
-    "101100": { name: "화산려 (火山旅)", lines: ['yin', 'yin', 'yang', 'yang', 'yin', 'yang'] },
-    "011011": { name: "손위풍 (巽爲風)", lines: ['yang', 'yang', 'yin', 'yang', 'yang', 'yin'] },
-    "110011": { name: "태위택 (兌爲澤)", lines: ['yang', 'yang', 'yin', 'yin', 'yang', 'yang'] },
-    "010110-2": { name: "풍수환 (風水渙)", lines: ['yin', 'yang', 'yin', 'yang', 'yang', 'yin'] },
-    "010011": { name: "수택절 (水澤節)", lines: ['yang', 'yang', 'yin', 'yin', 'yang', 'yin'] },
-    "011011-2": { name: "풍택중부 (風澤中孚)", lines: ['yang', 'yang', 'yin', 'yin', 'yang', 'yang'] },
-    "001100": { name: "뇌산소과 (雷山小過)", lines: ['yin', 'yin', 'yang', 'yang', 'yin', 'yin'] },
-    "101010": { name: "수화기제 (水火旣濟)", lines: ['yin', 'yang', 'yin', 'yang', 'yin', 'yang'] },
-    "010101": { name: "화수미제 (火水未濟)", lines: ['yang', 'yin', 'yang', 'yin', 'yang', 'yin'] }
+import { GoogleGenAI, Type } from "@google/genai";
+import { fileToBase64 } from '../utils/fileUtils';
+import type { PhysiognomyResult, PalmistryResult, ImpressionAnalysisResult, AstrologyResult, SajuResult, TarotResult, CardDraw, JuyeokReading, JuyeokResult, Hexagram, YukhyoResult } from '../types';
+
+// Correctly reference the environment variable using import.meta.env for Vite projects.
+// VITE_ prefix is required for environment variables to be exposed to the client-side code.
+const apiKey = import.meta.env.VITE_API_KEY;
+if (!apiKey) {
+  console.error("VITE_API_KEY is not set. Please check your environment variables.");
+}
+
+const ai = new GoogleGenAI({ apiKey: apiKey! });
+
+const analysisSchema = {
+  type: Type.OBJECT,
+  properties: {
+    overall_impression: {
+      type: Type.STRING,
+      description: "사진 속 인물에 대한 전반적인 관상 총평을 2~3문장으로 작성합니다."
+    },
+    features: {
+      type: Type.ARRAY,
+      description: "얼굴의 각 부위별 관상 분석 결과입니다.",
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          feature: {
+            type: Type.STRING,
+            description: "분석하는 얼굴 부위의 이름 (예: 눈, 코, 입, 이마, 턱, 귀)."
+          },
+          shape: {
+            type: Type.STRING,
+            description: "해당 부위의 구체적인 모양이나 특징에 대한 묘사."
+          },
+          analysis: {
+            type: Type.STRING,
+            description: "해당 부위의 특징이 관상학적으로 무엇을 의미하는지에 대한 상세한 설명."
+          }
+        },
+        required: ["feature", "shape", "analysis"]
+      }
+    }
+  },
+  required: ["overall_impression", "features"]
+};
+
+const palmAnalysisSchema = {
+  type: Type.OBJECT,
+  properties: {
+    overall_analysis: {
+      type: Type.STRING,
+      description: "사진 속 손금에 대한 전반적인 총평을 2~3문장으로 작성합니다."
+    },
+    lines: {
+      type: Type.ARRAY,
+      description: "주요 손금(생명선, 감정선, 두뇌선)에 대한 분석 결과입니다.",
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          line_name: {
+            type: Type.STRING,
+            description: "분석하는 손금의 이름 (예: 생명선, 감정선, 두뇌선)."
+          },
+          analysis: {
+            type: Type.STRING,
+            description: "해당 손금이 무엇을 의미하는지에 대한 상세한 설명. 강점과 함께 주의할 점이나 개선할 점을 균형 있게 포함합니다."
+          }
+        },
+        required: ["line_name", "analysis"]
+      }
+    },
+    credibility_score: {
+        type: Type.INTEGER,
+        description: "이 손금 분석에 대한 신뢰도 점수 (70~95 사이의 정수)."
+    },
+    credibility_comment: {
+        type: Type.STRING,
+        description: "손금은 정해진 미래가 아닌 가능성을 보여주는 지표라는 점을 설명하는 짧은 코멘트."
+    }
+  },
+  required: ["overall_analysis", "lines", "credibility_score", "credibility_comment"]
+};
+
+const impressionAnalysisSchema = {
+    type: Type.OBJECT,
+    properties: {
+        keywords: {
+            type: Type.ARRAY,
+            description: "사진 속 인물의 첫인상을 가장 잘 나타내는 핵심 키워드 3-4개.",
+            items: { type: Type.STRING }
+        },
+        detailed_analysis: {
+            type: Type.STRING,
+            description: "사진 속 인물의 표정, 분위기, 스타일 등을 종합하여 다른 사람에게 어떤 첫인상을 주는지 3-4문장으로 상세하게 분석합니다. 긍정적인 측면을 중심으로 서술합니다."
+        },
+        improvement_tip: {
+            type: Type.STRING,
+            description: "더 긍정적이고 매력적인 첫인상을 주기 위한 구체적이고 실용적인 팁 한 가지를 제안합니다."
+        }
+    },
+    required: ["keywords", "detailed_analysis", "improvement_tip"]
+};
+
+const astrologyAnalysisSchema = {
+    type: Type.OBJECT,
+    properties: {
+        zodiac_sign: { type: Type.STRING, description: "생년월일에 해당하는 서양 별자리 이름 (예: 양자리, 황소자리)." },
+        ruling_planet: { type: Type.STRING, description: "해당 별자리의 지배 행성 (예: 화성, 금성)." },
+        element: { type: Type.STRING, description: "해당 별자리의 4원소 (불, 흙, 공기, 물)." },
+        analysis: {
+            type: Type.OBJECT,
+            properties: {
+                personality: { type: Type.STRING, description: "별자리에 따른 성격적 특성, 장점, 단점에 대한 상세 분석." },
+                love_life: { type: Type.STRING, description: "연애 스타일 및 관계에서의 특징에 대한 분석." },
+                work_career: { type: Type.STRING, description: "직업적 강점 및 추천 진로에 대한 분석." }
+            },
+            required: ["personality", "love_life", "work_career"]
+        }
+    },
+    required: ["zodiac_sign", "ruling_planet", "element", "analysis"]
+};
+
+const sajuAnalysisSchema = {
+    type: Type.OBJECT,
+    properties: {
+        four_pillars: {
+            type: Type.OBJECT,
+            properties: {
+                year_pillar: { type: Type.STRING, description: "태어난 해를 나타내는 연주 (예: 갑자(甲子)년)." },
+                month_pillar: { type: Type.STRING, description: "태어난 월을 나타내는 월주 (예: 병인(丙寅)월)." },
+                day_pillar: { type: Type.STRING, description: "태어난 일을 나타내는 일주 (예: 정묘(丁卯)일)." },
+                hour_pillar: { type: Type.STRING, description: "태어난 시간을 나타내는 시주 (예: 무진(戊辰)시). 시간이 없으면 '알 수 없음'으로 표기." }
+            },
+            required: ["year_pillar", "month_pillar", "day_pillar", "hour_pillar"]
+        },
+        day_master: { type: Type.STRING, description: "사주의 주체이자 본질을 나타내는 일간 (日干) (예: 갑(甲)목)." },
+        overall_analysis: { type: Type.STRING, description: "사주 전체의 구조와 기운을 바탕으로 한 종합적인 분석 및 총평." },
+        elemental_analysis: { type: Type.STRING, description: "사주에 나타난 오행(목, 화, 토, 금, 수)의 분포와 균형에 대한 분석." },
+        life_advice: { type: Type.STRING, description: "타고난 사주를 바탕으로 삶을 더 나은 방향으로 이끌기 위한 조언." }
+    },
+    required: ["four_pillars", "day_master", "overall_analysis", "elemental_analysis", "life_advice"]
+};
+
+const tarotAnalysisSchema = {
+    type: Type.OBJECT,
+    properties: {
+        overall_reading: {
+            type: Type.STRING,
+            description: "뽑힌 카드 3장을 종합적으로 해석하여 사용자의 질문에 대한 총체적인 답변과 조언을 제공합니다."
+        },
+        cards: {
+            type: Type.ARRAY,
+            description: "뽑힌 3장의 카드 각각에 대한 개별 해석입니다.",
+            items: {
+                type: Type.OBJECT,
+                properties: {
+                    card_name: { type: Type.STRING, description: "해석하는 카드의 이름 (예: The Fool, Strength)." },
+                    orientation: { type: Type.STRING, description: "카드의 방향 ('정방향' 또는 '역방향')." },
+                    meaning: { type: Type.STRING, description: "해당 카드가 현재 상황에서 의미하는 바에 대한 상세한 설명." }
+                },
+                required: ["card_name", "orientation", "meaning"]
+            }
+        }
+    },
+    required: ["overall_reading", "cards"]
+};
+
+const juyeokAnalysisSchema = {
+    type: Type.OBJECT,
+    properties: {
+        present_hexagram_name: { type: Type.STRING, description: "현재 상황을 나타내는 본괘의 이름 (예: 건위천(乾爲天))." },
+        changing_hexagram_name: { type: Type.STRING, description: "미래의 변화를 나타내는 변괘의 이름. 변효가 없으면 null." },
+        interpretation: { type: Type.STRING, description: "사용자의 질문에 대해 본괘와 변괘가 의미하는 바를 종합적으로 해석한 내용." },
+        changing_lines_interpretation: { type: Type.STRING, description: "변화가 일어나는 효(변효)가 구체적으로 어떤 의미를 가지는지에 대한 상세한 설명. 변효가 없으면 null." }
+    },
+    required: ["present_hexagram_name", "interpretation"]
+};
+
+const yukhyoAnalysisSchema = {
+    type: Type.OBJECT,
+    properties: {
+        ganji_date: { type: Type.STRING, description: "점을 친 날의 간지 (예: 갑자(甲子)년 병인(丙寅)월 정묘(丁卯)일)." },
+        hexagram_name: { type: Type.STRING, description: "뽑힌 괘의 이름." },
+        yongsin: { type: Type.STRING, description: "질문의 핵심이 되는 용신(用神)과 그 상태(왕상휴수). 예: '재물(妻財)이 왕(旺)하여...'" },
+        lines: {
+            type: Type.ARRAY,
+            items: {
+                type: Type.OBJECT,
+                properties: {
+                    line_number: { type: Type.INTEGER, description: "효의 위치 (1~6)." },
+                    six_relatives: { type: Type.STRING, description: "효에 붙는 육친 (부모, 형제, 자손, 처재, 관귀)." },
+                    earthly_branch: { type: Type.STRING, description: "효에 붙는 12지지 (자, 축, 인, 묘...)." },
+                    marker: { type: Type.STRING, description: "세(世) 또는 응(應) 표시, 해당 없으면 null." }
+                },
+                required: ["line_number", "six_relatives", "earthly_branch"]
+            }
+        },
+        overall_interpretation: { type: Type.STRING, description: "용신을 중심으로 괘 전체를 해석하여, 사용자의 질문에 대한 구체적인 길흉과 조언을 제공합니다." }
+    },
+    required: ["ganji_date", "hexagram_name", "yongsin", "lines", "overall_interpretation"]
 };
 
 
-const getHexagramFromLines = (lines: LineType[]): Hexagram => {
-    // Note: The key generation logic now handles potential duplicates by checking for a "-2" suffix if the primary key fails.
-    // This is a temporary workaround for the data inconsistencies.
-    const baseKey = [...lines].reverse().map(line => line === 'yang' ? '1' : '0').join('');
-    let hexagramData = I_CHING_HEXAGRAMS[baseKey];
-    
-    // If the primary key is not found, check for the suffixed version.
-    if (!hexagramData) {
-        const secondaryKey = `${baseKey}-2`;
-        hexagramData = I_CHING_HEXAGRAMS[secondaryKey];
+export const analyzeFace = async (imageFile: File): Promise<PhysiognomyResult> => {
+  const base64Image = await fileToBase64(imageFile);
+  const mimeType = imageFile.type;
+
+  const prompt = `
+당신은 수십 년간 관상을 연구해 온 세계 최고의 관상가입니다. 
+당신의 임무는 사용자가 제공한 얼굴 사진을 보고, 각 부위별(눈, 코, 입, 이마, 턱, 귀) 특징과 그것이 의미하는 관상학적 해석을 상세하고 긍정적인 방향으로 설명해주는 것입니다.
+전문적이고 깊이 있는 분석을 제공하되, 사용자가 쉽게 이해할 수 있도록 친절하고 희망을 주는 말투를 사용하세요.
+분석 결과는 반드시 JSON 형식으로 반환해야 합니다.
+`;
+
+  const response = await ai.models.generateContent({
+    model: 'gemini-2.5-flash',
+    contents: {
+      parts: [
+        { text: prompt },
+        {
+          inlineData: {
+            mimeType,
+            data: base64Image,
+          },
+        },
+      ],
+    },
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: analysisSchema,
     }
-    
-    if (!hexagramData) {
-        // Fallback for any key that might still be missing, preventing a crash.
-        console.warn(`Could not find hexagram for key: ${baseKey}`);
-        return { name: '알 수 없는 괘', lines: lines };
+  });
+
+  const jsonText = response.text.trim();
+  try {
+    const result = JSON.parse(jsonText);
+    if (result && Array.isArray(result.features)) {
+      return result as PhysiognomyResult;
+    } else {
+      throw new Error("Invalid JSON structure from API");
     }
-    return hexagramData;
+  } catch (e) {
+    console.error("Failed to parse JSON response:", jsonText);
+    throw new Error("API 응답을 파싱하는 데 실패했습니다.");
+  }
 };
 
-export const generateIChingReading = (): JuyeokReading => {
-    const rawLines: number[] = Array.from({ length: 6 }, () => Math.floor(Math.random() * 4) + 6); // 6, 7, 8, 9
+export const analyzePalm = async (imageFile: File): Promise<PalmistryResult> => {
+  const base64Image = await fileToBase64(imageFile);
+  const mimeType = imageFile.type;
 
-    const presentLines: LineType[] = rawLines.map(v => (v === 6 || v === 8) ? 'yin' : 'yang');
-    const changingLinesNumbers: number[] = rawLines
-        .map((v, i) => (v === 6 || v === 9) ? i + 1 : 0)
-        .filter(v => v > 0);
+  const prompt = `
+당신은 수십 년간 손금을 연구해 온 세계 최고의 손금 전문가입니다.
+당신의 임무는 사용자가 제공한 손 사진을 보고, 주요 3대 손금(생명선, 감정선, 두뇌선)의 특징과 그것이 의미하는 바를 상세히 설명하는 것입니다.
+각 손금이 의미하는 장점과 함께 주의해야 할 점이나 개선할 점을 균형 있게 설명해주세요.
+분석은 현실적이어야 하지만, 사용자가 긍정적인 마음으로 자신의 삶을 개척해나갈 수 있도록 격려하는 톤을 유지해주세요.
+마지막으로, 이 분석에 대한 신뢰도 점수(70~95% 사이의 정수)와 함께, 손금은 정해진 미래가 아닌 가능성을 보여주는 지표라는 점을 설명하는 코멘트를 추가해주세요.
+분석 결과는 반드시 JSON 형식으로 반환해야 합니다.
+`;
 
-    let changingHexagram: Hexagram | null = null;
-    if (changingLinesNumbers.length > 0) {
-        const changingLines: LineType[] = presentLines.map((line, index) => 
-            changingLinesNumbers.includes(index + 1) ? (line === 'yin' ? 'yang' : 'yin') : line
-        );
-        changingHexagram = getHexagramFromLines(changingLines);
+  const response = await ai.models.generateContent({
+    model: 'gemini-2.5-flash',
+    contents: {
+      parts: [
+        { text: prompt },
+        {
+          inlineData: {
+            mimeType,
+            data: base64Image,
+          },
+        },
+      ],
+    },
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: palmAnalysisSchema,
     }
-    
-    const presentHexagram = getHexagramFromLines(presentLines);
+  });
 
-    return {
-        presentHexagram,
-        changingHexagram,
-        changingLines: changingLinesNumbers,
-    };
+  const jsonText = response.text.trim();
+  try {
+    const result = JSON.parse(jsonText);
+    if (result && Array.isArray(result.lines)) {
+      return result as PalmistryResult;
+    } else {
+      throw new Error("Invalid JSON structure from API for palm analysis");
+    }
+  } catch (e) {
+    console.error("Failed to parse JSON response:", jsonText);
+    throw new Error("API 응답을 파싱하는 데 실패했습니다.");
+  }
 };
 
+export const analyzeImpression = async (imageFile: File): Promise<ImpressionAnalysisResult> => {
+    const base64Image = await fileToBase64(imageFile);
+    const mimeType = imageFile.type;
 
-export const getGanjiDate = (): string => {
-    const stems = ['갑', '을', '병', '정', '무', '기', '경', '신', '임', '계'];
-    const branches = ['자', '축', '인', '묘', '진', '사', '오', '미', '신', '유', '술', '해'];
+    const prompt = `
+당신은 사회 심리학 및 인간 인식 분야의 전문가입니다.
+당신의 임무는 사용자가 제공한 인물 사진을 보고 그 사람의 첫인상을 분석하는 것입니다.
+사진 속 인물의 표정, 분위기, 스타일 등을 종합적으로 고려하여 다른 사람에게 어떤 느낌을 주는지 객관적으로 분석해주세요.
+분석은 격려가 되고 긍정적인 방향으로 제공되어야 하지만, 현실적인 조언도 포함해야 합니다.
+결과는 반드시 JSON 형식으로 반환해야 하며, 다음 세 가지 요소를 포함해야 합니다:
+1. keywords: 첫인상을 가장 잘 나타내는 핵심 키워드 3-4개.
+2. detailed_analysis: 첫인상에 대한 상세한 분석 (3-4 문장).
+3. improvement_tip: 더 긍정적인 인상을 주기 위한 구체적이고 실용적인 팁 한 가지.
+`;
+
+    const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: {
+            parts: [
+                { text: prompt },
+                {
+                    inlineData: {
+                        mimeType,
+                        data: base64Image,
+                    },
+                },
+            ],
+        },
+        config: {
+            responseMimeType: "application/json",
+            responseSchema: impressionAnalysisSchema,
+        }
+    });
+
+    const jsonText = response.text.trim();
+    try {
+        const result = JSON.parse(jsonText);
+        if (result && Array.isArray(result.keywords) && result.detailed_analysis && result.improvement_tip) {
+            return result as ImpressionAnalysisResult;
+        } else {
+            throw new Error("Invalid JSON structure from API for impression analysis");
+        }
+    } catch (e) {
+        console.error("Failed to parse JSON response:", jsonText);
+        throw new Error("API 응답을 파싱하는 데 실패했습니다.");
+    }
+};
+
+export const analyzeAstrology = async (birthDate: string): Promise<AstrologyResult> => {
+    const prompt = `
+당신은 세계적으로 유명한 점성술사입니다.
+사용자의 생년월일인 ${birthDate}를 기반으로 서양 점성술(별자리) 운세를 분석해주세요.
+결과는 반드시 JSON 형식으로 반환해야 합니다. 다음 정보를 포함해주세요:
+1. zodiac_sign: 해당하는 별자리.
+2. ruling_planet: 지배 행성.
+3. element: 4원소 (불, 흙, 공기, 물).
+4. analysis: 성격, 연애, 직업에 대한 상세 분석.
+`;
+
+    const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+        config: {
+            responseMimeType: "application/json",
+            responseSchema: astrologyAnalysisSchema,
+        }
+    });
+
+    const jsonText = response.text.trim();
+    try {
+        return JSON.parse(jsonText) as AstrologyResult;
+    } catch (e) {
+        console.error("Failed to parse JSON response:", jsonText);
+        throw new Error("API 응답을 파싱하는 데 실패했습니다.");
+    }
+};
+
+export const analyzeSaju = async (birthDate: string, birthTime: string): Promise<SajuResult> => {
+    const prompt = `
+당신은 수십 년 경력의 사주 명리학 대가입니다.
+사용자의 생년월일시인 ${birthDate} ${birthTime}를 기반으로 사주팔자를 분석해주세요. 만약 출생 시간이 '모름'으로 입력되었다면 시주(時柱)는 알 수 없는 것으로 간주하고 분석하세요.
+결과는 반드시 JSON 형식으로 반환해야 합니다. 다음 정보를 포함해주세요:
+1. four_pillars: 60갑자를 이용한 연주, 월주, 일주, 시주.
+2. day_master: 사주의 핵심인 일간(日干).
+3. overall_analysis: 사주 전체 구조에 대한 종합 해설.
+4. elemental_analysis: 사주에 나타난 오행(목, 화, 토, 금, 수)의 분포와 균형 분석.
+5. life_advice: 타고난 기질을 바탕으로 삶을 더 풍요롭게 만들기 위한 조언.
+`;
+
+    const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+        config: {
+            responseMimeType: "application/json",
+            responseSchema: sajuAnalysisSchema,
+        }
+    });
     
-    const date = new Date();
-    const year = date.getFullYear();
-    const month = date.getMonth() + 1;
-    const day = date.getDate();
+    const jsonText = response.text.trim();
+    try {
+        return JSON.parse(jsonText) as SajuResult;
+    } catch (e) {
+        console.error("Failed to parse JSON response:", jsonText);
+        throw new Error("API 응답을 파싱하는 데 실패했습니다.");
+    }
+};
 
-    // Calculate Year Ganji (Simplified)
-    const yearStemIndex = (year - 4) % 10;
-    const yearBranchIndex = (year - 4) % 12;
-    const yearGanji = stems[yearStemIndex] + branches[yearBranchIndex] + '년';
+export const analyzeTarotReading = async (question: string, cards: CardDraw[]): Promise<TarotResult> => {
+    const cardInfo = cards.map(c => `${c.name} (${c.orientation})`).join(', ');
+    const prompt = `
+당신은 영적인 통찰력이 뛰어난 타로 마스터입니다.
+사용자의 질문과 당신이 뽑은 세 장의 타로 카드를 기반으로 심도 있는 해석을 제공해주세요.
 
-    // This is a complex calculation involving solar terms (절기), so we'll use a simplified placeholder
-    // A proper implementation would require a detailed astronomical calendar.
-    // For this app, we'll send the request to AI, which has this knowledge.
-    // Let's create a placeholder for the prompt.
-    const monthGanji = "AI가 계산할 월"; 
-    
-    // Calculate Day Ganji (Julian Day Number method)
-    const JD = Math.floor(
-        (Date.UTC(year, month - 1, day) - Date.UTC(year, 0, 0)) / 86400000
-    ) + (year - 1) * 365 + Math.floor((year - 1) / 4) - Math.floor((year - 1) / 100) + Math.floor((year - 1) / 400) + 2440588 - 0.5;
+사용자의 질문: "${question}"
 
-    const dayStemIndex = Math.round(JD + 9) % 10;
-    const dayBranchIndex = Math.round(JD + 1) % 12;
-    const dayGanji = stems[dayStemIndex] + branches[dayBranchIndex] + '일';
+뽑힌 카드: ${cardInfo}
 
-    return `${yearGanji} ${month}월 ${dayGanji}`;
+각 카드의 의미를 개별적으로 설명한 후, 세 카드의 조합이 사용자의 질문에 대해 어떤 총체적인 메시지를 전달하는지 종합적으로 해석해주세요.
+해석은 사용자가 자신의 상황을 긍정적으로 이해하고 나아갈 방향을 찾는 데 도움이 되도록, 따뜻하고 희망적인 조언을 담아야 합니다.
+결과는 반드시 JSON 형식으로 반환해야 합니다.
+`;
+
+    const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+        config: {
+            responseMimeType: "application/json",
+            responseSchema: tarotAnalysisSchema,
+        }
+    });
+
+    const jsonText = response.text.trim();
+    try {
+        return JSON.parse(jsonText) as TarotResult;
+    } catch (e) {
+        console.error("Failed to parse JSON response:", jsonText);
+        throw new Error("API 응답을 파싱하는 데 실패했습니다.");
+    }
+};
+
+export const analyzeJuyeok = async (question: string, reading: JuyeokReading): Promise<JuyeokResult> => {
+    const prompt = `
+당신은 주역(I-Ching)의 대가입니다. 사용자의 질문에 대해 뽑힌 주역 괘를 해석해주세요.
+
+사용자의 질문: "${question}"
+
+뽑힌 괘:
+- 본괘 (현재 상황): ${reading.presentHexagram.name}
+- 변괘 (미래 변화): ${reading.changingHexagram ? reading.changingHexagram.name : '없음'}
+- 변효 (변화의 핵심): ${reading.changingLines.length > 0 ? reading.changingLines.map(l => `${l}효`).join(', ') : '없음'}
+
+해석 지침:
+1. 본괘가 현재 상황에 대해 가지는 의미를 설명합니다.
+2. 변효가 있다면, 각 변효가 어떤 구체적인 변화나 조언을 의미하는지 상세히 설명합니다.
+3. 변괘가 있다면, 이 변화를 거친 후 맞이하게 될 미래의 상황을 설명합니다.
+4. 모든 해석을 종합하여 사용자의 질문에 대한 최종적인 조언을 제공합니다.
+5. 긍정적이고 희망적인 관점에서 조언하되, 현실적인 통찰을 담아주세요.
+
+결과는 반드시 JSON 형식으로 반환해야 합니다.
+`;
+
+    const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+        config: {
+            responseMimeType: "application/json",
+            responseSchema: juyeokAnalysisSchema,
+        }
+    });
+
+    const jsonText = response.text.trim();
+    try {
+        return JSON.parse(jsonText) as JuyeokResult;
+    } catch (e) {
+        console.error("Failed to parse JSON response:", jsonText);
+        throw new Error("API 응답을 파싱하는 데 실패했습니다.");
+    }
+};
+
+export const analyzeYukhyo = async (question: string, hexagram: Hexagram, ganjiDate: string): Promise<YukhyoResult> => {
+    const prompt = `
+당신은 육효점의 최고 전문가입니다. 사용자의 질문에 대해 주어진 정보로 육효점을 해석해주세요.
+
+사용자의 질문: "${question}"
+점을 친 날짜: ${ganjiDate}
+뽑힌 괘: ${hexagram.name}
+
+해석 과정:
+1. 주어진 괘(${hexagram.name})에 ${ganjiDate}의 간지를 적용하여 납갑(納甲)을 붙이고, 세(世)와 응(應)을 정합니다.
+2. 각 효에 육친(부모, 형제, 자손, 처재, 관귀)을 배치합니다.
+3. 사용자의 질문("${question}")의 핵심 카테고리(예: 재물, 연애, 시험, 건강 등)를 파악하고 그에 맞는 용신(用神)을 찾습니다.
+4. 용신이 일진(日辰)과 월건(月建)에 비추어 왕상휴수(旺相休囚)한지 판단합니다.
+5. 위의 모든 요소를 종합하여 질문에 대한 구체적인 길흉을 판단하고, 상세한 조언을 제공합니다.
+
+결과는 반드시 JSON 형식으로 반환해야 합니다.
+`;
+
+    const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+        config: {
+            responseMimeType: "application/json",
+            responseSchema: yukhyoAnalysisSchema,
+        }
+    });
+
+    const jsonText = response.text.trim();
+    try {
+        const result = JSON.parse(jsonText);
+        // Basic validation
+        if (result && result.yongsin && Array.isArray(result.lines)) {
+            return result as YukhyoResult;
+        } else {
+            throw new Error("Invalid JSON structure from API for Yukhyo analysis");
+        }
+    } catch (e) {
+        console.error("Failed to parse JSON response:", jsonText);
+        throw new Error("API 응답을 파싱하는 데 실패했습니다.");
+    }
 };
