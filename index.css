@@ -1,0 +1,17 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&family=Playfair+Display:wght@700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    @apply dark;
+  }
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+  }
+  .font-display {
+    font-family: 'Playfair Display', serif;
+  }
+}
