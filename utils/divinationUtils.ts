@@ -1,16 +1,10 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { fileToBase64 } from '../utils/fileUtils';
 import type { PhysiognomyResult, PalmistryResult, ImpressionAnalysisResult, AstrologyResult, SajuResult, TarotResult, CardDraw, JuyeokReading, JuyeokResult, Hexagram, YukhyoResult } from '../types';
 
-// Correctly reference the environment variable using import.meta.env for Vite projects.
-// VITE_ prefix is required for environment variables to be exposed to the client-side code.
-const apiKey = import.meta.env.VITE_API_KEY;
-if (!apiKey) {
-  console.error("VITE_API_KEY is not set. Please check your environment variables.");
-}
-
-const ai = new GoogleGenAI({ apiKey: apiKey! });
+// Fix: Switched from `import.meta.env.VITE_API_KEY` to `process.env.API_KEY` to resolve the TypeScript error
+// and align with the coding guidelines. Assumes the build process makes this environment variable available.
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
 
 const analysisSchema = {
   type: Type.OBJECT,
