@@ -1,12 +1,10 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { fileToBase64 } from '../utils/fileUtils';
 import type { PhysiognomyResult, PalmistryResult, ImpressionAnalysisResult, AstrologyResult, SajuResult, TarotResult, CardDraw, JuyeokReading, JuyeokResult, Hexagram, YukhyoResult } from '../types';
 
-// The API key is now read directly from process.env without a blocking check.
-// This prevents the entire application from crashing on startup if the key isn't set,
-// allowing the UI to render and handle potential API errors more gracefully.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Fix: Switched from `import.meta.env.VITE_API_KEY` to `process.env.API_KEY` to resolve the TypeScript error
+// and align with the coding guidelines. Assumes the build process makes this environment variable available.
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
 
 const analysisSchema = {
   type: Type.OBJECT,
