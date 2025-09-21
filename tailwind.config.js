@@ -5,7 +5,12 @@ export default {
     "./**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        'sans': ['"Noto Sans KR"', 'sans-serif'],
+        'display': ['"Playfair Display"', 'serif'],
+      }
+    },
   },
   plugins: [],
 }
