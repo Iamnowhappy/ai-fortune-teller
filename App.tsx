@@ -12,7 +12,7 @@ import { TarotResultDisplay } from './components/TarotResultDisplay';
 import { JuyeokResultDisplay } from './components/JuyeokResultDisplay';
 import { YukhyoResultDisplay } from './components/YukhyoResultDisplay';
 import { Loader } from './components/Loader';
-import { analyzeFace, analyzePalm, analyzeImpression, analyzeAstrology, analyzeSaju, analyzeTarotReading, analyzeJuyeok, analyzeYukhyo } from './services/geminiService';
+import { analyzeFace, analyzePalm, analyzeImpression, analyzeAstrology, analyzeSaju, analyzeTarotReading, analyzeJuyeok, analyzeYukhyo } from './geminiService';
 import type { PhysiognomyResult, PalmistryResult, ImpressionAnalysisResult, AstrologyResult, SajuResult, TarotResult, JuyeokResult, YukhyoResult, CardDraw, JuyeokReading } from './types';
 import { Footer } from './components/Footer';
 import { FaceIcon, PalmIcon, ImpressionIcon, AstrologyIcon, SajuIcon, TarotIcon, JuyeokIcon, YukhyoIcon } from './components/icons';
