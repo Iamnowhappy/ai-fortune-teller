@@ -1,0 +1,5 @@
+{
+  "name": "AI Fortune Teller",
+  "description": "A suite of AI-powered analysis tools, including a face reader, with plans to add palm reading and first impression analysis. Get insights into your personality and future.",
+  "requestFramePermissions": []
+}
