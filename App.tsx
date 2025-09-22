@@ -1,4 +1,5 @@
 
+
 import './index.css';
 import React, { useState, useCallback } from 'react';
 import { Header } from './components/Header';
@@ -29,7 +30,7 @@ const HomePage: React.FC<{ onNavigate: (page: Page) => void; }> = ({ onNavigate 
   return (
     <main className="flex-grow flex flex-col items-center justify-center text-center py-10">
       <header className="text-center py-6 mb-10">
-        <h1 className="text-4xl sm:text-5xl font-bold font-display tracking-wider text-white">
+        <h1 className="text-4xl sm:text-5xl font-bold font-display tracking-wider text-white" translate="no">
           AI 운세 시리즈
         </h1>
         <p className="mt-3 text-lg text-slate-400">
@@ -1119,7 +1120,7 @@ const App: React.FC = () => {
     <div className="min-h-screen bg-slate-900 text-white flex flex-col items-center p-4 sm:p-6 lg:p-8">
       <div className="w-full max-w-7xl mx-auto flex flex-col flex-grow">
         {renderPage()}
-        <Footer />
+        <Footer currentPage={currentPage} />
       </div>
     </div>
   );
