@@ -1,5 +1,6 @@
 
 
+
 import './index.css';
 import React, { useState, useCallback } from 'react';
 import { Header } from './components/Header';
@@ -14,6 +15,10 @@ import { TarotResultDisplay } from './components/TarotResultDisplay';
 import { JuyeokResultDisplay } from './components/JuyeokResultDisplay';
 import { YukhyoResultDisplay } from './components/YukhyoResultDisplay';
 import { SavedResultsPage } from './components/SavedResultsPage';
+import { AboutPage } from './components/AboutPage';
+import { PrivacyPolicyPage } from './components/PrivacyPolicyPage';
+import { TermsOfServicePage } from './components/TermsOfServicePage';
+import { GuidePage } from './components/GuidePage';
 import { Loader } from './components/Loader';
 import { analyzeFace, analyzePalm, analyzeImpression, analyzeAstrology, analyzeSaju, analyzeTarotReading, analyzeJuyeok, analyzeYukhyo } from './services/geminiService';
 import type { PhysiognomyResult, PalmistryResult, ImpressionAnalysisResult, AstrologyResult, SajuResult, TarotResult, JuyeokResult, YukhyoResult, CardDraw, JuyeokReading, SavedResult } from './types';
@@ -23,7 +28,7 @@ import { drawThreeCards } from './utils/tarotUtils';
 import { generateIChingReading, getGanjiDate } from './utils/divinationUtils';
 import { saveResult } from './utils/storage';
 
-type Page = 'home' | 'face-reader' | 'palm-reader' | 'impression-analyzer' | 'astrology-reader' | 'saju-analyzer' | 'tarot-reader' | 'juyeok-reader' | 'yukhyo-analyzer' | 'saved-results';
+type Page = 'home' | 'face-reader' | 'palm-reader' | 'impression-analyzer' | 'astrology-reader' | 'saju-analyzer' | 'tarot-reader' | 'juyeok-reader' | 'yukhyo-analyzer' | 'saved-results' | 'about' | 'privacy' | 'terms' | 'guide';
 
 // --- HomePage Component ---
 const HomePage: React.FC<{ onNavigate: (page: Page) => void; }> = ({ onNavigate }) => {
@@ -1102,7 +1107,6 @@ const App: React.FC = () => {
       case 'saju-analyzer':
         return <SajuAnalyzerPage onBack={() => navigateTo('home')} />;
       case 'tarot-reader':
-        {/* FIX: Changed TarotResultPage to TarotReaderPage to resolve component not found error. */}
         return <TarotReaderPage onBack={() => navigateTo('home')} />;
       case 'juyeok-reader':
         return <JuyeokReaderPage onBack={() => navigateTo('home')} />;
@@ -1110,6 +1114,14 @@ const App: React.FC = () => {
         return <YukhyoAnalyzerPage onBack={() => navigateTo('home')} />;
       case 'saved-results':
         return <SavedResultsPage onBack={() => navigateTo('home')} />;
+      case 'about':
+        return <AboutPage onBack={() => navigateTo('home')} />;
+      case 'privacy':
+        return <PrivacyPolicyPage onBack={() => navigateTo('home')} />;
+      case 'terms':
+        return <TermsOfServicePage onBack={() => navigateTo('home')} />;
+      case 'guide':
+        return <GuidePage onBack={() => navigateTo('home')} />;
       case 'home':
       default:
         return <HomePage onNavigate={navigateTo} />;
@@ -1120,7 +1132,7 @@ const App: React.FC = () => {
     <div className="min-h-screen bg-slate-900 text-white flex flex-col items-center p-4 sm:p-6 lg:p-8">
       <div className="w-full max-w-7xl mx-auto flex flex-col flex-grow">
         {renderPage()}
-        <Footer currentPage={currentPage} />
+        <Footer onNavigate={navigateTo} />
       </div>
     </div>
   );
