@@ -1,3 +1,4 @@
+
 import './index.css';
 import React, { useState, useCallback } from 'react';
 import { Header } from './components/Header';
@@ -11,16 +12,17 @@ import { SajuResultDisplay } from './components/SajuResultDisplay';
 import { TarotResultDisplay } from './components/TarotResultDisplay';
 import { JuyeokResultDisplay } from './components/JuyeokResultDisplay';
 import { YukhyoResultDisplay } from './components/YukhyoResultDisplay';
+import { SavedResultsPage } from './components/SavedResultsPage';
 import { Loader } from './components/Loader';
 import { analyzeFace, analyzePalm, analyzeImpression, analyzeAstrology, analyzeSaju, analyzeTarotReading, analyzeJuyeok, analyzeYukhyo } from './services/geminiService';
-import type { PhysiognomyResult, PalmistryResult, ImpressionAnalysisResult, AstrologyResult, SajuResult, TarotResult, JuyeokResult, YukhyoResult, CardDraw, JuyeokReading } from './types';
+import type { PhysiognomyResult, PalmistryResult, ImpressionAnalysisResult, AstrologyResult, SajuResult, TarotResult, JuyeokResult, YukhyoResult, CardDraw, JuyeokReading, SavedResult } from './types';
 import { Footer } from './components/Footer';
-import { FaceIcon, PalmIcon, ImpressionIcon, AstrologyIcon, SajuIcon, TarotIcon, JuyeokIcon, YukhyoIcon } from './components/icons';
+import { FaceIcon, PalmIcon, ImpressionIcon, AstrologyIcon, SajuIcon, TarotIcon, JuyeokIcon, YukhyoIcon, BoxIcon } from './components/icons';
 import { drawThreeCards } from './utils/tarotUtils';
 import { generateIChingReading, getGanjiDate } from './utils/divinationUtils';
-import { AdSenseUnit } from './components/AdSenseUnit';
+import { saveResult } from './utils/storage';
 
-type Page = 'home' | 'face-reader' | 'palm-reader' | 'impression-analyzer' | 'astrology-reader' | 'saju-analyzer' | 'tarot-reader' | 'juyeok-reader' | 'yukhyo-analyzer';
+type Page = 'home' | 'face-reader' | 'palm-reader' | 'impression-analyzer' | 'astrology-reader' | 'saju-analyzer' | 'tarot-reader' | 'juyeok-reader' | 'yukhyo-analyzer' | 'saved-results';
 
 // --- HomePage Component ---
 const HomePage: React.FC<{ onNavigate: (page: Page) => void; }> = ({ onNavigate }) => {
@@ -35,7 +37,7 @@ const HomePage: React.FC<{ onNavigate: (page: Page) => void; }> = ({ onNavigate 
         </p>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full max-w-7xl">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-7xl">
         {/* Face Reader Card */}
         <div
           onClick={() => onNavigate('face-reader')}
@@ -147,11 +149,20 @@ const HomePage: React.FC<{ onNavigate: (page: Page) => void; }> = ({ onNavigate 
           <h2 className="text-2xl font-bold text-white">AI 육효 분석가</h2>
           <p className="text-slate-400">질문 시점의 기운으로 구체적인 길흉을 예측합니다.</p>
         </div>
-      </div>
-      
-      {/* AdSense Unit */}
-      <div className="mt-12 w-full max-w-4xl">
-        <AdSenseUnit />
+        
+        {/* Saved Results Card */}
+        <div
+          onClick={() => onNavigate('saved-results')}
+          className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 flex flex-col items-center gap-4 transition-all duration-300 hover:scale-105 hover:border-cyan-500 cursor-pointer"
+          role="button"
+          tabIndex={0}
+          aria-label="나의 운세함 보기"
+          onKeyDown={(e) => e.key === 'Enter' && onNavigate('saved-results')}
+        >
+          <BoxIcon className="w-16 h-16 text-cyan-400" />
+          <h2 className="text-2xl font-bold text-white">나의 운세함</h2>
+          <p className="text-slate-400">저장된 분석 결과를 다시 확인합니다.</p>
+        </div>
       </div>
     </main>
   );
@@ -164,12 +175,14 @@ const FaceReaderPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
     const [analysisResult, setAnalysisResult] = useState<PhysiognomyResult | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
+    const [isSaved, setIsSaved] = useState(false);
 
     const handleImageSelect = (file: File) => {
         setImageFile(file);
         setImageUrl(URL.createObjectURL(file));
         setAnalysisResult(null);
         setError(null);
+        setIsSaved(false);
     };
 
     const handleAnalyze = useCallback(async () => {
@@ -192,12 +205,41 @@ const FaceReaderPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
         setIsLoading(false);
         }
     }, [imageFile]);
+    
+    const handleSave = useCallback(() => {
+        if (!analysisResult) return;
+        const savedItem: SavedResult = {
+            id: new Date().toISOString(),
+            type: 'face-reader',
+            typeName: 'AI 관상가',
+            date: new Date().toISOString(),
+            result: analysisResult,
+        };
+        saveResult(savedItem);
+        setIsSaved(true);
+        setTimeout(() => setIsSaved(false), 2000);
+    }, [analysisResult]);
+    
+    const handleShare = useCallback(() => {
+        if (!analysisResult) return;
+        const shareData = {
+            title: 'AI 관상가 분석 결과',
+            text: `AI 관상가로 분석한 저의 관상 결과입니다:\n\n[총평]\n${analysisResult.overall_impression}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`,
+            url: window.location.href,
+        };
+        if (navigator.share) {
+            navigator.share(shareData).catch(console.error);
+        } else {
+            alert('이 브라우저에서는 공유 기능을 지원하지 않습니다.');
+        }
+    }, [analysisResult]);
 
     const handleReset = () => {
         setImageFile(null);
         setImageUrl(null);
         setAnalysisResult(null);
         setError(null);
+        setIsSaved(false);
     };
 
     return (
@@ -211,7 +253,7 @@ const FaceReaderPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
                 {isLoading ? (
                 <Loader />
                 ) : analysisResult ? (
-                <ResultDisplay result={analysisResult} onReset={handleReset} onBack={onBack} />
+                <ResultDisplay result={analysisResult} onReset={handleReset} onBack={onBack} onSave={handleSave} onShare={handleShare} isSaved={isSaved} />
                 ) : (
                 <ImageUploader
                     onImageSelect={handleImageSelect}
@@ -239,6 +281,7 @@ const PalmReaderPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
     const [analysisResult, setAnalysisResult] = useState<PalmistryResult | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
+    const [isSaved, setIsSaved] = useState(false);
 
     const palmReadingMessages = [
         "손바닥의 지도를 그리고 있습니다...",
@@ -253,6 +296,7 @@ const PalmReaderPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
         setImageUrl(URL.createObjectURL(file));
         setAnalysisResult(null);
         setError(null);
+        setIsSaved(false);
     };
 
     const handleAnalyze = useCallback(async () => {
@@ -276,11 +320,40 @@ const PalmReaderPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
         }
     }, [imageFile]);
 
+    const handleSave = useCallback(() => {
+        if (!analysisResult) return;
+        const savedItem: SavedResult = {
+            id: new Date().toISOString(),
+            type: 'palm-reader',
+            typeName: 'AI 손금 분석',
+            date: new Date().toISOString(),
+            result: analysisResult,
+        };
+        saveResult(savedItem);
+        setIsSaved(true);
+        setTimeout(() => setIsSaved(false), 2000);
+    }, [analysisResult]);
+
+    const handleShare = useCallback(() => {
+        if (!analysisResult) return;
+        const shareData = {
+            title: 'AI 손금 분석 결과',
+            text: `AI 손금 분석 결과입니다:\n\n[총평]\n${analysisResult.overall_analysis}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`,
+            url: window.location.href,
+        };
+        if (navigator.share) {
+            navigator.share(shareData).catch(console.error);
+        } else {
+            alert('이 브라우저에서는 공유 기능을 지원하지 않습니다.');
+        }
+    }, [analysisResult]);
+
     const handleReset = () => {
         setImageFile(null);
         setImageUrl(null);
         setAnalysisResult(null);
         setError(null);
+        setIsSaved(false);
     };
 
     return (
@@ -294,7 +367,7 @@ const PalmReaderPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
                 {isLoading ? (
                 <Loader messages={palmReadingMessages} />
                 ) : analysisResult ? (
-                <PalmResultDisplay result={analysisResult} onReset={handleReset} onBack={onBack} />
+                <PalmResultDisplay result={analysisResult} onReset={handleReset} onBack={onBack} onSave={handleSave} onShare={handleShare} isSaved={isSaved} />
                 ) : (
                 <ImageUploader
                     onImageSelect={handleImageSelect}
@@ -323,6 +396,7 @@ const ImpressionAnalyzerPage: React.FC<{ onBack: () => void; }> = ({ onBack }) =
     const [analysisResult, setAnalysisResult] = useState<ImpressionAnalysisResult | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
+    const [isSaved, setIsSaved] = useState(false);
 
     const impressionAnalysisMessages = [
         "사진 속 인상을 스캔하고 있습니다...",
@@ -337,6 +411,7 @@ const ImpressionAnalyzerPage: React.FC<{ onBack: () => void; }> = ({ onBack }) =
         setImageUrl(URL.createObjectURL(file));
         setAnalysisResult(null);
         setError(null);
+        setIsSaved(false);
     };
 
     const handleAnalyze = useCallback(async () => {
@@ -360,11 +435,40 @@ const ImpressionAnalyzerPage: React.FC<{ onBack: () => void; }> = ({ onBack }) =
         }
     }, [imageFile]);
 
+    const handleSave = useCallback(() => {
+        if (!analysisResult) return;
+        const savedItem: SavedResult = {
+            id: new Date().toISOString(),
+            type: 'impression-analyzer',
+            typeName: 'AI 첫인상 분석',
+            date: new Date().toISOString(),
+            result: analysisResult,
+        };
+        saveResult(savedItem);
+        setIsSaved(true);
+        setTimeout(() => setIsSaved(false), 2000);
+    }, [analysisResult]);
+
+    const handleShare = useCallback(() => {
+        if (!analysisResult) return;
+        const shareData = {
+            title: 'AI 첫인상 분석 결과',
+            text: `AI가 분석한 저의 첫인상 키워드는 '${analysisResult.keywords.join(', ')}' 입니다.\n\n[상세 분석]\n${analysisResult.detailed_analysis}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`,
+            url: window.location.href,
+        };
+        if (navigator.share) {
+            navigator.share(shareData).catch(console.error);
+        } else {
+            alert('이 브라우저에서는 공유 기능을 지원하지 않습니다.');
+        }
+    }, [analysisResult]);
+
     const handleReset = () => {
         setImageFile(null);
         setImageUrl(null);
         setAnalysisResult(null);
         setError(null);
+        setIsSaved(false);
     };
 
     return (
@@ -378,7 +482,7 @@ const ImpressionAnalyzerPage: React.FC<{ onBack: () => void; }> = ({ onBack }) =
                 {isLoading ? (
                     <Loader messages={impressionAnalysisMessages} />
                 ) : analysisResult ? (
-                    <ImpressionResultDisplay result={analysisResult} onReset={handleReset} onBack={onBack} />
+                    <ImpressionResultDisplay result={analysisResult} onReset={handleReset} onBack={onBack} onSave={handleSave} onShare={handleShare} isSaved={isSaved} />
                 ) : (
                     <ImageUploader
                         onImageSelect={handleImageSelect}
@@ -405,6 +509,7 @@ const AstrologyReaderPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
     const [analysisResult, setAnalysisResult] = useState<AstrologyResult | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
+    const [isSaved, setIsSaved] = useState(false);
 
     const astrologyMessages = [
         "밤하늘의 별자리를 정렬하고 있습니다...",
@@ -418,6 +523,7 @@ const AstrologyReaderPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
         setIsLoading(true);
         setError(null);
         setAnalysisResult(null);
+        setIsSaved(false);
 
         try {
             const result = await analyzeAstrology(birthDate);
@@ -430,9 +536,38 @@ const AstrologyReaderPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
         }
     }, []);
     
+    const handleSave = useCallback(() => {
+        if (!analysisResult) return;
+        const savedItem: SavedResult = {
+            id: new Date().toISOString(),
+            type: 'astrology-reader',
+            typeName: 'AI 별자리 운세',
+            date: new Date().toISOString(),
+            result: analysisResult,
+        };
+        saveResult(savedItem);
+        setIsSaved(true);
+        setTimeout(() => setIsSaved(false), 2000);
+    }, [analysisResult]);
+    
+    const handleShare = useCallback(() => {
+        if (!analysisResult) return;
+        const shareData = {
+            title: 'AI 별자리 운세 결과',
+            text: `AI가 분석한 저의 별자리는 ${analysisResult.zodiac_sign}입니다.\n\n[성격 분석]\n${analysisResult.analysis.personality}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`,
+            url: window.location.href,
+        };
+        if (navigator.share) {
+            navigator.share(shareData).catch(console.error);
+        } else {
+            alert('이 브라우저에서는 공유 기능을 지원하지 않습니다.');
+        }
+    }, [analysisResult]);
+
     const handleReset = () => {
         setAnalysisResult(null);
         setError(null);
+        setIsSaved(false);
     };
 
     return (
@@ -446,7 +581,7 @@ const AstrologyReaderPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
                 {isLoading ? (
                     <Loader messages={astrologyMessages} />
                 ) : analysisResult ? (
-                    <AstrologyResultDisplay result={analysisResult} onReset={handleReset} onBack={onBack} />
+                    <AstrologyResultDisplay result={analysisResult} onReset={handleReset} onBack={onBack} onSave={handleSave} onShare={handleShare} isSaved={isSaved} />
                 ) : (
                     <BirthDateInput
                         onAnalyze={handleAnalyze}
@@ -469,6 +604,7 @@ const SajuAnalyzerPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
     const [analysisResult, setAnalysisResult] = useState<SajuResult | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
+    const [isSaved, setIsSaved] = useState(false);
 
     const sajuMessages = [
         "천간과 지지를 배열하고 있습니다...",
@@ -482,6 +618,7 @@ const SajuAnalyzerPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
         setIsLoading(true);
         setError(null);
         setAnalysisResult(null);
+        setIsSaved(false);
 
         try {
             const result = await analyzeSaju(birthDate, birthTime);
@@ -493,10 +630,39 @@ const SajuAnalyzerPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
             setIsLoading(false);
         }
     }, []);
+
+    const handleSave = useCallback(() => {
+        if (!analysisResult) return;
+        const savedItem: SavedResult = {
+            id: new Date().toISOString(),
+            type: 'saju-analyzer',
+            typeName: 'AI 사주 분석',
+            date: new Date().toISOString(),
+            result: analysisResult,
+        };
+        saveResult(savedItem);
+        setIsSaved(true);
+        setTimeout(() => setIsSaved(false), 2000);
+    }, [analysisResult]);
+
+    const handleShare = useCallback(() => {
+        if (!analysisResult) return;
+        const shareData = {
+            title: 'AI 사주 분석 결과',
+            text: `AI 사주 분석 결과, 저의 일간은 ${analysisResult.day_master} 입니다.\n\n[종합 분석]\n${analysisResult.overall_analysis}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`,
+            url: window.location.href,
+        };
+        if (navigator.share) {
+            navigator.share(shareData).catch(console.error);
+        } else {
+            alert('이 브라우저에서는 공유 기능을 지원하지 않습니다.');
+        }
+    }, [analysisResult]);
     
     const handleReset = () => {
         setAnalysisResult(null);
         setError(null);
+        setIsSaved(false);
     };
 
     return (
@@ -510,7 +676,7 @@ const SajuAnalyzerPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
                 {isLoading ? (
                     <Loader messages={sajuMessages} />
                 ) : analysisResult ? (
-                    <SajuResultDisplay result={analysisResult} onReset={handleReset} onBack={onBack} />
+                    <SajuResultDisplay result={analysisResult} onReset={handleReset} onBack={onBack} onSave={handleSave} onShare={handleShare} isSaved={isSaved} />
                 ) : (
                     <BirthDateInput
                         onAnalyze={handleAnalyze}
@@ -536,6 +702,7 @@ const TarotReaderPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
     const [drawnCards, setDrawnCards] = useState<CardDraw[] | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
+    const [isSaved, setIsSaved] = useState(false);
 
     const tarotMessages = [
         "카드를 섞고 있습니다...",
@@ -554,6 +721,7 @@ const TarotReaderPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
         setIsLoading(true);
         setError(null);
         setAnalysisResult(null);
+        setIsSaved(false);
         
         const cards = drawThreeCards();
         setDrawnCards(cards);
@@ -569,11 +737,42 @@ const TarotReaderPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
         }
     }, [question]);
     
+    const handleSave = useCallback(() => {
+        if (!analysisResult || !drawnCards) return;
+        const savedItem: SavedResult = {
+            id: new Date().toISOString(),
+            type: 'tarot-reader',
+            typeName: 'AI 타로 마스터',
+            date: new Date().toISOString(),
+            result: analysisResult,
+            context: { question, drawnCards }
+        };
+        saveResult(savedItem);
+        setIsSaved(true);
+        setTimeout(() => setIsSaved(false), 2000);
+    }, [analysisResult, drawnCards, question]);
+
+    const handleShare = useCallback(() => {
+        if (!analysisResult || !drawnCards) return;
+        const cardNames = drawnCards.map(c => `${c.name}(${c.orientation})`).join(', ');
+        const shareData = {
+            title: 'AI 타로 마스터 리딩 결과',
+            text: `질문: "${question}"\n뽑힌 카드: ${cardNames}\n\n[종합 리딩]\n${analysisResult.overall_reading}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`,
+            url: window.location.href,
+        };
+        if (navigator.share) {
+            navigator.share(shareData).catch(console.error);
+        } else {
+            alert('이 브라우저에서는 공유 기능을 지원하지 않습니다.');
+        }
+    }, [analysisResult, drawnCards, question]);
+
     const handleReset = () => {
         setQuestion('');
         setAnalysisResult(null);
         setDrawnCards(null);
         setError(null);
+        setIsSaved(false);
     };
 
     return (
@@ -587,7 +786,7 @@ const TarotReaderPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
                 {isLoading ? (
                     <Loader messages={tarotMessages} />
                 ) : analysisResult && drawnCards ? (
-                    <TarotResultDisplay result={analysisResult} drawnCards={drawnCards} onReset={handleReset} onBack={onBack} />
+                    <TarotResultDisplay result={analysisResult} drawnCards={drawnCards} onReset={handleReset} onBack={onBack} onSave={handleSave} onShare={handleShare} isSaved={isSaved} />
                 ) : (
                     <div className="w-full max-w-md flex flex-col items-center gap-8 p-6 bg-slate-800/50 rounded-2xl shadow-lg border border-slate-700">
                         <div className="w-full flex flex-col gap-4">
@@ -630,6 +829,7 @@ const JuyeokReaderPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
     const [juyeokReading, setJuyeokReading] = useState<JuyeokReading | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
+    const [isSaved, setIsSaved] = useState(false);
 
     const juyeokMessages = [
         "천지의 기운을 모으고 있습니다...",
@@ -648,6 +848,7 @@ const JuyeokReaderPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
         setIsLoading(true);
         setError(null);
         setAnalysisResult(null);
+        setIsSaved(false);
         
         const reading = generateIChingReading();
         setJuyeokReading(reading);
@@ -662,12 +863,42 @@ const JuyeokReaderPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
             setIsLoading(false);
         }
     }, [question]);
+
+    const handleSave = useCallback(() => {
+        if (!analysisResult || !juyeokReading) return;
+        const savedItem: SavedResult = {
+            id: new Date().toISOString(),
+            type: 'juyeok-reader',
+            typeName: 'AI 주역 전문가',
+            date: new Date().toISOString(),
+            result: analysisResult,
+            context: { question, reading: juyeokReading }
+        };
+        saveResult(savedItem);
+        setIsSaved(true);
+        setTimeout(() => setIsSaved(false), 2000);
+    }, [analysisResult, juyeokReading, question]);
+
+    const handleShare = useCallback(() => {
+        if (!analysisResult) return;
+        const shareData = {
+            title: 'AI 주역 전문가 해석 결과',
+            text: `질문: "${question}"\n본괘: ${analysisResult.present_hexagram_name}\n\n[종합 해설]\n${analysisResult.interpretation}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`,
+            url: window.location.href,
+        };
+        if (navigator.share) {
+            navigator.share(shareData).catch(console.error);
+        } else {
+            alert('이 브라우저에서는 공유 기능을 지원하지 않습니다.');
+        }
+    }, [analysisResult, question]);
     
     const handleReset = () => {
         setQuestion('');
         setAnalysisResult(null);
         setJuyeokReading(null);
         setError(null);
+        setIsSaved(false);
     };
 
     return (
@@ -681,7 +912,7 @@ const JuyeokReaderPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
                 {isLoading ? (
                     <Loader messages={juyeokMessages} />
                 ) : analysisResult && juyeokReading ? (
-                    <JuyeokResultDisplay result={analysisResult} reading={juyeokReading} onReset={handleReset} onBack={onBack} />
+                    <JuyeokResultDisplay result={analysisResult} reading={juyeokReading} onReset={handleReset} onBack={onBack} onSave={handleSave} onShare={handleShare} isSaved={isSaved} />
                 ) : (
                     <div className="w-full max-w-md flex flex-col items-center gap-8 p-6 bg-slate-800/50 rounded-2xl shadow-lg border border-slate-700">
                         <div className="w-full flex flex-col gap-4">
@@ -725,6 +956,7 @@ const YukhyoAnalyzerPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
     const [ganjiDate, setGanjiDate] = useState<string>('');
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
+    const [isSaved, setIsSaved] = useState(false);
 
     const yukhyoMessages = [
         "오늘의 천기를 살피고 있습니다...",
@@ -743,6 +975,7 @@ const YukhyoAnalyzerPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
         setIsLoading(true);
         setError(null);
         setAnalysisResult(null);
+        setIsSaved(false);
         
         const reading = generateIChingReading();
         const date = getGanjiDate();
@@ -759,6 +992,35 @@ const YukhyoAnalyzerPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
             setIsLoading(false);
         }
     }, [question]);
+
+    const handleSave = useCallback(() => {
+        if (!analysisResult) return;
+        const savedItem: SavedResult = {
+            id: new Date().toISOString(),
+            type: 'yukhyo-analyzer',
+            typeName: 'AI 육효 분석가',
+            date: new Date().toISOString(),
+            result: analysisResult,
+            context: { question }
+        };
+        saveResult(savedItem);
+        setIsSaved(true);
+        setTimeout(() => setIsSaved(false), 2000);
+    }, [analysisResult, question]);
+    
+    const handleShare = useCallback(() => {
+        if (!analysisResult) return;
+        const shareData = {
+            title: 'AI 육효 분석가 결과',
+            text: `질문: "${question}"\n괘: ${analysisResult.hexagram_name}\n\n[종합 해설]\n${analysisResult.overall_interpretation}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`,
+            url: window.location.href,
+        };
+        if (navigator.share) {
+            navigator.share(shareData).catch(console.error);
+        } else {
+            alert('이 브라우저에서는 공유 기능을 지원하지 않습니다.');
+        }
+    }, [analysisResult, question]);
     
     const handleReset = () => {
         setQuestion('');
@@ -766,6 +1028,7 @@ const YukhyoAnalyzerPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
         setJuyeokReading(null);
         setGanjiDate('');
         setError(null);
+        setIsSaved(false);
     };
 
     return (
@@ -779,7 +1042,7 @@ const YukhyoAnalyzerPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
                 {isLoading ? (
                     <Loader messages={yukhyoMessages} />
                 ) : analysisResult && juyeokReading ? (
-                    <YukhyoResultDisplay result={analysisResult} onReset={handleReset} onBack={onBack} />
+                    <YukhyoResultDisplay result={analysisResult} onReset={handleReset} onBack={onBack} onSave={handleSave} onShare={handleShare} isSaved={isSaved} />
                 ) : (
                     <div className="w-full max-w-md flex flex-col items-center gap-8 p-6 bg-slate-800/50 rounded-2xl shadow-lg border border-slate-700">
                         <div className="w-full flex flex-col gap-4">
@@ -838,11 +1101,14 @@ const App: React.FC = () => {
       case 'saju-analyzer':
         return <SajuAnalyzerPage onBack={() => navigateTo('home')} />;
       case 'tarot-reader':
+        {/* FIX: Changed TarotResultPage to TarotReaderPage to resolve component not found error. */}
         return <TarotReaderPage onBack={() => navigateTo('home')} />;
       case 'juyeok-reader':
         return <JuyeokReaderPage onBack={() => navigateTo('home')} />;
       case 'yukhyo-analyzer':
         return <YukhyoAnalyzerPage onBack={() => navigateTo('home')} />;
+      case 'saved-results':
+        return <SavedResultsPage onBack={() => navigateTo('home')} />;
       case 'home':
       default:
         return <HomePage onNavigate={navigateTo} />;

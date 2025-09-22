@@ -106,3 +106,13 @@ export interface YukhyoResult {
     lines: YukhyoLine[];
     overall_interpretation: string;
 }
+
+// --- Saved Result Type ---
+export interface SavedResult {
+  id: string; // Unique ID for the result, can be a timestamp string
+  type: 'face-reader' | 'palm-reader' | 'impression-analyzer' | 'astrology-reader' | 'saju-analyzer' | 'tarot-reader' | 'juyeok-reader' | 'yukhyo-analyzer';
+  typeName: string; // User-friendly name like "AI 관상가"
+  date: string; // ISO string of the save date
+  result: any; // The result data object
+  context?: { [key: string]: any }; // Extra context, e.g., { question: '...', drawnCards: [...] } for Tarot
+}

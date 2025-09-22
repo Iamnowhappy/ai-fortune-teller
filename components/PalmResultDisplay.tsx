@@ -1,12 +1,16 @@
 import React from 'react';
 import type { PalmistryResult } from '../types';
-import { RefreshIcon, HomeIcon, HeartLineIcon, HeadLineIcon, LifeLineIcon, LineIcon } from './icons';
+import { RefreshIcon, HomeIcon, HeartLineIcon, HeadLineIcon, LifeLineIcon, LineIcon, SaveIcon, ShareIcon, ArrowLeftIcon } from './icons';
 import { AnalysisInfo } from './AnalysisInfo';
 
 interface PalmResultDisplayProps {
   result: PalmistryResult;
   onReset: () => void;
   onBack: () => void;
+  onSave?: () => void;
+  onShare?: () => void;
+  isSaved?: boolean;
+  isSavedView?: boolean;
 }
 
 const lineIcons: { [key: string]: React.ReactNode } = {
@@ -24,7 +28,7 @@ const getLineIcon = (lineName: string) => {
     return <LineIcon className="w-8 h-8 text-cyan-400" />; // Fallback
 }
 
-export const PalmResultDisplay: React.FC<PalmResultDisplayProps> = ({ result, onReset, onBack }) => {
+export const PalmResultDisplay: React.FC<PalmResultDisplayProps> = ({ result, onReset, onBack, onSave, onShare, isSaved, isSavedView }) => {
   return (
     <div className="w-full max-w-3xl animate-fade-in">
       <div className="bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8">
@@ -59,18 +63,38 @@ export const PalmResultDisplay: React.FC<PalmResultDisplayProps> = ({ result, on
       <div className="mt-10 text-center flex flex-wrap justify-center gap-4">
         <button
           onClick={onBack}
-          className="py-3 px-8 bg-slate-600 text-white font-bold text-lg rounded-lg shadow-md transition-all duration-300 hover:bg-slate-500 flex items-center gap-2"
+          className="py-3 px-6 bg-slate-600 text-white font-bold text-lg rounded-lg shadow-md transition-all duration-300 hover:bg-slate-500 flex items-center gap-2"
         >
-          <HomeIcon className="w-5 h-5" />
-          홈으로
+          {isSavedView ? <ArrowLeftIcon className="w-5 h-5" /> : <HomeIcon className="w-5 h-5" />}
+          {isSavedView ? '목록으로' : '홈으로'}
         </button>
-        <button
-          onClick={onReset}
-          className="py-3 px-8 bg-cyan-500 text-slate-900 font-bold text-lg rounded-lg shadow-md transition-all duration-300 hover:bg-cyan-400 hover:shadow-cyan-400/30 flex items-center gap-2"
-        >
-          <RefreshIcon className="w-5 h-5" />
-          다시 분석하기
-        </button>
+        
+        {!isSavedView && (
+          <>
+            <button
+              onClick={onReset}
+              className="py-3 px-6 bg-cyan-500 text-slate-900 font-bold text-lg rounded-lg shadow-md transition-all duration-300 hover:bg-cyan-400 hover:shadow-cyan-400/30 flex items-center gap-2"
+            >
+              <RefreshIcon className="w-5 h-5" />
+              다시 분석
+            </button>
+            <button
+              onClick={onSave}
+              disabled={isSaved}
+              className="py-3 px-6 bg-slate-700 text-white font-bold text-lg rounded-lg shadow-md transition-all duration-300 hover:bg-slate-600 disabled:bg-green-500 disabled:text-slate-900 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              <SaveIcon className="w-5 h-5" />
+              {isSaved ? '저장됨!' : '결과 저장'}
+            </button>
+            <button
+              onClick={onShare}
+              className="py-3 px-6 bg-slate-700 text-white font-bold text-lg rounded-lg shadow-md transition-all duration-300 hover:bg-slate-600 flex items-center gap-2"
+            >
+              <ShareIcon className="w-5 h-5" />
+              공유하기
+            </button>
+          </>
+        )}
       </div>
        <style>{`
         @keyframes fade-in {
