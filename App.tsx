@@ -18,6 +18,7 @@ import { Footer } from './components/Footer';
 import { FaceIcon, PalmIcon, ImpressionIcon, AstrologyIcon, SajuIcon, TarotIcon, JuyeokIcon, YukhyoIcon } from './components/icons';
 import { drawThreeCards } from './utils/tarotUtils';
 import { generateIChingReading, getGanjiDate } from './utils/divinationUtils';
+import { AdSenseUnit } from './components/AdSenseUnit';
 
 type Page = 'home' | 'face-reader' | 'palm-reader' | 'impression-analyzer' | 'astrology-reader' | 'saju-analyzer' | 'tarot-reader' | 'juyeok-reader' | 'yukhyo-analyzer';
 
@@ -146,6 +147,11 @@ const HomePage: React.FC<{ onNavigate: (page: Page) => void; }> = ({ onNavigate 
           <h2 className="text-2xl font-bold text-white">AI 육효 분석가</h2>
           <p className="text-slate-400">질문 시점의 기운으로 구체적인 길흉을 예측합니다.</p>
         </div>
+      </div>
+      
+      {/* AdSense Unit */}
+      <div className="mt-12 w-full max-w-4xl">
+        <AdSenseUnit />
       </div>
     </main>
   );
