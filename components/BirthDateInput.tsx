@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 
 interface BirthDateInputProps {
@@ -80,9 +81,8 @@ export const BirthDateInput: React.FC<BirthDateInputProps> = ({
           <div>
             <label htmlFor="hour" className="block text-sm font-medium text-slate-300 mb-2">
               태어난 시간
-              <span className="text-slate-400 ml-2 relative group inline-block">(선택)
-                {/* [최종 수정] 툴팁이 입력창을 가리지 않도록 위치를 확실하게 고정합니다. */}
-                <span className="absolute top-full mt-2 w-64 p-2 bg-slate-900 text-xs text-slate-300 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 left-1/2 -translate-x-1/2 shadow-lg z-20 pointer-events-none">
+              <span className="text-slate-400 ml-2 relative group">(선택)
+                <span className="absolute bottom-full mb-2 w-64 p-2 bg-slate-900 text-xs text-slate-300 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 left-1/2 -translate-x-1/2 shadow-lg z-10">
                   태어난 시간을 입력하면 '시주(時柱)'를 포함한 더 정확한 사주 분석이 가능합니다. 모르실 경우 '모름'으로 두세요.
                 </span>
               </span>

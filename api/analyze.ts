@@ -1,8 +1,4 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
-// Vercel의 서버리스 함수 환경을 위한 타입을 가져옵니다.
-// 이 타입은 Vercel 배포 환경에서 자동으로 인식됩니다.
-// @ts-ignore
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 // --- 모든 스키마 정의를 서버로 이동 ---

@@ -4,14 +4,9 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  html {
-    @apply dark;
-  }
-  body {
-    font-family: 'Noto Sans KR', sans-serif;
-  }
-  .font-display {
-    font-family: 'Playfair Display', serif;
-  }
+body {
+  font-family: 'Noto Sans KR', sans-serif;
+}
+.font-display {
+  font-family: 'Playfair Display', serif;
 }
