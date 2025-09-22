@@ -1,7 +1,6 @@
 import React from 'react';
 import { AdSenseUnit } from './AdSenseUnit';
 
-// FIX: Define a more specific type for the 'page' parameter to align with the possible page values in App.tsx, improving type safety.
 type Page = 'home' | 'face-reader' | 'palm-reader' | 'impression-analyzer' | 'astrology-reader' | 'saju-analyzer' | 'tarot-reader' | 'juyeok-reader' | 'yukhyo-analyzer' | 'saved-results' | 'about' | 'privacy' | 'terms' | 'guide';
 
 interface FooterProps {

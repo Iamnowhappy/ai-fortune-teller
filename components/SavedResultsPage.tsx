@@ -73,6 +73,7 @@ export const SavedResultsPage: React.FC<{ onBack: () => void; }> = ({ onBack: na
         icon={<BoxIcon className="w-10 h-10 text-cyan-400" />}
         title="나의 운세함"
         description="저장된 분석 결과를 다시 확인하고 관리할 수 있습니다."
+        onBack={navigateToHome}
       />
       <main className="flex-grow flex flex-col items-center text-center py-10 w-full max-w-4xl mx-auto">
         {savedResults.length > 0 ? (
@@ -108,13 +109,6 @@ export const SavedResultsPage: React.FC<{ onBack: () => void; }> = ({ onBack: na
             <p className="text-slate-500 mt-2">분석 결과를 저장하고 나중에 다시 확인해보세요.</p>
           </div>
         )}
-         <button
-          onClick={navigateToHome}
-          className="mt-10 py-3 px-8 bg-slate-600 text-white font-bold text-lg rounded-lg shadow-md transition-all duration-300 hover:bg-slate-500 flex items-center gap-2"
-        >
-          <HomeIcon className="w-5 h-5" />
-          홈으로
-        </button>
       </main>
     </>
   );

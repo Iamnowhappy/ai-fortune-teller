@@ -1,6 +1,3 @@
-
-
-
 import './index.css';
 import React, { useState, useCallback } from 'react';
 import { Header } from './components/Header';
@@ -254,6 +251,7 @@ const FaceReaderPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
                 icon={<FaceIcon className="w-10 h-10 text-cyan-400" />}
                 title="AI 관상가"
                 description="AI가 당신의 얼굴을 분석하여 미래를 읽어드립니다."
+                onBack={onBack}
             />
             <main className="flex-grow flex flex-col items-center justify-center text-center py-10">
                 {isLoading ? (
@@ -368,6 +366,7 @@ const PalmReaderPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
                 icon={<PalmIcon className="w-10 h-10 text-cyan-400" />}
                 title="AI 손금 분석"
                 description="AI가 당신의 손금을 분석하여 운명을 읽어드립니다."
+                onBack={onBack}
             />
             <main className="flex-grow flex flex-col items-center justify-center text-center py-10">
                 {isLoading ? (
@@ -483,6 +482,7 @@ const ImpressionAnalyzerPage: React.FC<{ onBack: () => void; }> = ({ onBack }) =
                 icon={<ImpressionIcon className="w-10 h-10 text-cyan-400" />}
                 title="AI 첫인상 분석"
                 description="AI가 사진을 통해 당신의 첫인상을 분석해 드립니다."
+                onBack={onBack}
             />
             <main className="flex-grow flex flex-col items-center justify-center text-center py-10">
                 {isLoading ? (
@@ -582,6 +582,7 @@ const AstrologyReaderPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
                 icon={<AstrologyIcon className="w-10 h-10 text-cyan-400" />}
                 title="AI 별자리 운세"
                 description="생년월일을 입력하면 AI가 당신의 별자리 운세를 알려드립니다."
+                onBack={onBack}
             />
             <main className="flex-grow flex flex-col items-center justify-center text-center py-10">
                 {isLoading ? (
@@ -677,6 +678,7 @@ const SajuAnalyzerPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
                 icon={<SajuIcon className="w-10 h-10 text-cyan-400" />}
                 title="AI 사주 분석"
                 description="생년월일시를 입력하면 AI가 당신의 사주를 분석해 드립니다."
+                onBack={onBack}
             />
             <main className="flex-grow flex flex-col items-center justify-center text-center py-10">
                 {isLoading ? (
@@ -787,6 +789,7 @@ const TarotReaderPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
                 icon={<TarotIcon className="w-10 h-10 text-cyan-400" />}
                 title="AI 타로 마스터"
                 description="마음속 질문을 입력하면, AI가 타로 카드로 답을 드립니다."
+                onBack={onBack}
             />
             <main className="flex-grow flex flex-col items-center justify-center text-center py-10">
                 {isLoading ? (
@@ -913,6 +916,7 @@ const JuyeokReaderPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
                 icon={<JuyeokIcon className="w-10 h-10 text-cyan-400" />}
                 title="AI 주역 전문가"
                 description="마음속 질문을 입력하면, AI가 주역 괘로 답을 드립니다."
+                onBack={onBack}
             />
             <main className="flex-grow flex flex-col items-center justify-center text-center py-10">
                 {isLoading ? (
@@ -1043,6 +1047,7 @@ const YukhyoAnalyzerPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
                 icon={<YukhyoIcon className="w-10 h-10 text-cyan-400" />}
                 title="AI 육효 분석가"
                 description="질문 시점의 기운으로 구체적인 길흉을 예측합니다."
+                onBack={onBack}
             />
             <main className="flex-grow flex flex-col items-center justify-center text-center py-10">
                 {isLoading ? (
