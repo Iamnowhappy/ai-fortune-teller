@@ -5,7 +5,7 @@ import { AnalysisInfo } from './AnalysisInfo';
 import { ShareButtons } from './ShareButtons';
 import { PremiumPlaceholder } from './PremiumPlaceholder';
 import { TypingResult } from './TypingResult';
-
+import { motion } from 'framer-motion';
 
 interface ResultDisplayProps {
   result: PhysiognomyResult;
@@ -34,19 +34,27 @@ const getFeatureIcon = (featureName: string) => {
     return null;
 }
 
+const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
+const itemVariants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } } };
+
 export const ResultDisplay: React.FC<ResultDisplayProps> = ({ result, onReset, onBack, onSave, isSaved, isSavedView }) => {
   const shareText = `AI 관상가로 분석한 저의 관상 결과입니다:\n\n[총평]\n${result.overall_impression}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
 
   return (
-    <div className="w-full max-w-3xl animate-fade-in">
-      <div className="bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8">
+    <motion.div 
+      className="w-full max-w-3xl"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      <motion.div variants={itemVariants} className="bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8">
         <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display">관상 분석 총평</h2>
         <TypingResult text={result.overall_impression} className="text-slate-300 leading-relaxed whitespace-pre-wrap" />
-      </div>
+      </motion.div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
         {result.features.map((feature, index) => (
-          <div key={index} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 flex flex-col gap-4 transition-transform duration-300 hover:scale-105 hover:border-cyan-500">
+          <motion.div variants={itemVariants} key={index} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 flex flex-col gap-4 transition-transform duration-300 hover:scale-105 hover:border-cyan-500">
             <div className="flex items-center gap-4">
               {getFeatureIcon(feature.feature)}
               <div>
@@ -55,18 +63,15 @@ export const ResultDisplay: React.FC<ResultDisplayProps> = ({ result, onReset, o
               </div>
             </div>
             <p className="text-slate-400 leading-relaxed text-left text-base">{feature.analysis}</p>
-          </div>
+          </motion.div>
         ))}
       </div>
 
-      {!isSavedView && <PremiumPlaceholder />}
+      {!isSavedView && <motion.div variants={itemVariants}><PremiumPlaceholder /></motion.div>}
+      <motion.div variants={itemVariants}><AnalysisInfo /></motion.div>
+      {!isSavedView && <motion.div variants={itemVariants}><ShareButtons shareText={shareText} /></motion.div>}
 
-      <AnalysisInfo />
-
-      {!isSavedView && <ShareButtons shareText={shareText} />}
-
-
-      <div className="mt-10 text-center flex flex-wrap justify-center gap-4">
+      <motion.div variants={itemVariants} className="mt-10 text-center flex flex-wrap justify-center gap-4">
         <button
           onClick={onBack}
           className="py-3 px-6 bg-slate-600 text-white font-bold text-lg rounded-lg shadow-md transition-all duration-300 hover:bg-slate-500 flex items-center gap-2"
@@ -94,16 +99,7 @@ export const ResultDisplay: React.FC<ResultDisplayProps> = ({ result, onReset, o
             </button>
           </>
         )}
-      </div>
-       <style>{`
-        @keyframes fade-in {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fade-in {
-          animation: fade-in 0.7s ease-out forwards;
-        }
-      `}</style>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 };

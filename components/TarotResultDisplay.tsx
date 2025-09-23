@@ -5,6 +5,8 @@ import { AnalysisInfo } from './AnalysisInfo';
 import { getCardVisualComponent } from '../utils/tarotUtils';
 import { ShareButtons } from './ShareButtons';
 import { PremiumPlaceholder } from './PremiumPlaceholder';
+import { TypingResult } from './TypingResult';
+import { motion } from 'framer-motion';
 
 interface TarotResultDisplayProps {
   result: TarotResult;
@@ -80,6 +82,9 @@ const getSpreadLabels = (count: number): string[] => {
     }
 };
 
+const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
+const itemVariants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } } };
+
 
 export const TarotResultDisplay: React.FC<TarotResultDisplayProps> = ({ result, drawnCards, onReset, onBack, onSave, isSaved, isSavedView, question }) => {
   const cardNames = drawnCards.map(c => `${c.name}(${c.orientation})`).join(', ');
@@ -87,26 +92,31 @@ export const TarotResultDisplay: React.FC<TarotResultDisplayProps> = ({ result, 
   const spreadLabels = getSpreadLabels(drawnCards.length);
   
   return (
-    <div className="w-full max-w-4xl animate-fade-in">
-      <div className="flex flex-row flex-wrap justify-center items-start gap-x-6 sm:gap-x-8 gap-y-4 mb-8">
+    <motion.div 
+      className="w-full max-w-4xl"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      <motion.div variants={itemVariants} className="flex flex-row flex-wrap justify-center items-start gap-x-6 sm:gap-x-8 gap-y-4 mb-8">
         {drawnCards.map((card, index) => (
             <div key={index} className="flex flex-col items-center">
                 {spreadLabels[index] && <h4 className="text-base font-bold text-slate-300 mb-2">{spreadLabels[index]}</h4>}
                 <Card card={card} index={index} />
             </div>
         ))}
-      </div>
+      </motion.div>
       
-      <div className="bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8">
+      <motion.div variants={itemVariants} className="bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8">
         <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display">종합 리딩</h2>
-        <p className="text-slate-300 leading-relaxed whitespace-pre-wrap">{result.overall_reading}</p>
-      </div>
+        <TypingResult text={result.overall_reading} className="text-slate-300 leading-relaxed whitespace-pre-wrap" />
+      </motion.div>
 
       <div className="space-y-6 mt-8">
         {result.cards.map((interp, index) => {
           const correspondingCard = drawnCards[index];
           return (
-            <div key={index} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 sm:p-8 flex flex-col gap-4">
+            <motion.div variants={itemVariants} key={index} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 sm:p-8 flex flex-col gap-4">
               {correspondingCard?.imageData && correspondingCard?.mimeType && (
                 <div className="w-full max-w-sm mx-auto rounded-lg overflow-hidden relative shadow-lg my-2">
                   <img 
@@ -123,20 +133,18 @@ export const TarotResultDisplay: React.FC<TarotResultDisplayProps> = ({ result, 
                   ({interp.orientation})
                 </p>
               </div>
-              <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{interp.meaning}</p>
-            </div>
+              <TypingResult text={interp.meaning} className="text-slate-400 leading-relaxed whitespace-pre-wrap" />
+            </motion.div>
           );
         })}
       </div>
       
-      {!isSavedView && <PremiumPlaceholder />}
-
-      <AnalysisInfo />
-
-      {!isSavedView && <ShareButtons shareText={shareText} />}
+      {!isSavedView && <motion.div variants={itemVariants}><PremiumPlaceholder /></motion.div>}
+      <motion.div variants={itemVariants}><AnalysisInfo /></motion.div>
+      {!isSavedView && <motion.div variants={itemVariants}><ShareButtons shareText={shareText} /></motion.div>}
 
 
-      <div className="mt-10 text-center flex flex-wrap justify-center gap-4">
+      <motion.div variants={itemVariants} className="mt-10 text-center flex flex-wrap justify-center gap-4">
         <button
           onClick={onBack}
           className="py-3 px-6 bg-slate-600 text-white font-bold text-lg rounded-lg shadow-md transition-all duration-300 hover:bg-slate-500 flex items-center gap-2"
@@ -164,16 +172,7 @@ export const TarotResultDisplay: React.FC<TarotResultDisplayProps> = ({ result, 
             </button>
           </>
         )}
-      </div>
-       <style>{`
-        @keyframes fade-in {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fade-in {
-          animation: fade-in 0.7s ease-out forwards;
-        }
-      `}</style>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 };

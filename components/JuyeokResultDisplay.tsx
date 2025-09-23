@@ -5,6 +5,7 @@ import { AnalysisInfo } from './AnalysisInfo';
 import { ShareButtons } from './ShareButtons';
 import { PremiumPlaceholder } from './PremiumPlaceholder';
 import { TypingResult } from './TypingResult';
+import { motion } from 'framer-motion';
 
 interface JuyeokResultDisplayProps {
   result: JuyeokResult;
@@ -40,12 +41,21 @@ const HexagramVisual: React.FC<{ lines: LineType[], changingLines?: number[] }> 
     </div>
 );
 
+const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
+const itemVariants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } } };
+
+
 export const JuyeokResultDisplay: React.FC<JuyeokResultDisplayProps> = ({ result, reading, onReset, onBack, onSave, isSaved, isSavedView, question }) => {
   const shareText = `질문: "${question || '나의 운세'}"\n본괘: ${result.present_hexagram_name}\n\n[종합 해설]\n${result.interpretation}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
   
   return (
-    <div className="w-full max-w-4xl animate-fade-in">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8 mb-8">
+    <motion.div 
+      className="w-full max-w-4xl"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
+        <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8 mb-8">
             <div className="flex flex-col items-center gap-2">
                 <h3 className="text-lg font-bold text-slate-300">현재 (本卦)</h3>
                 <HexagramVisual lines={reading.presentHexagram.lines} changingLines={reading.changingLines} />
@@ -71,28 +81,26 @@ export const JuyeokResultDisplay: React.FC<JuyeokResultDisplayProps> = ({ result
                     </div>
                 )}
             </div>
-        </div>
+        </motion.div>
 
-      <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 sm:p-8">
+      <motion.div variants={itemVariants} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 sm:p-8">
         <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display">종합 해설</h2>
         <TypingResult text={result.interpretation} className="text-slate-300 leading-relaxed whitespace-pre-wrap" />
-      </div>
+      </motion.div>
 
       {result.changing_lines_interpretation && (
-        <div className="mt-8 bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+        <motion.div variants={itemVariants} className="mt-8 bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
             <h3 className="text-xl font-bold text-white mb-3 font-display">변화의 핵심 (變爻)</h3>
             <TypingResult text={result.changing_lines_interpretation} className="text-slate-400 leading-relaxed whitespace-pre-wrap" />
-        </div>
+        </motion.div>
       )}
       
-      {!isSavedView && <PremiumPlaceholder />}
-
-      <AnalysisInfo />
-
-      {!isSavedView && <ShareButtons shareText={shareText} />}
+      {!isSavedView && <motion.div variants={itemVariants}><PremiumPlaceholder /></motion.div>}
+      <motion.div variants={itemVariants}><AnalysisInfo /></motion.div>
+      {!isSavedView && <motion.div variants={itemVariants}><ShareButtons shareText={shareText} /></motion.div>}
 
 
-      <div className="mt-10 text-center flex flex-wrap justify-center gap-4">
+      <motion.div variants={itemVariants} className="mt-10 text-center flex flex-wrap justify-center gap-4">
         <button
           onClick={onBack}
           className="py-3 px-6 bg-slate-600 text-white font-bold text-lg rounded-lg shadow-md transition-all duration-300 hover:bg-slate-500 flex items-center gap-2"
@@ -120,16 +128,7 @@ export const JuyeokResultDisplay: React.FC<JuyeokResultDisplayProps> = ({ result
             </button>
           </>
         )}
-      </div>
-       <style>{`
-        @keyframes fade-in {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fade-in {
-          animation: fade-in 0.7s ease-out forwards;
-        }
-      `}</style>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 };
