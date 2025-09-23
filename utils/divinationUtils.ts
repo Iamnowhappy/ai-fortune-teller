@@ -152,3 +152,25 @@ export const getGanjiDate = (): string => {
 
     return `${yearGanji} ${month}월 ${dayGanji}`;
 };
+
+
+export const getDailyFortune = (): string => {
+    const fortunes = [
+        "뜻밖의 행운이 찾아옵니다 ✨",
+        "작은 실수에 주의하세요 ⚠️",
+        "소중한 인연이 다가옵니다 💕",
+        "재물운이 강하게 들어옵니다 💰",
+        "새로운 기회를 잡게 될 거예요 🚀",
+        "오늘은 잠시 쉬어가는 것이 좋겠어요 😌",
+        "오래된 친구에게서 좋은 소식이 들려옵니다 💌",
+        "당신의 노력이 드디어 빛을 발하는 날입니다 🌟",
+        "작은 지출이 큰 기쁨으로 돌아옵니다 🎁",
+        "긍정적인 생각이 좋은 결과를 가져옵니다 😊",
+    ];
+
+    const today = new Date();
+    const dayOfYear = Math.floor((today.getTime() - new Date(today.getFullYear(), 0, 0).getTime()) / (1000 * 60 * 60 * 24));
+    const index = (dayOfYear + today.getFullYear()) % fortunes.length;
+
+    return fortunes[index];
+};
