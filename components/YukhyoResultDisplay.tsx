@@ -5,7 +5,6 @@ import { AnalysisInfo } from './AnalysisInfo';
 import { ShareButtons } from './ShareButtons';
 import { PremiumPlaceholder } from './PremiumPlaceholder';
 import { TypingResult } from './TypingResult';
-// FIX: Import Variants type from framer-motion to resolve typing errors.
 import { motion, Variants } from 'framer-motion';
 
 interface YukhyoResultDisplayProps {
@@ -18,7 +17,6 @@ interface YukhyoResultDisplayProps {
   question?: string;
 }
 
-// FIX: Explicitly type animation variants to satisfy framer-motion's stricter type requirements.
 const containerVariants: Variants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
 const itemVariants: Variants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } } };
 
