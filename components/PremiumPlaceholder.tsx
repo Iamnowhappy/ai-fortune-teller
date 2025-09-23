@@ -1,5 +1,4 @@
 import React from 'react';
-import { LockClosedIcon } from '@heroicons/react/24/solid'; // Assuming heroicons are available or add a custom lock icon
 
 // A simple lock icon if heroicons are not setup
 const LockIcon: React.FC<{ className?: string }> = ({ className }) => (
