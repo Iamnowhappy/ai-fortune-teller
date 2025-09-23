@@ -5,7 +5,8 @@ import { AnalysisInfo } from './AnalysisInfo';
 import { ShareButtons } from './ShareButtons';
 import { PremiumPlaceholder } from './PremiumPlaceholder';
 import { TypingResult } from './TypingResult';
-import { motion } from 'framer-motion';
+// FIX: Import Variants type from framer-motion to resolve typing errors.
+import { motion, Variants } from 'framer-motion';
 
 interface ImpressionResultDisplayProps {
   result: ImpressionAnalysisResult;
@@ -16,8 +17,9 @@ interface ImpressionResultDisplayProps {
   isSavedView?: boolean;
 }
 
-const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
-const itemVariants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } } };
+// FIX: Explicitly type animation variants to satisfy framer-motion's stricter type requirements.
+const containerVariants: Variants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
+const itemVariants: Variants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } } };
 
 
 export const ImpressionResultDisplay: React.FC<ImpressionResultDisplayProps> = ({ result, onReset, onBack, onSave, isSaved, isSavedView }) => {

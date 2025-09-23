@@ -5,7 +5,8 @@ import { AnalysisInfo } from './AnalysisInfo';
 import { ShareButtons } from './ShareButtons';
 import { PremiumPlaceholder } from './PremiumPlaceholder';
 import { TypingResult } from './TypingResult';
-import { motion } from 'framer-motion';
+// FIX: Import Variants type from framer-motion to resolve typing errors.
+import { motion, Variants } from 'framer-motion';
 
 interface ResultDisplayProps {
   result: PhysiognomyResult;
@@ -34,8 +35,9 @@ const getFeatureIcon = (featureName: string) => {
     return null;
 }
 
-const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
-const itemVariants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } } };
+// FIX: Explicitly type animation variants to satisfy framer-motion's stricter type requirements.
+const containerVariants: Variants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
+const itemVariants: Variants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } } };
 
 export const ResultDisplay: React.FC<ResultDisplayProps> = ({ result, onReset, onBack, onSave, isSaved, isSavedView }) => {
   const shareText = `AI 관상가로 분석한 저의 관상 결과입니다:\n\n[총평]\n${result.overall_impression}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
