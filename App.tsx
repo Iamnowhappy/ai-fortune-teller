@@ -1,5 +1,6 @@
 import './index.css';
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import { motion } from 'framer-motion';
 import { Header } from './components/Header';
 import { ImageUploader } from './components/ImageUploader';
 import { BirthDateInput } from './components/BirthDateInput';
@@ -21,7 +22,7 @@ import { Loader } from './components/Loader';
 import { analyzeFace, analyzePalm, analyzeImpression, analyzeAstrology, analyzeSaju, analyzeTarotReading, analyzeJuyeok, analyzeYukhyo, generateFortuneImage } from './services/geminiService';
 import type { PhysiognomyResult, PalmistryResult, ImpressionAnalysisResult, AstrologyResult, SajuResult, TarotResult, JuyeokResult, YukhyoResult, CardDraw, JuyeokReading, SavedResult } from './types';
 import { Footer } from './components/Footer';
-import { FaceIcon, PalmIcon, ImpressionIcon, AstrologyIcon, SajuIcon, TarotIcon, JuyeokIcon, YukhyoIcon, BoxIcon, TheSunIcon } from './components/icons';
+import { FaceIcon, PalmIcon, ImpressionIcon, AstrologyIcon, SajuIcon, TarotIcon, JuyeokIcon, YukhyoIcon, BoxIcon, TheSunIcon, StarIcon } from './components/icons';
 import { generateIChingReading, getGanjiDate, getDailyFortune } from './utils/divinationUtils';
 import { saveResult } from './utils/storage';
 import { TarotReaderPage } from './components/TarotReaderPage';
@@ -33,6 +34,18 @@ type Page = 'home' | 'face-reader' | 'palm-reader' | 'impression-analyzer' | 'as
 const HomePage: React.FC<{ onNavigate: (page: Page) => void; }> = ({ onNavigate }) => {
   const dailyFortune = getDailyFortune();
   const [fortuneImage, setFortuneImage] = useState<{ loading: boolean; url: string | null; error: boolean; }>({ loading: true, url: null, error: false });
+
+  const stars = useMemo(() => {
+    return Array.from({ length: 20 }).map((_, i) => ({
+      id: i,
+      top: `${Math.random() * 100}%`,
+      left: `${Math.random() * 100}%`,
+      delay: Math.random() * 4,
+      duration: Math.random() * 2 + 2,
+      scale: Math.random() * 0.8 + 0.5,
+    }));
+  }, []);
+
 
   useEffect(() => {
     const fetchFortuneImage = async () => {
@@ -126,6 +139,30 @@ const HomePage: React.FC<{ onNavigate: (page: Page) => void; }> = ({ onNavigate 
             // Fallback background
             <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-slate-800/50"></div>
           )}
+          
+          {/* Twinkling Stars Background */}
+          <div className="absolute inset-0 pointer-events-none z-0">
+            {stars.map((star) => (
+              <motion.div
+                key={star.id}
+                className="absolute text-yellow-400/80"
+                initial={{ opacity: 0, scale: star.scale }}
+                animate={{ opacity: [0, 1, 0] }}
+                transition={{
+                  duration: star.duration,
+                  repeat: Infinity,
+                  delay: star.delay,
+                  ease: "easeInOut",
+                }}
+                style={{
+                  top: star.top,
+                  left: star.left,
+                }}
+              >
+                <StarIcon className="w-2 h-2" />
+              </motion.div>
+            ))}
+          </div>
           
           <div className="relative z-10 flex flex-col items-center gap-3">
               <h2 className="text-2xl font-bold text-white flex items-center gap-3 text-shadow">
