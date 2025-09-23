@@ -1,4 +1,5 @@
 
+
 export interface FeatureAnalysis {
   feature: string;
   shape: string;
@@ -57,6 +58,8 @@ export type CardOrientation = '정방향' | '역방향';
 export interface CardDraw {
   name: string;
   orientation: CardOrientation;
+  imageData?: string; // Base64 encoded string, without data URI prefix
+  mimeType?: string;
 }
 
 export interface CardInterpretation {
@@ -69,6 +72,17 @@ export interface TarotResult {
   overall_reading: string;
   cards: CardInterpretation[];
 }
+
+// --- Daily Tarot Types ---
+export interface DailyTarotResult {
+    interpretation: string;
+}
+
+// --- Daily Fortune Image ---
+export interface FortuneImageResult {
+    imageBase64: string;
+}
+
 
 // --- Juyeok (I-Ching) Types ---
 export type LineType = 'yin' | 'yang';

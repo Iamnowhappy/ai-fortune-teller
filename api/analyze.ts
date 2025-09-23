@@ -139,11 +139,11 @@ const tarotAnalysisSchema = {
     properties: {
         overall_reading: {
             type: Type.STRING,
-            description: "뽑힌 카드 3장을 종합적으로 해석하여 사용자의 질문에 대한 총체적인 답변과 조언을 제공합니다."
+            description: "뽑힌 카드들을 종합적으로 해석하여 사용자의 질문에 대한 총체적인 답변과 조언을 제공합니다."
         },
         cards: {
             type: Type.ARRAY,
-            description: "뽑힌 3장의 카드 각각에 대한 개별 해석입니다.",
+            description: "뽑힌 카드 각각에 대한 개별 해석입니다.",
             items: {
                 type: Type.OBJECT,
                 properties: {
@@ -156,6 +156,17 @@ const tarotAnalysisSchema = {
         }
     },
     required: ["overall_reading", "cards"]
+};
+
+const dailyTarotAnalysisSchema = {
+    type: Type.OBJECT,
+    properties: {
+        interpretation: {
+            type: Type.STRING,
+            description: "오늘 하루를 위한 짧고 긍정적인 조언을 한 문장으로 제공합니다."
+        }
+    },
+    required: ["interpretation"]
 };
 
 const juyeokAnalysisSchema = {
@@ -208,6 +219,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(500).json({ error: 'Server configuration error.' });
         }
         const ai = new GoogleGenAI({ apiKey });
+
+        if (type === 'daily-fortune-image') {
+            const prompt = `A beautiful, symbolic, artistic illustration representing the fortune: '${payload.fortuneText}'. The style should be vibrant, hopeful, and slightly abstract. Avoid text in the image. Aspect ratio 16:9.`;
+
+            const imageResponse = await ai.models.generateImages({
+                model: 'imagen-4.0-generate-001',
+                prompt: prompt,
+                config: {
+                    numberOfImages: 1,
+                    outputMimeType: 'image/jpeg',
+                    aspectRatio: '16:9',
+                },
+            });
+
+            if (imageResponse.generatedImages && imageResponse.generatedImages.length > 0) {
+                const imageBase64 = imageResponse.generatedImages[0].image.imageBytes;
+                return res.status(200).json({ imageBase64 });
+            } else {
+                throw new Error("Image generation failed, no images returned.");
+            }
+        }
         
         let prompt: any;
         let schema: any;
@@ -254,10 +286,46 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 schema = sajuAnalysisSchema;
                 contents = prompt;
                 break;
-            case 'tarot':
-                const cardInfo = payload.cards.map((c: any) => `${c.name} (${c.orientation})`).join(', ');
-                prompt = `당신은 영적인 통찰력이 뛰어난 타로 마스터입니다. 사용자의 질문과 당신이 뽑은 세 장의 타로 카드를 기반으로 심도 있는 해석을 제공해주세요. 사용자의 질문: "${payload.question}" 뽑힌 카드: ${cardInfo} 각 카드의 의미를 개별적으로 설명한 후, 세 카드의 조합이 사용자의 질문에 대해 어떤 총체적인 메시지를 전달하는지 종합적으로 해석해주세요. 해석은 사용자가 자신의 상황을 긍정적으로 이해하고 나아갈 방향을 찾는 데 도움이 되도록, 따뜻하고 희망적인 조언을 담아야 합니다. 결과는 반드시 JSON 형식으로 반환해야 합니다.`;
+            case 'tarot': {
+                const cardCount = payload.cards.length;
+                let spreadInstruction = '';
+                switch (cardCount) {
+                    case 1:
+                        spreadInstruction = "This single card represents the core energy or answer to the question. Provide a concise but deep interpretation.";
+                        break;
+                    case 3:
+                        spreadInstruction = "Interpret these three cards as representing the Past, the Present, and the Future in relation to the user's question. The overall reading should synthesize this flow of time.";
+                        break;
+                    case 5:
+                        spreadInstruction = "Interpret these five cards using a simple cross spread where each position has a specific meaning: 1. The Heart of the Matter (current situation). 2. The Crossing Factor (challenge or opposing force). 3. The Foundation (past influences). 4. The Near Future (what is emerging). 5. The Potential Outcome. The overall reading should weave these positions into a coherent narrative.";
+                        break;
+                }
+
+                const introPrompt = `You are a wise and insightful Tarot Master. Your task is to provide a deep and meaningful reading based on the user's question, the cards drawn, and any symbolic images the user has provided.
+${spreadInstruction}
+When an image is provided with a card, integrate its symbolism with the card's traditional meaning for a more personal interpretation. In the final JSON, ensure the 'meaning' for each card also reflects its positional significance in the spread. If no image is provided, rely on the card's meaning alone.
+User's Question: "${payload.question}"
+
+Now, analyze the following cards:`;
+                
+                const contentParts: any[] = [{ text: introPrompt }];
+
+                payload.cards.forEach((card: any) => {
+                    contentParts.push({ text: `\n--- \nCard: ${card.name} (${card.orientation})` });
+                    if (card.imageData && card.mimeType) {
+                        contentParts.push({ inlineData: { mimeType: card.mimeType, data: card.imageData } });
+                    }
+                });
+
+                contentParts.push({ text: "\n---\nBased on all the information above, provide the final answer in JSON format. The result must include an 'overall_reading' and a 'cards' array (containing the name, orientation, and detailed positional meaning for each card)." });
+
                 schema = tarotAnalysisSchema;
+                contents = { parts: contentParts };
+                break;
+            }
+            case 'daily-tarot':
+                prompt = `당신은 희망을 주는 타로 마스터입니다. 오늘 사용자가 뽑은 카드는 '${payload.card.name}' (${payload.card.orientation}) 입니다. 이 카드를 바탕으로 오늘 하루를 위한 짧고 긍정적인 조언을 딱 한 문장으로 만들어주세요. 결과는 반드시 JSON 형식으로 반환해야 합니다.`;
+                schema = dailyTarotAnalysisSchema;
                 contents = prompt;
                 break;
             case 'juyeok':

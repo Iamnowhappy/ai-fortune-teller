@@ -1,19 +1,23 @@
 import React from 'react';
 import type { YukhyoResult } from '../types';
-import { RefreshIcon, HomeIcon, SaveIcon, ShareIcon, ArrowLeftIcon } from './icons';
+import { RefreshIcon, HomeIcon, SaveIcon, ArrowLeftIcon } from './icons';
 import { AnalysisInfo } from './AnalysisInfo';
+import { ShareButtons } from './ShareButtons';
+import { PremiumPlaceholder } from './PremiumPlaceholder';
 
 interface YukhyoResultDisplayProps {
   result: YukhyoResult;
   onReset: () => void;
   onBack: () => void;
   onSave?: () => void;
-  onShare?: () => void;
   isSaved?: boolean;
   isSavedView?: boolean;
+  question?: string;
 }
 
-export const YukhyoResultDisplay: React.FC<YukhyoResultDisplayProps> = ({ result, onReset, onBack, onSave, onShare, isSaved, isSavedView }) => {
+export const YukhyoResultDisplay: React.FC<YukhyoResultDisplayProps> = ({ result, onReset, onBack, onSave, isSaved, isSavedView, question }) => {
+  const shareText = `질문: "${question || '나의 운세'}"\n괘: ${result.hexagram_name}\n\n[종합 해설]\n${result.overall_interpretation}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
+  
   return (
     <div className="w-full max-w-4xl animate-fade-in">
       <div className="bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8">
@@ -59,7 +63,12 @@ export const YukhyoResultDisplay: React.FC<YukhyoResultDisplayProps> = ({ result
         </div>
       </div>
       
+      {!isSavedView && <PremiumPlaceholder />}
+
       <AnalysisInfo />
+
+      {!isSavedView && <ShareButtons shareText={shareText} />}
+
 
       <div className="mt-10 text-center flex flex-wrap justify-center gap-4">
         <button
@@ -86,13 +95,6 @@ export const YukhyoResultDisplay: React.FC<YukhyoResultDisplayProps> = ({ result
             >
               <SaveIcon className="w-5 h-5" />
               {isSaved ? '저장됨!' : '결과 저장'}
-            </button>
-            <button
-              onClick={onShare}
-              className="py-3 px-6 bg-slate-700 text-white font-bold text-lg rounded-lg shadow-md transition-all duration-300 hover:bg-slate-600 flex items-center gap-2"
-            >
-              <ShareIcon className="w-5 h-5" />
-              공유하기
             </button>
           </>
         )}

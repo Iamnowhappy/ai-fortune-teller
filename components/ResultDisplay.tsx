@@ -1,14 +1,16 @@
 import React from 'react';
 import type { PhysiognomyResult } from '../types';
-import { EyeIcon, NoseIcon, MouthIcon, ForeheadIcon, ChinIcon, EarIcon, RefreshIcon, HomeIcon, SaveIcon, ShareIcon, ArrowLeftIcon } from './icons';
+import { EyeIcon, NoseIcon, MouthIcon, ForeheadIcon, ChinIcon, EarIcon, RefreshIcon, HomeIcon, SaveIcon, ArrowLeftIcon } from './icons';
 import { AnalysisInfo } from './AnalysisInfo';
+import { ShareButtons } from './ShareButtons';
+import { PremiumPlaceholder } from './PremiumPlaceholder';
+
 
 interface ResultDisplayProps {
   result: PhysiognomyResult;
   onReset: () => void;
   onBack: () => void;
   onSave?: () => void;
-  onShare?: () => void;
   isSaved?: boolean;
   isSavedView?: boolean;
 }
@@ -31,7 +33,9 @@ const getFeatureIcon = (featureName: string) => {
     return null;
 }
 
-export const ResultDisplay: React.FC<ResultDisplayProps> = ({ result, onReset, onBack, onSave, onShare, isSaved, isSavedView }) => {
+export const ResultDisplay: React.FC<ResultDisplayProps> = ({ result, onReset, onBack, onSave, isSaved, isSavedView }) => {
+  const shareText = `AI 관상가로 분석한 저의 관상 결과입니다:\n\n[총평]\n${result.overall_impression}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
+
   return (
     <div className="w-full max-w-3xl animate-fade-in">
       <div className="bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8">
@@ -54,7 +58,12 @@ export const ResultDisplay: React.FC<ResultDisplayProps> = ({ result, onReset, o
         ))}
       </div>
 
+      {!isSavedView && <PremiumPlaceholder />}
+
       <AnalysisInfo />
+
+      {!isSavedView && <ShareButtons shareText={shareText} />}
+
 
       <div className="mt-10 text-center flex flex-wrap justify-center gap-4">
         <button
@@ -81,13 +90,6 @@ export const ResultDisplay: React.FC<ResultDisplayProps> = ({ result, onReset, o
             >
               <SaveIcon className="w-5 h-5" />
               {isSaved ? '저장됨!' : '결과 저장'}
-            </button>
-            <button
-              onClick={onShare}
-              className="py-3 px-6 bg-slate-700 text-white font-bold text-lg rounded-lg shadow-md transition-all duration-300 hover:bg-slate-600 flex items-center gap-2"
-            >
-              <ShareIcon className="w-5 h-5" />
-              공유하기
             </button>
           </>
         )}

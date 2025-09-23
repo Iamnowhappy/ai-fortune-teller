@@ -1,19 +1,22 @@
 import React from 'react';
 import type { SajuResult } from '../types';
-import { RefreshIcon, HomeIcon, SaveIcon, ShareIcon, ArrowLeftIcon } from './icons';
+import { RefreshIcon, HomeIcon, SaveIcon, ArrowLeftIcon } from './icons';
 import { AnalysisInfo } from './AnalysisInfo';
+import { ShareButtons } from './ShareButtons';
+import { PremiumPlaceholder } from './PremiumPlaceholder';
 
 interface SajuResultDisplayProps {
   result: SajuResult;
   onReset: () => void;
   onBack: () => void;
   onSave?: () => void;
-  onShare?: () => void;
   isSaved?: boolean;
   isSavedView?: boolean;
 }
 
-export const SajuResultDisplay: React.FC<SajuResultDisplayProps> = ({ result, onReset, onBack, onSave, onShare, isSaved, isSavedView }) => {
+export const SajuResultDisplay: React.FC<SajuResultDisplayProps> = ({ result, onReset, onBack, onSave, isSaved, isSavedView }) => {
+  const shareText = `AI 사주 분석 결과, 저의 일간은 ${result.day_master} 입니다.\n\n[종합 분석]\n${result.overall_analysis}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
+  
   return (
     <div className="w-full max-w-3xl animate-fade-in">
       <div className="bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8">
@@ -48,7 +51,11 @@ export const SajuResultDisplay: React.FC<SajuResultDisplayProps> = ({ result, on
         </div>
       </div>
       
+      {!isSavedView && <PremiumPlaceholder />}
+      
       <AnalysisInfo />
+
+      {!isSavedView && <ShareButtons shareText={shareText} />}
 
       <div className="mt-10 text-center flex flex-wrap justify-center gap-4">
         <button
@@ -75,13 +82,6 @@ export const SajuResultDisplay: React.FC<SajuResultDisplayProps> = ({ result, on
             >
               <SaveIcon className="w-5 h-5" />
               {isSaved ? '저장됨!' : '결과 저장'}
-            </button>
-            <button
-              onClick={onShare}
-              className="py-3 px-6 bg-slate-700 text-white font-bold text-lg rounded-lg shadow-md transition-all duration-300 hover:bg-slate-600 flex items-center gap-2"
-            >
-              <ShareIcon className="w-5 h-5" />
-              공유하기
             </button>
           </>
         )}

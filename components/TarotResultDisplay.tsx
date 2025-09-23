@@ -1,14 +1,20 @@
 import React from 'react';
 import type { TarotResult, CardDraw } from '../types';
-import { RefreshIcon, HomeIcon, TarotCardBackIcon } from './icons';
+import { RefreshIcon, HomeIcon, TarotCardBackIcon, SaveIcon, ArrowLeftIcon } from './icons';
 import { AnalysisInfo } from './AnalysisInfo';
 import { getCardVisualComponent } from '../utils/tarotUtils';
+import { ShareButtons } from './ShareButtons';
+import { PremiumPlaceholder } from './PremiumPlaceholder';
 
 interface TarotResultDisplayProps {
   result: TarotResult;
   drawnCards: CardDraw[];
   onReset: () => void;
   onBack: () => void;
+  onSave?: () => void;
+  isSaved?: boolean;
+  isSavedView?: boolean;
+  question?: string;
 }
 
 const Card: React.FC<{ card: CardDraw; index: number }> = ({ card, index }) => {
@@ -40,8 +46,14 @@ const Card: React.FC<{ card: CardDraw; index: number }> = ({ card, index }) => {
                         style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
                     >
                         <div className="text-left text-xs sm:text-sm font-bold text-white whitespace-normal leading-tight">{card.name}</div>
-                        <div className={`flex-grow flex justify-center items-center transition-transform duration-500 ${card.orientation === '역방향' ? 'transform rotate-180' : ''}`}>
-                            <VisualComponent className="w-12 h-12 sm:w-16 sm:h-16 text-cyan-400/70" />
+                        <div className="flex-grow flex justify-center items-center overflow-hidden my-1">
+                            <div className={`w-full h-full transition-transform duration-500 flex justify-center items-center ${card.orientation === '역방향' ? 'transform rotate-180' : ''}`}>
+                                {card.imageData && card.mimeType ? (
+                                    <img src={`data:${card.mimeType};base64,${card.imageData}`} alt={`${card.name} user image`} className="w-full h-full object-cover" />
+                                ) : (
+                                    <VisualComponent className="w-12 h-12 sm:w-16 sm:h-16 text-cyan-400/70" />
+                                )}
+                            </div>
                         </div>
                         <div className={`text-right text-xs sm:text-sm font-semibold text-white whitespace-normal leading-tight ${card.orientation === '역방향' ? 'transform rotate-180' : ''}`}>{card.name}</div>
                     </div>
@@ -55,13 +67,33 @@ const Card: React.FC<{ card: CardDraw; index: number }> = ({ card, index }) => {
     );
 }
 
+const getSpreadLabels = (count: number): string[] => {
+    switch (count) {
+        case 1:
+            return ['핵심 조언'];
+        case 3:
+            return ['과거', '현재', '미래'];
+        case 5:
+            return ['현재 상황', '도전 과제', '과거의 영향', '가까운 미래', '잠재적 결과'];
+        default:
+            return [];
+    }
+};
 
-export const TarotResultDisplay: React.FC<TarotResultDisplayProps> = ({ result, drawnCards, onReset, onBack }) => {
+
+export const TarotResultDisplay: React.FC<TarotResultDisplayProps> = ({ result, drawnCards, onReset, onBack, onSave, isSaved, isSavedView, question }) => {
+  const cardNames = drawnCards.map(c => `${c.name}(${c.orientation})`).join(', ');
+  const shareText = `질문: "${question || '나의 운세'}"\n뽑힌 카드: ${cardNames}\n\n[종합 리딩]\n${result.overall_reading}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
+  const spreadLabels = getSpreadLabels(drawnCards.length);
+  
   return (
     <div className="w-full max-w-4xl animate-fade-in">
-      <div className="flex flex-col sm:flex-row justify-center items-start gap-6 sm:gap-8 mb-8">
+      <div className="flex flex-row flex-wrap justify-center items-start gap-x-6 sm:gap-x-8 gap-y-4 mb-8">
         {drawnCards.map((card, index) => (
-          <Card key={index} card={card} index={index} />
+            <div key={index} className="flex flex-col items-center">
+                {spreadLabels[index] && <h4 className="text-base font-bold text-slate-300 mb-2">{spreadLabels[index]}</h4>}
+                <Card card={card} index={index} />
+            </div>
         ))}
       </div>
       
@@ -71,31 +103,67 @@ export const TarotResultDisplay: React.FC<TarotResultDisplayProps> = ({ result, 
       </div>
 
       <div className="space-y-6 mt-8">
-        {result.cards.map((interp, index) => (
-          <div key={index} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
-            <h3 className="text-xl font-bold text-white mb-2 font-display">{interp.card_name} <span className={`text-base font-medium ${interp.orientation === '역방향' ? 'text-yellow-400' : 'text-cyan-400'}`}>({interp.orientation})</span></h3>
-            <p className="text-slate-400 leading-relaxed">{interp.meaning}</p>
-          </div>
-        ))}
+        {result.cards.map((interp, index) => {
+          const correspondingCard = drawnCards[index];
+          return (
+            <div key={index} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 sm:p-8 flex flex-col gap-4">
+              {correspondingCard?.imageData && correspondingCard?.mimeType && (
+                <div className="w-full max-w-sm mx-auto rounded-lg overflow-hidden relative shadow-lg my-2">
+                  <img 
+                    src={`data:${correspondingCard.mimeType};base64,${correspondingCard.imageData}`} 
+                    alt={`${interp.card_name} user image`} 
+                    className="w-full h-auto object-contain" 
+                  />
+                  <div className="absolute inset-0 bg-black/10 pointer-events-none"></div>
+                </div>
+              )}
+              <div className="text-center">
+                <h3 className="text-2xl font-bold text-white font-display">{interp.card_name}</h3>
+                <p className={`text-lg font-medium ${interp.orientation === '역방향' ? 'text-yellow-400' : 'text-cyan-400'}`}>
+                  ({interp.orientation})
+                </p>
+              </div>
+              <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{interp.meaning}</p>
+            </div>
+          );
+        })}
       </div>
       
+      {!isSavedView && <PremiumPlaceholder />}
+
       <AnalysisInfo />
+
+      {!isSavedView && <ShareButtons shareText={shareText} />}
+
 
       <div className="mt-10 text-center flex flex-wrap justify-center gap-4">
         <button
           onClick={onBack}
-          className="py-3 px-8 bg-slate-600 text-white font-bold text-lg rounded-lg shadow-md transition-all duration-300 hover:bg-slate-500 flex items-center gap-2"
+          className="py-3 px-6 bg-slate-600 text-white font-bold text-lg rounded-lg shadow-md transition-all duration-300 hover:bg-slate-500 flex items-center gap-2"
         >
-          <HomeIcon className="w-5 h-5" />
-          홈으로
+          {isSavedView ? <ArrowLeftIcon className="w-5 h-5" /> : <HomeIcon className="w-5 h-5" />}
+          {isSavedView ? '목록으로' : '홈으로'}
         </button>
-        <button
-          onClick={onReset}
-          className="py-3 px-8 bg-cyan-500 text-slate-900 font-bold text-lg rounded-lg shadow-md transition-all duration-300 hover:bg-cyan-400 hover:shadow-cyan-400/30 flex items-center gap-2"
-        >
-          <RefreshIcon className="w-5 h-5" />
-          다시 분석하기
-        </button>
+        
+        {!isSavedView && (
+          <>
+            <button
+              onClick={onReset}
+              className="py-3 px-6 bg-cyan-500 text-slate-900 font-bold text-lg rounded-lg shadow-md transition-all duration-300 hover:bg-cyan-400 hover:shadow-cyan-400/30 flex items-center gap-2"
+            >
+              <RefreshIcon className="w-5 h-5" />
+              다시 분석
+            </button>
+            <button
+              onClick={onSave}
+              disabled={isSaved}
+              className="py-3 px-6 bg-slate-700 text-white font-bold text-lg rounded-lg shadow-md transition-all duration-300 hover:bg-slate-600 disabled:bg-green-500 disabled:text-slate-900 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              <SaveIcon className="w-5 h-5" />
+              {isSaved ? '저장됨!' : '결과 저장'}
+            </button>
+          </>
+        )}
       </div>
        <style>{`
         @keyframes fade-in {

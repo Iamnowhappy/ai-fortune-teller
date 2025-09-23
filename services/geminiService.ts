@@ -1,6 +1,7 @@
 
+
 import { fileToBase64 } from '../utils/fileUtils';
-import type { PhysiognomyResult, PalmistryResult, ImpressionAnalysisResult, AstrologyResult, SajuResult, TarotResult, CardDraw, JuyeokReading, JuyeokResult, Hexagram, YukhyoResult } from '../types';
+import type { PhysiognomyResult, PalmistryResult, ImpressionAnalysisResult, AstrologyResult, SajuResult, TarotResult, CardDraw, JuyeokReading, JuyeokResult, Hexagram, YukhyoResult, DailyTarotResult, FortuneImageResult } from '../types';
 
 /**
  * 범용 분석 함수. 프론트엔드의 모든 요청을 백엔드 API 라우트로 보냅니다.
@@ -67,4 +68,12 @@ export const analyzeJuyeok = async (question: string, reading: JuyeokReading): P
 
 export const analyzeYukhyo = async (question: string, hexagram: Hexagram, ganjiDate: string): Promise<YukhyoResult> => {
     return analyze<YukhyoResult>('yukhyo', { question, hexagram, ganjiDate });
+};
+
+export const analyzeDailyTarot = async (card: CardDraw): Promise<DailyTarotResult> => {
+    return analyze<DailyTarotResult>('daily-tarot', { card });
+};
+
+export const generateFortuneImage = async (fortuneText: string): Promise<FortuneImageResult> => {
+    return analyze<FortuneImageResult>('daily-fortune-image', { fortuneText });
 };

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import type { CardDraw, CardOrientation } from '../types';
 import {
@@ -82,12 +81,13 @@ export const getCardVisualComponent = (cardName: string): React.FC<IconProps> =>
 };
 
 /**
- * Draws three unique cards from the Tarot deck, each with a random orientation.
- * @returns An array of three CardDraw objects.
+ * Draws a specified number of unique cards from the Tarot deck.
+ * @param count The number of cards to draw.
+ * @returns An array of CardDraw objects.
  */
-export const drawThreeCards = (): CardDraw[] => {
+export const drawCards = (count: number): CardDraw[] => {
   const shuffledDeck = shuffleArray(TAROT_DECK);
-  const drawnCards = shuffledDeck.slice(0, 3);
+  const drawnCards = shuffledDeck.slice(0, count);
   
   return drawnCards.map(cardName => {
     const orientation: CardOrientation = Math.random() < 0.5 ? '정방향' : '역방향';
@@ -96,4 +96,17 @@ export const drawThreeCards = (): CardDraw[] => {
       orientation: orientation,
     };
   });
+};
+
+/**
+ * Draws one card from the Tarot deck with a random orientation.
+ * @returns A single CardDraw object.
+ */
+export const drawOneCard = (): CardDraw => {
+    const cardName = TAROT_DECK[Math.floor(Math.random() * TAROT_DECK.length)];
+    const orientation: CardOrientation = Math.random() < 0.5 ? '정방향' : '역방향';
+    return {
+        name: cardName,
+        orientation: orientation,
+    };
 };
