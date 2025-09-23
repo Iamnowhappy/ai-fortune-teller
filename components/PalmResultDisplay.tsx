@@ -4,6 +4,7 @@ import { RefreshIcon, HomeIcon, HeartLineIcon, HeadLineIcon, LifeLineIcon, LineI
 import { AnalysisInfo } from './AnalysisInfo';
 import { ShareButtons } from './ShareButtons';
 import { PremiumPlaceholder } from './PremiumPlaceholder';
+import { TypingResult } from './TypingResult';
 
 
 interface PalmResultDisplayProps {
@@ -37,7 +38,7 @@ export const PalmResultDisplay: React.FC<PalmResultDisplayProps> = ({ result, on
     <div className="w-full max-w-3xl animate-fade-in">
       <div className="bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8">
         <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display">손금 분석 총평</h2>
-        <p className="text-slate-300 leading-relaxed whitespace-pre-wrap">{result.overall_analysis}</p>
+        <TypingResult text={result.overall_analysis} className="text-slate-300 leading-relaxed whitespace-pre-wrap" />
       </div>
 
       <div className="mt-8 bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
@@ -56,7 +57,7 @@ export const PalmResultDisplay: React.FC<PalmResultDisplayProps> = ({ result, on
             </div>
             <div>
               <h3 className="text-xl font-bold text-white">{line.line_name}</h3>
-              <p className="text-slate-400 leading-relaxed mt-2">{line.analysis}</p>
+              <TypingResult text={line.analysis} className="text-slate-400 leading-relaxed mt-2" />
             </div>
           </div>
         ))}

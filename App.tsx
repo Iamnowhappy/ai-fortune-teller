@@ -141,7 +141,7 @@ const HomePage: React.FC<{ onNavigate: (page: Page) => void; }> = ({ onNavigate 
         {/* Daily Tarot Card */}
         <div
           onClick={() => onNavigate('daily-tarot')}
-          className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 flex flex-col items-center gap-4 transition-all duration-300 hover:scale-105 hover:border-yellow-500 cursor-pointer"
+          className="bg-[#059669]/80 border border-[#047857] rounded-2xl p-6 flex flex-col items-center gap-4 transition-all duration-300 hover:scale-105 hover:border-[#34D399] cursor-pointer"
           role="button"
           tabIndex={0}
           aria-label="오늘의 타로 실행하기"
@@ -149,13 +149,13 @@ const HomePage: React.FC<{ onNavigate: (page: Page) => void; }> = ({ onNavigate 
         >
           <TarotIcon className="w-16 h-16 text-yellow-400" />
           <h2 className="text-2xl font-bold text-white">오늘의 타로</h2>
-          <p className="text-slate-400">하루에 한 번, 오늘의 AI 타로점을 확인하세요.</p>
+          <p className="text-slate-300">하루에 한 번, 오늘의 AI 타로점을 확인하세요.</p>
         </div>
 
         {/* Face Reader Card */}
         <div
           onClick={() => onNavigate('face-reader')}
-          className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 flex flex-col items-center gap-4 transition-all duration-300 hover:scale-105 hover:border-cyan-500 cursor-pointer"
+          className="bg-[#F59E0B]/80 border border-[#D97706] rounded-2xl p-6 flex flex-col items-center gap-4 transition-all duration-300 hover:scale-105 hover:border-[#FBBF24] cursor-pointer"
           role="button"
           tabIndex={0}
           aria-label="AI 관상가 실행하기"
@@ -163,13 +163,13 @@ const HomePage: React.FC<{ onNavigate: (page: Page) => void; }> = ({ onNavigate 
         >
           <FaceIcon className="w-16 h-16 text-cyan-400" />
           <h2 className="text-2xl font-bold text-white">AI 관상가</h2>
-          <p className="text-slate-400">얼굴 사진으로 당신의 성격과 미래를 분석합니다.</p>
+          <p className="text-slate-300">얼굴 사진으로 당신의 성격과 미래를 분석합니다.</p>
         </div>
 
         {/* Palm Reader Card */}
         <div
           onClick={() => onNavigate('palm-reader')}
-          className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 flex flex-col items-center gap-4 transition-all duration-300 hover:scale-105 hover:border-cyan-500 cursor-pointer"
+          className="bg-[#DC2626]/80 border border-[#B91C1C] rounded-2xl p-6 flex flex-col items-center gap-4 transition-all duration-300 hover:scale-105 hover:border-[#F87171] cursor-pointer"
           role="button"
           tabIndex={0}
           aria-label="AI 손금 분석 실행하기"
@@ -177,13 +177,13 @@ const HomePage: React.FC<{ onNavigate: (page: Page) => void; }> = ({ onNavigate 
         >
           <PalmIcon className="w-16 h-16 text-cyan-400" />
           <h2 className="text-2xl font-bold text-white">AI 손금 분석</h2>
-          <p className="text-slate-400">손금 사진으로 당신의 운명을 읽어드립니다.</p>
+          <p className="text-slate-300">손금 사진으로 당신의 운명을 읽어드립니다.</p>
         </div>
 
         {/* First Impression Card */}
         <div
           onClick={() => onNavigate('impression-analyzer')}
-          className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 flex flex-col items-center gap-4 transition-all duration-300 hover:scale-105 hover:border-cyan-500 cursor-pointer"
+          className="bg-[#0D9488]/80 border border-[#0F766E] rounded-2xl p-6 flex flex-col items-center gap-4 transition-all duration-300 hover:scale-105 hover:border-[#2DD4BF] cursor-pointer"
           role="button"
           tabIndex={0}
           aria-label="AI 첫인상 분석 실행하기"
@@ -191,13 +191,13 @@ const HomePage: React.FC<{ onNavigate: (page: Page) => void; }> = ({ onNavigate 
         >
           <ImpressionIcon className="w-16 h-16 text-cyan-400" />
           <h2 className="text-2xl font-bold text-white">AI 첫인상 분석</h2>
-          <p className="text-slate-400">사진 속 당신의 첫인상은 어떨까요? AI가 알려드립니다.</p>
+          <p className="text-slate-300">사진 속 당신의 첫인상은 어떨까요? AI가 알려드립니다.</p>
         </div>
 
         {/* Astrology Reader Card */}
         <div
           onClick={() => onNavigate('astrology-reader')}
-          className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 flex flex-col items-center gap-4 transition-all duration-300 hover:scale-105 hover:border-cyan-500 cursor-pointer"
+          className="bg-[#4338CA]/80 border border-[#3730A3] rounded-2xl p-6 flex flex-col items-center gap-4 transition-all duration-300 hover:scale-105 hover:border-[#818CF8] cursor-pointer"
           role="button"
           tabIndex={0}
           aria-label="AI 별자리 운세 실행하기"
@@ -205,13 +205,13 @@ const HomePage: React.FC<{ onNavigate: (page: Page) => void; }> = ({ onNavigate 
         >
           <AstrologyIcon className="w-16 h-16 text-cyan-400" />
           <h2 className="text-2xl font-bold text-white">AI 별자리 운세</h2>
-          <p className="text-slate-400">생년월일로 당신의 별자리를 분석하고 운세를 예측합니다.</p>
+          <p className="text-slate-300">생년월일로 당신의 별자리를 분석하고 운세를 예측합니다.</p>
         </div>
 
         {/* Saju Analyzer Card */}
         <div
           onClick={() => onNavigate('saju-analyzer')}
-          className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 flex flex-col items-center gap-4 transition-all duration-300 hover:scale-105 hover:border-cyan-500 cursor-pointer"
+          className="bg-[#2563EB]/80 border border-[#1D4ED8] rounded-2xl p-6 flex flex-col items-center gap-4 transition-all duration-300 hover:scale-105 hover:border-[#60A5FA] cursor-pointer"
           role="button"
           tabIndex={0}
           aria-label="AI 사주 분석 실행하기"
@@ -219,13 +219,13 @@ const HomePage: React.FC<{ onNavigate: (page: Page) => void; }> = ({ onNavigate 
         >
           <SajuIcon className="w-16 h-16 text-cyan-400" />
           <h2 className="text-2xl font-bold text-white">AI 사주 분석</h2>
-          <p className="text-slate-400">생년월일시로 타고난 운명의 지도를 해석해 드립니다.</p>
+          <p className="text-slate-300">생년월일시로 타고난 운명의 지도를 해석해 드립니다.</p>
         </div>
 
         {/* Tarot Reader Card */}
         <div
           onClick={() => onNavigate('tarot-reader')}
-          className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 flex flex-col items-center gap-4 transition-all duration-300 hover:scale-105 hover:border-cyan-500 cursor-pointer"
+          className="bg-[#7E22CE]/80 border border-[#6B21A8] rounded-2xl p-6 flex flex-col items-center gap-4 transition-all duration-300 hover:scale-105 hover:border-[#A78BFA] cursor-pointer"
           role="button"
           tabIndex={0}
           aria-label="AI 타로 마스터 실행하기"
@@ -233,13 +233,13 @@ const HomePage: React.FC<{ onNavigate: (page: Page) => void; }> = ({ onNavigate 
         >
           <TarotIcon className="w-16 h-16 text-cyan-400" />
           <h2 className="text-2xl font-bold text-white">AI 타로 마스터</h2>
-          <p className="text-slate-400">당신의 질문에 AI가 타로 카드로 답해드립니다.</p>
+          <p className="text-slate-300">당신의 질문에 AI가 타로 카드로 답해드립니다.</p>
         </div>
 
         {/* Juyeok Reader Card */}
         <div
           onClick={() => onNavigate('juyeok-reader')}
-          className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 flex flex-col items-center gap-4 transition-all duration-300 hover:scale-105 hover:border-cyan-500 cursor-pointer"
+          className="bg-[#9333EA]/80 border border-[#7E22CE] rounded-2xl p-6 flex flex-col items-center gap-4 transition-all duration-300 hover:scale-105 hover:border-[#C084FC] cursor-pointer"
           role="button"
           tabIndex={0}
           aria-label="AI 주역 전문가 실행하기"
@@ -247,13 +247,13 @@ const HomePage: React.FC<{ onNavigate: (page: Page) => void; }> = ({ onNavigate 
         >
           <JuyeokIcon className="w-16 h-16 text-cyan-400" />
           <h2 className="text-2xl font-bold text-white">AI 주역 전문가</h2>
-          <p className="text-slate-400">주역 64괘로 당신의 고민에 대한 통찰을 제공합니다.</p>
+          <p className="text-slate-300">주역 64괘로 당신의 고민에 대한 통찰을 제공합니다.</p>
         </div>
 
         {/* Yukhyo Analyzer Card */}
         <div
           onClick={() => onNavigate('yukhyo-analyzer')}
-          className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 flex flex-col items-center gap-4 transition-all duration-300 hover:scale-105 hover:border-cyan-500 cursor-pointer"
+          className="bg-[#0EA5E9]/80 border border-[#0284C7] rounded-2xl p-6 flex flex-col items-center gap-4 transition-all duration-300 hover:scale-105 hover:border-[#38BDF8] cursor-pointer"
           role="button"
           tabIndex={0}
           aria-label="AI 육효 분석가 실행하기"
@@ -261,13 +261,13 @@ const HomePage: React.FC<{ onNavigate: (page: Page) => void; }> = ({ onNavigate 
         >
           <YukhyoIcon className="w-16 h-16 text-cyan-400" />
           <h2 className="text-2xl font-bold text-white">AI 육효 분석가</h2>
-          <p className="text-slate-400">질문 시점의 기운으로 구체적인 길흉을 예측합니다.</p>
+          <p className="text-slate-300">질문 시점의 기운으로 구체적인 길흉을 예측합니다.</p>
         </div>
         
         {/* Saved Results Card */}
         <div
           onClick={() => onNavigate('saved-results')}
-          className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 flex flex-col items-center gap-4 transition-all duration-300 hover:scale-105 hover:border-cyan-500 cursor-pointer"
+          className="bg-[#475569]/80 border border-[#334155] rounded-2xl p-6 flex flex-col items-center gap-4 transition-all duration-300 hover:scale-105 hover:border-[#94A3B8] cursor-pointer"
           role="button"
           tabIndex={0}
           aria-label="나의 운세함 보기"
@@ -275,7 +275,7 @@ const HomePage: React.FC<{ onNavigate: (page: Page) => void; }> = ({ onNavigate 
         >
           <BoxIcon className="w-16 h-16 text-cyan-400" />
           <h2 className="text-2xl font-bold text-white">나의 운세함</h2>
-          <p className="text-slate-400">저장된 분석 결과를 다시 확인합니다.</p>
+          <p className="text-slate-300">저장된 분석 결과를 다시 확인합니다.</p>
         </div>
       </div>
        <style>{`

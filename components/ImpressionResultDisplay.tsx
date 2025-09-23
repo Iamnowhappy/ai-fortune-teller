@@ -1,11 +1,10 @@
-
-
 import React from 'react';
 import type { ImpressionAnalysisResult } from '../types';
 import { RefreshIcon, HomeIcon, LightbulbIcon, SaveIcon, ArrowLeftIcon } from './icons';
 import { AnalysisInfo } from './AnalysisInfo';
 import { ShareButtons } from './ShareButtons';
 import { PremiumPlaceholder } from './PremiumPlaceholder';
+import { TypingResult } from './TypingResult';
 
 interface ImpressionResultDisplayProps {
   result: ImpressionAnalysisResult;
@@ -30,7 +29,7 @@ export const ImpressionResultDisplay: React.FC<ImpressionResultDisplayProps> = (
                 </span>
             ))}
         </div>
-        <p className="text-slate-300 leading-relaxed whitespace-pre-wrap">{result.detailed_analysis}</p>
+        <TypingResult text={result.detailed_analysis} className="text-slate-300 leading-relaxed whitespace-pre-wrap" />
       </div>
 
       <div className="mt-8 bg-slate-800/50 border border-slate-700 rounded-2xl p-6 flex items-start gap-4">
@@ -39,7 +38,7 @@ export const ImpressionResultDisplay: React.FC<ImpressionResultDisplayProps> = (
         </div>
         <div>
             <h3 className="text-xl font-bold text-yellow-300 mb-2 font-display">첫인상 개선을 위한 TIP</h3>
-            <p className="text-slate-400 leading-relaxed">{result.improvement_tip}</p>
+            <TypingResult text={result.improvement_tip} className="text-slate-400 leading-relaxed" />
         </div>
       </div>
       

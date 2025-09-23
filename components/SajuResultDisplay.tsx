@@ -4,6 +4,7 @@ import { RefreshIcon, HomeIcon, SaveIcon, ArrowLeftIcon } from './icons';
 import { AnalysisInfo } from './AnalysisInfo';
 import { ShareButtons } from './ShareButtons';
 import { PremiumPlaceholder } from './PremiumPlaceholder';
+import { TypingResult } from './TypingResult';
 
 interface SajuResultDisplayProps {
   result: SajuResult;
@@ -39,15 +40,15 @@ export const SajuResultDisplay: React.FC<SajuResultDisplayProps> = ({ result, on
       <div className="space-y-6 mt-8">
         <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
             <h3 className="text-xl font-bold text-white mb-3 font-display">종합 분석</h3>
-            <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{result.overall_analysis}</p>
+            <TypingResult text={result.overall_analysis} className="text-slate-400 leading-relaxed whitespace-pre-wrap" />
         </div>
         <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
             <h3 className="text-xl font-bold text-white mb-3 font-display">오행의 균형</h3>
-            <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{result.elemental_analysis}</p>
+            <TypingResult text={result.elemental_analysis} className="text-slate-400 leading-relaxed whitespace-pre-wrap" />
         </div>
         <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
             <h3 className="text-xl font-bold text-white mb-3 font-display">삶의 조언</h3>
-            <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{result.life_advice}</p>
+            <TypingResult text={result.life_advice} className="text-slate-400 leading-relaxed whitespace-pre-wrap" />
         </div>
       </div>
       

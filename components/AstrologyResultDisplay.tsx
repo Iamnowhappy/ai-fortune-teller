@@ -1,11 +1,10 @@
-
-
 import React from 'react';
 import type { AstrologyResult } from '../types';
 import { RefreshIcon, HomeIcon, SaveIcon, ArrowLeftIcon } from './icons';
 import { AnalysisInfo } from './AnalysisInfo';
 import { ShareButtons } from './ShareButtons';
 import { PremiumPlaceholder } from './PremiumPlaceholder';
+import { TypingResult } from './TypingResult';
 
 interface AstrologyResultDisplayProps {
   result: AstrologyResult;
@@ -33,15 +32,15 @@ export const AstrologyResultDisplay: React.FC<AstrologyResultDisplayProps> = ({ 
       <div className="space-y-6 mt-8">
         <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
             <h3 className="text-xl font-bold text-white mb-3 font-display">성격 분석</h3>
-            <p className="text-slate-400 leading-relaxed">{result.analysis.personality}</p>
+            <TypingResult text={result.analysis.personality} className="text-slate-400 leading-relaxed" />
         </div>
         <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
             <h3 className="text-xl font-bold text-white mb-3 font-display">연애 및 관계</h3>
-            <p className="text-slate-400 leading-relaxed">{result.analysis.love_life}</p>
+            <TypingResult text={result.analysis.love_life} className="text-slate-400 leading-relaxed" />
         </div>
         <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
             <h3 className="text-xl font-bold text-white mb-3 font-display">직업 및 경력</h3>
-            <p className="text-slate-400 leading-relaxed">{result.analysis.work_career}</p>
+            <TypingResult text={result.analysis.work_career} className="text-slate-400 leading-relaxed" />
         </div>
       </div>
       

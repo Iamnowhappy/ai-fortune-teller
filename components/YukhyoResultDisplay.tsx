@@ -4,6 +4,7 @@ import { RefreshIcon, HomeIcon, SaveIcon, ArrowLeftIcon } from './icons';
 import { AnalysisInfo } from './AnalysisInfo';
 import { ShareButtons } from './ShareButtons';
 import { PremiumPlaceholder } from './PremiumPlaceholder';
+import { TypingResult } from './TypingResult';
 
 interface YukhyoResultDisplayProps {
   result: YukhyoResult;
@@ -55,11 +56,11 @@ export const YukhyoResultDisplay: React.FC<YukhyoResultDisplayProps> = ({ result
       <div className="space-y-6 mt-8">
         <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
             <h3 className="text-xl font-bold text-white mb-3 font-display">핵심 분석 (용신)</h3>
-            <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{result.yongsin}</p>
+            <TypingResult text={result.yongsin} className="text-slate-400 leading-relaxed whitespace-pre-wrap" />
         </div>
         <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
             <h3 className="text-xl font-bold text-white mb-3 font-display">종합 해설 및 조언</h3>
-            <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{result.overall_interpretation}</p>
+            <TypingResult text={result.overall_interpretation} className="text-slate-400 leading-relaxed whitespace-pre-wrap" />
         </div>
       </div>
       

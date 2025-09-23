@@ -1,14 +1,20 @@
-
 import React from 'react';
 import type { JuyeokResult, JuyeokReading, LineType } from '../types';
-import { RefreshIcon, HomeIcon } from './icons';
+import { RefreshIcon, HomeIcon, SaveIcon, ArrowLeftIcon } from './icons';
 import { AnalysisInfo } from './AnalysisInfo';
+import { ShareButtons } from './ShareButtons';
+import { PremiumPlaceholder } from './PremiumPlaceholder';
+import { TypingResult } from './TypingResult';
 
 interface JuyeokResultDisplayProps {
   result: JuyeokResult;
   reading: JuyeokReading;
   onReset: () => void;
   onBack: () => void;
+  onSave?: () => void;
+  isSaved?: boolean;
+  isSavedView?: boolean;
+  question?: string;
 }
 
 const HexagramVisual: React.FC<{ lines: LineType[], changingLines?: number[] }> = ({ lines, changingLines = [] }) => (
@@ -34,7 +40,9 @@ const HexagramVisual: React.FC<{ lines: LineType[], changingLines?: number[] }> 
     </div>
 );
 
-export const JuyeokResultDisplay: React.FC<JuyeokResultDisplayProps> = ({ result, reading, onReset, onBack }) => {
+export const JuyeokResultDisplay: React.FC<JuyeokResultDisplayProps> = ({ result, reading, onReset, onBack, onSave, isSaved, isSavedView, question }) => {
+  const shareText = `질문: "${question || '나의 운세'}"\n본괘: ${result.present_hexagram_name}\n\n[종합 해설]\n${result.interpretation}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
+  
   return (
     <div className="w-full max-w-4xl animate-fade-in">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8 mb-8">
@@ -67,33 +75,51 @@ export const JuyeokResultDisplay: React.FC<JuyeokResultDisplayProps> = ({ result
 
       <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 sm:p-8">
         <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display">종합 해설</h2>
-        <p className="text-slate-300 leading-relaxed whitespace-pre-wrap">{result.interpretation}</p>
+        <TypingResult text={result.interpretation} className="text-slate-300 leading-relaxed whitespace-pre-wrap" />
       </div>
 
       {result.changing_lines_interpretation && (
         <div className="mt-8 bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
             <h3 className="text-xl font-bold text-white mb-3 font-display">변화의 핵심 (變爻)</h3>
-            <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{result.changing_lines_interpretation}</p>
+            <TypingResult text={result.changing_lines_interpretation} className="text-slate-400 leading-relaxed whitespace-pre-wrap" />
         </div>
       )}
       
+      {!isSavedView && <PremiumPlaceholder />}
+
       <AnalysisInfo />
+
+      {!isSavedView && <ShareButtons shareText={shareText} />}
+
 
       <div className="mt-10 text-center flex flex-wrap justify-center gap-4">
         <button
           onClick={onBack}
-          className="py-3 px-8 bg-slate-600 text-white font-bold text-lg rounded-lg shadow-md transition-all duration-300 hover:bg-slate-500 flex items-center gap-2"
+          className="py-3 px-6 bg-slate-600 text-white font-bold text-lg rounded-lg shadow-md transition-all duration-300 hover:bg-slate-500 flex items-center gap-2"
         >
-          <HomeIcon className="w-5 h-5" />
-          홈으로
+          {isSavedView ? <ArrowLeftIcon className="w-5 h-5" /> : <HomeIcon className="w-5 h-5" />}
+          {isSavedView ? '목록으로' : '홈으로'}
         </button>
-        <button
-          onClick={onReset}
-          className="py-3 px-8 bg-cyan-500 text-slate-900 font-bold text-lg rounded-lg shadow-md transition-all duration-300 hover:bg-cyan-400 hover:shadow-cyan-400/30 flex items-center gap-2"
-        >
-          <RefreshIcon className="w-5 h-5" />
-          다시 분석하기
-        </button>
+        
+        {!isSavedView && (
+          <>
+            <button
+              onClick={onReset}
+              className="py-3 px-6 bg-cyan-500 text-slate-900 font-bold text-lg rounded-lg shadow-md transition-all duration-300 hover:bg-cyan-400 hover:shadow-cyan-400/30 flex items-center gap-2"
+            >
+              <RefreshIcon className="w-5 h-5" />
+              다시 분석
+            </button>
+            <button
+              onClick={onSave}
+              disabled={isSaved}
+              className="py-3 px-6 bg-slate-700 text-white font-bold text-lg rounded-lg shadow-md transition-all duration-300 hover:bg-slate-600 disabled:bg-green-500 disabled:text-slate-900 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              <SaveIcon className="w-5 h-5" />
+              {isSaved ? '저장됨!' : '결과 저장'}
+            </button>
+          </>
+        )}
       </div>
        <style>{`
         @keyframes fade-in {

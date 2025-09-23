@@ -4,6 +4,7 @@ import { EyeIcon, NoseIcon, MouthIcon, ForeheadIcon, ChinIcon, EarIcon, RefreshI
 import { AnalysisInfo } from './AnalysisInfo';
 import { ShareButtons } from './ShareButtons';
 import { PremiumPlaceholder } from './PremiumPlaceholder';
+import { TypingResult } from './TypingResult';
 
 
 interface ResultDisplayProps {
@@ -40,7 +41,7 @@ export const ResultDisplay: React.FC<ResultDisplayProps> = ({ result, onReset, o
     <div className="w-full max-w-3xl animate-fade-in">
       <div className="bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8">
         <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display">관상 분석 총평</h2>
-        <p className="text-slate-300 leading-relaxed whitespace-pre-wrap">{result.overall_impression}</p>
+        <TypingResult text={result.overall_impression} className="text-slate-300 leading-relaxed whitespace-pre-wrap" />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
