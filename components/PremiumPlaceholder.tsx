@@ -28,3 +28,6 @@ export const UpgradeCTA: React.FC = () => {
         </div>
     );
 };
+
+// Alias for backward compatibility to fix build errors
+export const PremiumPlaceholder = UpgradeCTA;
