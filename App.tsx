@@ -304,18 +304,26 @@ const HomePage: React.FC<{ onNavigate: (page: Page) => void; }> = ({ onNavigate 
           <p className="text-slate-200">질문 시점의 기운으로 구체적인 길흉을 예측합니다.</p>
         </div>
         
-        {/* Saved Results Card */}
+        {/* Saved Results Card (Premium) */}
         <div
           onClick={() => onNavigate('saved-results')}
-          className="bg-[#475569]/80 border border-[#334155] rounded-2xl p-6 flex flex-col items-center gap-4 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:border-[#94A3B8] cursor-pointer group shadow-lg"
+          className="relative bg-slate-800/80 border border-[#475569] rounded-2xl p-6 flex flex-col items-center gap-4 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:border-[#94A3B8] hover:bg-slate-700/60 cursor-pointer group shadow-lg"
           role="button"
           tabIndex={0}
-          aria-label="나의 운세함 보기"
+          aria-label="나의 운세함 보기 (프리미엄 기능)"
           onKeyDown={(e) => e.key === 'Enter' && onNavigate('saved-results')}
         >
-          <BoxIcon className="w-16 h-16 text-white transition-transform duration-500 group-hover:rotate-12 group-hover:scale-110" />
-          <h2 className="text-2xl font-bold text-white">나의 운세함</h2>
-          <p className="text-slate-200">저장된 분석 결과를 다시 확인합니다.</p>
+          <div className="absolute top-3 right-3 bg-cyan-500 text-slate-900 text-xs font-bold px-2 py-1 rounded-full shadow-md z-10">
+            PREMIUM
+          </div>
+          <div className="opacity-70 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center gap-4 text-center">
+            <BoxIcon className="w-16 h-16 text-white transition-transform duration-500 group-hover:rotate-12 group-hover:scale-110" />
+            <div className="flex items-center gap-2">
+              <LockIcon className="w-6 h-6 text-cyan-400" />
+              <h2 className="text-2xl font-bold text-white">나의 운세함</h2>
+            </div>
+            <p className="text-slate-200">저장된 분석 결과를 다시 확인합니다.</p>
+          </div>
         </div>
       </div>
        <style>{`
