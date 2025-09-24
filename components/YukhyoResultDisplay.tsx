@@ -3,7 +3,7 @@ import type { YukhyoResult } from '../types';
 import { RefreshIcon, HomeIcon, SaveIcon, ArrowLeftIcon } from './icons';
 import { AnalysisInfo } from './AnalysisInfo';
 import { ShareButtons } from './ShareButtons';
-import { PremiumPlaceholder } from './PremiumPlaceholder';
+import { UpgradeCTA } from './PremiumPlaceholder';
 import { TypingResult } from './TypingResult';
 import { motion, Variants } from 'framer-motion';
 
@@ -73,7 +73,7 @@ export const YukhyoResultDisplay: React.FC<YukhyoResultDisplayProps> = ({ result
         </motion.div>
       </div>
       
-      {!isSavedView && <motion.div variants={itemVariants}><PremiumPlaceholder /></motion.div>}
+      {!isSavedView && <motion.div variants={itemVariants}><UpgradeCTA /></motion.div>}
       <motion.div variants={itemVariants}><AnalysisInfo /></motion.div>
       {!isSavedView && <motion.div variants={itemVariants}><ShareButtons shareText={shareText} /></motion.div>}
 

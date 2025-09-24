@@ -22,13 +22,15 @@ import { Loader } from './components/Loader';
 import { analyzeFace, analyzePalm, analyzeImpression, analyzeAstrology, analyzeSaju, analyzeTarotReading, analyzeJuyeok, analyzeYukhyo, generateFortuneImage } from './services/geminiService';
 import type { PhysiognomyResult, PalmistryResult, ImpressionAnalysisResult, AstrologyResult, SajuResult, TarotResult, JuyeokResult, YukhyoResult, CardDraw, JuyeokReading, SavedResult } from './types';
 import { Footer } from './components/Footer';
-import { FaceIcon, PalmIcon, ImpressionIcon, AstrologyIcon, SajuIcon, TarotIcon, JuyeokIcon, YukhyoIcon, BoxIcon, TheSunIcon, StarIcon } from './components/icons';
-import { generateIChingReading, getGanjiDate, getDailyFortune } from './utils/divinationUtils';
+import { FaceIcon, PalmIcon, ImpressionIcon, AstrologyIcon, SajuIcon, TarotIcon, JuyeokIcon, YukhyoIcon, BoxIcon, TheSunIcon, StarIcon, LockIcon } from './components/icons';
+import { generateIChingReading, getDailyFortune } from './utils/divinationUtils';
 import { saveResult } from './utils/storage';
 import { TarotReaderPage } from './components/TarotReaderPage';
 import { ChangelogPage } from './components/Changelog';
+import { ImageAndQuestionUploader } from './components/ImageAndQuestionUploader';
+import { PremiumRoute } from './components/shared/PremiumRoute';
 
-type Page = 'home' | 'face-reader' | 'palm-reader' | 'impression-analyzer' | 'astrology-reader' | 'saju-analyzer' | 'tarot-reader' | 'juyeok-reader' | 'yukhyo-analyzer' | 'daily-tarot' | 'saved-results' | 'about' | 'privacy' | 'terms' | 'guide' | 'changelog';
+type Page = 'home' | 'face-reader' | 'palm-reader' | 'impression-analyzer' | 'astrology-reader' | 'saju-analyzer' | 'tarot-reader' | 'juyeok-reader' | 'yukhyo-analyzer' | 'daily-tarot' | 'saved-results' | 'about' | 'privacy' | 'terms' | 'guide' | 'changelog' | 'checkout';
 
 // --- HomePage Component ---
 const HomePage: React.FC<{ onNavigate: (page: Page) => void; }> = ({ onNavigate }) => {
@@ -331,6 +333,35 @@ const HomePage: React.FC<{ onNavigate: (page: Page) => void; }> = ({ onNavigate 
     </main>
   );
 };
+
+// --- CheckoutPage Component ---
+const CheckoutPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
+  return (
+    <>
+      <Header
+        icon={<LockIcon className="w-10 h-10 text-cyan-400" />}
+        title="프리미엄 전용 기능"
+        description="더욱 상세한 분석을 원하시면 프리미엄 플랜을 이용해보세요."
+        onBack={onBack}
+      />
+      <main className="flex-grow flex flex-col items-center justify-center text-center py-10">
+        <div className="w-full max-w-md flex flex-col items-center gap-6 p-8 bg-slate-800/50 rounded-2xl shadow-lg border border-slate-700">
+          <h2 className="text-2xl font-bold text-white">프리미엄 플랜으로 업그레이드</h2>
+          <p className="text-slate-400">
+            모든 상세 분석 리포트, 광고 제거, 분석 결과 무제한 저장 등 특별한 혜택을 누려보세요.
+          </p>
+          <button
+            onClick={() => alert('결제 기능은 현재 준비 중입니다.')}
+            className="w-full py-3 px-6 bg-cyan-500 text-slate-900 font-bold text-lg rounded-lg shadow-md transition-all duration-300 hover:bg-cyan-400 hover:shadow-cyan-400/30"
+          >
+            ₩990원으로 시작하기
+          </button>
+        </div>
+      </main>
+    </>
+  );
+};
+
 
 // --- FaceReaderPage Component ---
 const FaceReaderPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
@@ -909,25 +940,37 @@ const JuyeokReaderPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
 
 // --- YukhyoAnalyzerPage Component ---
 const YukhyoAnalyzerPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
+    const [imageFile, setImageFile] = useState<File | null>(null);
+    const [imageUrl, setImageUrl] = useState<string | null>(null);
     const [question, setQuestion] = useState<string>('');
     const [analysisResult, setAnalysisResult] = useState<YukhyoResult | null>(null);
-    const [juyeokReading, setJuyeokReading] = useState<JuyeokReading | null>(null);
-    const [ganjiDate, setGanjiDate] = useState<string>('');
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
     const [isSaved, setIsSaved] = useState(false);
 
     const yukhyoMessages = [
         "오늘의 천기를 살피고 있습니다...",
-        "질문의 핵심을 파악하여 괘를 세우는 중...",
+        "이미지의 기운을 읽어 괘를 세우는 중...",
         "육친과 세응을 배치하고 있습니다...",
         "길흉을 판단할 용신을 찾는 중...",
         "곧 구체적인 예측이 완성됩니다."
     ];
 
+    const handleImageSelect = (file: File) => {
+        setImageFile(file);
+        setImageUrl(URL.createObjectURL(file));
+        setAnalysisResult(null);
+        setError(null);
+        setIsSaved(false);
+    };
+
     const handleAnalyze = useCallback(async () => {
         if (!question.trim()) {
             setError('질문을 입력해주세요.');
+            return;
+        }
+        if (!imageFile) {
+            setError('이미지를 선택해주세요.');
             return;
         }
 
@@ -936,13 +979,8 @@ const YukhyoAnalyzerPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
         setAnalysisResult(null);
         setIsSaved(false);
         
-        const reading = generateIChingReading();
-        const date = getGanjiDate();
-        setJuyeokReading(reading);
-        setGanjiDate(date);
-
         try {
-            const result = await analyzeYukhyo(question, reading.presentHexagram, date);
+            const result = await analyzeYukhyo(imageFile, question);
             setAnalysisResult(result);
         } catch (err) {
             console.error(err);
@@ -950,7 +988,7 @@ const YukhyoAnalyzerPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
         } finally {
             setIsLoading(false);
         }
-    }, [question]);
+    }, [imageFile, question]);
 
     const handleSave = useCallback(() => {
         if (!analysisResult) return;
@@ -968,10 +1006,10 @@ const YukhyoAnalyzerPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
     }, [analysisResult, question]);
     
     const handleReset = () => {
+        setImageFile(null);
+        setImageUrl(null);
         setQuestion('');
         setAnalysisResult(null);
-        setJuyeokReading(null);
-        setGanjiDate('');
         setError(null);
         setIsSaved(false);
     };
@@ -981,37 +1019,24 @@ const YukhyoAnalyzerPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
             <Header
                 icon={<YukhyoIcon className="w-10 h-10 text-cyan-400" />}
                 title="AI 육효 분석가"
-                description="질문 시점의 기운으로 구체적인 길흉을 예측합니다."
+                description="질문과 관련된 이미지를 올리면 AI가 구체적인 길흉을 예측합니다."
                 onBack={onBack}
             />
             <main className="flex-grow flex flex-col items-center justify-center text-center py-10">
                 {isLoading ? (
                     <Loader messages={yukhyoMessages} />
-                ) : analysisResult && juyeokReading ? (
+                ) : analysisResult ? (
                     <YukhyoResultDisplay result={analysisResult} onReset={handleReset} onBack={onBack} onSave={handleSave} isSaved={isSaved} question={question} />
                 ) : (
-                    <div className="w-full max-w-md flex flex-col items-center gap-8 p-6 bg-slate-800/50 rounded-2xl shadow-lg border border-slate-700">
-                        <div className="w-full flex flex-col gap-4">
-                            <label htmlFor="yukhyo-question" className="block text-lg font-medium text-slate-300">
-                                어떤 점이 궁금하신가요?
-                            </label>
-                            <textarea
-                                id="yukhyo-question"
-                                value={question}
-                                onChange={(e) => setQuestion(e.target.value)}
-                                placeholder="예) 이번 시험에 합격할 수 있을까요?"
-                                className="w-full p-3 h-32 bg-slate-700/50 border border-slate-600 rounded-lg text-white resize-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
-                                aria-label="육효 질문"
-                            />
-                        </div>
-                        <button
-                          onClick={handleAnalyze}
-                          disabled={!question.trim()}
-                          className="w-full py-3 px-6 bg-cyan-500 text-slate-900 font-bold text-lg rounded-lg shadow-md transition-all duration-300 hover:bg-cyan-400 hover:shadow-cyan-400/30 disabled:bg-slate-600 disabled:text-slate-400 disabled:cursor-not-allowed disabled:shadow-none"
-                        >
-                          육효점 보기
-                        </button>
-                    </div>
+                    <ImageAndQuestionUploader
+                        onImageSelect={handleImageSelect}
+                        imageUrl={imageUrl}
+                        question={question}
+                        onQuestionChange={setQuestion}
+                        onAnalyze={handleAnalyze}
+                        hasImage={!!imageFile}
+                        buttonText="육효점 보기"
+                    />
                 )}
                 {error && (
                     <div className="mt-6 bg-red-500/20 border border-red-500 text-red-300 px-4 py-3 rounded-lg relative" role="alert">
@@ -1029,10 +1054,25 @@ const YukhyoAnalyzerPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
 const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<Page>('home');
 
+  // This function is for programmatic navigation by components
   const navigateTo = (page: Page) => {
-    setCurrentPage(page);
-    window.scrollTo(0, 0);
+    window.location.hash = page === 'home' ? '' : page;
   };
+
+  // This effect synchronizes the URL hash with the component state
+  useEffect(() => {
+    const handleHashChange = () => {
+      const pageFromHash = (window.location.hash.substring(1) || 'home') as Page;
+      setCurrentPage(pageFromHash);
+      window.scrollTo(0, 0);
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    // Initial page load
+    handleHashChange();
+
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []); // Empty dependency array ensures this runs only once
 
   const renderPage = () => {
     switch (currentPage) {
@@ -1055,7 +1095,11 @@ const App: React.FC = () => {
       case 'daily-tarot':
         return <DailyTarotPage onBack={() => navigateTo('home')} />;
       case 'saved-results':
-        return <SavedResultsPage onBack={() => navigateTo('home')} />;
+        return (
+          <PremiumRoute navigate={navigateTo}>
+            <SavedResultsPage onBack={() => navigateTo('home')} />
+          </PremiumRoute>
+        );
       case 'about':
         return <AboutPage onBack={() => navigateTo('home')} />;
       case 'privacy':
@@ -1066,6 +1110,8 @@ const App: React.FC = () => {
         return <GuidePage onBack={() => navigateTo('home')} />;
       case 'changelog':
         return <ChangelogPage onBack={() => navigateTo('home')} />;
+      case 'checkout':
+        return <CheckoutPage onBack={() => navigateTo('home')} />;
       case 'home':
       default:
         return <HomePage onNavigate={navigateTo} />;

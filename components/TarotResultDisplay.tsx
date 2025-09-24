@@ -4,9 +4,10 @@ import { RefreshIcon, HomeIcon, TarotCardBackIcon, SaveIcon, ArrowLeftIcon } fro
 import { AnalysisInfo } from './AnalysisInfo';
 import { getCardVisualComponent } from '../utils/tarotUtils';
 import { ShareButtons } from './ShareButtons';
-import { PremiumPlaceholder } from './PremiumPlaceholder';
+import { UpgradeCTA } from './PremiumPlaceholder';
 import { TypingResult } from './TypingResult';
-import { motion } from 'framer-motion';
+// FIX: Import Variants type from framer-motion to resolve typing errors.
+import { motion, Variants } from 'framer-motion';
 
 interface TarotResultDisplayProps {
   result: TarotResult;
@@ -82,8 +83,9 @@ const getSpreadLabels = (count: number): string[] => {
     }
 };
 
-const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
-const itemVariants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } } };
+// FIX: Explicitly type animation variants to satisfy framer-motion's stricter type requirements.
+const containerVariants: Variants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
+const itemVariants: Variants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } } };
 
 
 export const TarotResultDisplay: React.FC<TarotResultDisplayProps> = ({ result, drawnCards, onReset, onBack, onSave, isSaved, isSavedView, question }) => {
@@ -139,7 +141,7 @@ export const TarotResultDisplay: React.FC<TarotResultDisplayProps> = ({ result, 
         })}
       </div>
       
-      {!isSavedView && <motion.div variants={itemVariants}><PremiumPlaceholder /></motion.div>}
+      {!isSavedView && <motion.div variants={itemVariants}><UpgradeCTA /></motion.div>}
       <motion.div variants={itemVariants}><AnalysisInfo /></motion.div>
       {!isSavedView && <motion.div variants={itemVariants}><ShareButtons shareText={shareText} /></motion.div>}
 

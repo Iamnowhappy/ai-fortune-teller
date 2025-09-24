@@ -66,8 +66,10 @@ export const analyzeJuyeok = async (question: string, reading: JuyeokReading): P
     return analyze<JuyeokResult>('juyeok', { question, reading });
 };
 
-export const analyzeYukhyo = async (question: string, hexagram: Hexagram, ganjiDate: string): Promise<YukhyoResult> => {
-    return analyze<YukhyoResult>('yukhyo', { question, hexagram, ganjiDate });
+export const analyzeYukhyo = async (imageFile: File, question: string): Promise<YukhyoResult> => {
+  const data = await fileToBase64(imageFile);
+  const mimeType = imageFile.type;
+  return analyze<YukhyoResult>('yukhyo', { data, mimeType, question });
 };
 
 export const analyzeDailyTarot = async (card: CardDraw): Promise<DailyTarotResult> => {
