@@ -19,6 +19,7 @@ interface TarotResultDisplayProps {
   isSavedView?: boolean;
   question?: string;
   onNavigate: (page: string) => void;
+  email: string | null;
 }
 
 const Card: React.FC<{ card: CardDraw; index: number }> = ({ card, index }) => {
@@ -87,18 +88,18 @@ const getSpreadLabels = (count: number): string[] => {
 const containerVariants: Variants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
 const itemVariants: Variants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } } };
 
-export const TarotResultDisplay: React.FC<TarotResultDisplayProps> = ({ result, drawnCards, onReset, onBack, onSave, isSaved, isSavedView, question, onNavigate }) => {
+export const TarotResultDisplay: React.FC<TarotResultDisplayProps> = ({ result, drawnCards, onReset, onBack, onSave, isSaved, isSavedView, question, onNavigate, email }) => {
   const cardNames = drawnCards.map(c => `${c.name}(${c.orientation})`).join(', ');
   const shareText = `질문: "${question || '나의 운세'}"\n뽑힌 카드: ${cardNames}\n\n[종합 리딩]\n${result.overall_reading}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
   const spreadLabels = getSpreadLabels(drawnCards.length);
   
   const PremiumContent = () => (
-    <div className="space-y-6 mt-8">
+    <motion.div variants={itemVariants} className="space-y-6 mt-8">
       <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display text-center">카드별 상세 해석 (프리미엄)</h2>
       {result.cards.map((interp, index) => {
         const correspondingCard = drawnCards[index];
         return (
-          <motion.div variants={itemVariants} key={index} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 sm:p-8 flex flex-col gap-4">
+          <div key={index} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 sm:p-8 flex flex-col gap-4">
             {correspondingCard?.imageData && correspondingCard?.mimeType && (
               <div className="w-full max-w-sm mx-auto rounded-lg overflow-hidden relative shadow-lg my-2">
                 <img 
@@ -115,11 +116,11 @@ export const TarotResultDisplay: React.FC<TarotResultDisplayProps> = ({ result, 
                 ({interp.orientation})
               </p>
             </div>
-            <TypingResult text={interp.meaning} className="text-slate-400 leading-relaxed whitespace-pre-wrap" />
-          </motion.div>
+            <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{interp.meaning}</p>
+          </div>
         );
       })}
-    </div>
+    </motion.div>
   );
   
   return (
@@ -146,7 +147,7 @@ export const TarotResultDisplay: React.FC<TarotResultDisplayProps> = ({ result, 
       {!isSavedView && <motion.div variants={itemVariants}><UpgradeCTA /></motion.div>}
 
       {isSavedView ? <PremiumContent /> : (
-        <PremiumRoute navigate={onNavigate}>
+        <PremiumRoute navigate={onNavigate} email={email}>
             <PremiumContent />
         </PremiumRoute>
       )}

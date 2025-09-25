@@ -29,7 +29,7 @@ export const YukhyoResultDisplay: React.FC<YukhyoResultDisplayProps> = ({ result
   const PremiumContent = () => (
      <motion.div variants={itemVariants} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 mt-8">
         <h3 className="text-xl font-bold text-white mb-3 font-display">종합 해설 및 조언 (프리미엄)</h3>
-        <TypingResult text={result.overall_interpretation} className="text-slate-400 leading-relaxed whitespace-pre-wrap" />
+        <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{result.overall_interpretation}</p>
     </motion.div>
   );
 
@@ -41,7 +41,7 @@ export const YukhyoResultDisplay: React.FC<YukhyoResultDisplayProps> = ({ result
       animate="visible"
     >
       <motion.div variants={itemVariants} className="bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8">
-        <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-1 font-display">육효 분석 결과</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-1 font-display">육효 분석 (무료)</h2>
         <p className="text-slate-400 mb-4">{result.ganji_date} 기준</p>
         
         <div className="overflow-x-auto">
@@ -72,12 +72,12 @@ export const YukhyoResultDisplay: React.FC<YukhyoResultDisplayProps> = ({ result
         </div>
       </motion.div>
 
-      <div className="space-y-6 mt-8">
-        <motion.div variants={itemVariants} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+      <motion.div variants={itemVariants} className="space-y-6 mt-8">
+        <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
             <h3 className="text-xl font-bold text-white mb-3 font-display">핵심 분석 (용신) - 무료</h3>
             <TypingResult text={result.yongsin} className="text-slate-400 leading-relaxed whitespace-pre-wrap" />
-        </motion.div>
-      </div>
+        </div>
+      </motion.div>
       
       {!isSavedView && <motion.div variants={itemVariants}><UpgradeCTA /></motion.div>}
 

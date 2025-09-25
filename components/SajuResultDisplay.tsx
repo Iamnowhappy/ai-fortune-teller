@@ -26,16 +26,17 @@ export const SajuResultDisplay: React.FC<SajuResultDisplayProps> = ({ result, on
   const shareText = `AI 사주 분석 결과, 저의 일간은 ${result.day_master} 입니다.\n\n[종합 분석]\n${result.overall_analysis}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
   
   const PremiumContent = () => (
-     <div className="space-y-6 mt-8">
-        <motion.div variants={itemVariants} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
-            <h3 className="text-xl font-bold text-white mb-3 font-display">오행의 균형 (프리미엄)</h3>
-            <TypingResult text={result.elemental_analysis} className="text-slate-400 leading-relaxed whitespace-pre-wrap" />
-        </motion.div>
-        <motion.div variants={itemVariants} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
-            <h3 className="text-xl font-bold text-white mb-3 font-display">삶의 조언 (프리미엄)</h3>
-            <TypingResult text={result.life_advice} className="text-slate-400 leading-relaxed whitespace-pre-wrap" />
-        </motion.div>
-      </div>
+     <motion.div variants={itemVariants} className="space-y-6 mt-8">
+        <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display text-center">사주 심층 분석 (프리미엄)</h2>
+        <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+            <h3 className="text-xl font-bold text-white mb-3 font-display">오행의 균형</h3>
+            <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{result.elemental_analysis}</p>
+        </div>
+        <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+            <h3 className="text-xl font-bold text-white mb-3 font-display">삶의 조언</h3>
+            <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{result.life_advice}</p>
+        </div>
+      </motion.div>
   );
 
   return (
@@ -46,7 +47,7 @@ export const SajuResultDisplay: React.FC<SajuResultDisplayProps> = ({ result, on
       animate="visible"
     >
       <motion.div variants={itemVariants} className="bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8">
-        <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display">사주 명식 (四柱命式)</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display">사주 명식 (무료)</h2>
         <div className="grid grid-cols-4 gap-2 text-center text-white rounded-lg overflow-hidden border border-slate-700">
             <div className="bg-slate-700/50 p-2 font-bold">시주(時柱)</div>
             <div className="bg-slate-700/50 p-2 font-bold">일주(日柱)</div>
@@ -62,12 +63,12 @@ export const SajuResultDisplay: React.FC<SajuResultDisplayProps> = ({ result, on
         </p>
       </motion.div>
 
-      <div className="space-y-6 mt-8">
-        <motion.div variants={itemVariants} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+      <motion.div variants={itemVariants} className="space-y-6 mt-8">
+        <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
             <h3 className="text-xl font-bold text-white mb-3 font-display">종합 분석 (무료)</h3>
             <TypingResult text={result.overall_analysis} className="text-slate-400 leading-relaxed whitespace-pre-wrap" />
-        </motion.div>
-      </div>
+        </div>
+      </motion.div>
       
       {!isSavedView && <motion.div variants={itemVariants}><UpgradeCTA /></motion.div>}
 

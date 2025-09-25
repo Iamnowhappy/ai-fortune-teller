@@ -5,8 +5,8 @@ import { AnalysisInfo } from './AnalysisInfo';
 import { ShareButtons } from './ShareButtons';
 import { UpgradeCTA } from './PremiumPlaceholder';
 import { TypingResult } from './TypingResult';
-// FIX: Import Variants type from framer-motion to resolve typing errors.
 import { motion, Variants } from 'framer-motion';
+import { PremiumRoute } from './shared/PremiumRoute';
 
 interface JuyeokResultDisplayProps {
   result: JuyeokResult;
@@ -17,6 +17,8 @@ interface JuyeokResultDisplayProps {
   isSaved?: boolean;
   isSavedView?: boolean;
   question?: string;
+  onNavigate: (page: string) => void;
+  email: string | null;
 }
 
 const HexagramVisual: React.FC<{ lines: LineType[], changingLines?: number[] }> = ({ lines, changingLines = [] }) => (
@@ -42,14 +44,23 @@ const HexagramVisual: React.FC<{ lines: LineType[], changingLines?: number[] }> 
     </div>
 );
 
-// FIX: Explicitly type animation variants to satisfy framer-motion's stricter type requirements.
 const containerVariants: Variants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
 const itemVariants: Variants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } } };
 
-
-export const JuyeokResultDisplay: React.FC<JuyeokResultDisplayProps> = ({ result, reading, onReset, onBack, onSave, isSaved, isSavedView, question }) => {
+export const JuyeokResultDisplay: React.FC<JuyeokResultDisplayProps> = ({ result, reading, onReset, onBack, onSave, isSaved, isSavedView, question, onNavigate, email }) => {
   const shareText = `질문: "${question || '나의 운세'}"\n본괘: ${result.present_hexagram_name}\n\n[종합 해설]\n${result.interpretation}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
   
+  const PremiumContent = () => (
+    <>
+      {result.changing_lines_interpretation && (
+        <motion.div variants={itemVariants} className="mt-8 bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+            <h3 className="text-xl font-bold text-white mb-3 font-display">변화의 핵심 (變爻) - 프리미엄</h3>
+            <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{result.changing_lines_interpretation}</p>
+        </motion.div>
+      )}
+    </>
+  );
+
   return (
     <motion.div 
       className="w-full max-w-4xl"
@@ -86,18 +97,18 @@ export const JuyeokResultDisplay: React.FC<JuyeokResultDisplayProps> = ({ result
         </motion.div>
 
       <motion.div variants={itemVariants} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 sm:p-8">
-        <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display">종합 해설</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display">종합 해설 (무료)</h2>
         <TypingResult text={result.interpretation} className="text-slate-300 leading-relaxed whitespace-pre-wrap" />
       </motion.div>
 
-      {result.changing_lines_interpretation && (
-        <motion.div variants={itemVariants} className="mt-8 bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
-            <h3 className="text-xl font-bold text-white mb-3 font-display">변화의 핵심 (變爻)</h3>
-            <TypingResult text={result.changing_lines_interpretation} className="text-slate-400 leading-relaxed whitespace-pre-wrap" />
-        </motion.div>
-      )}
-      
       {!isSavedView && <motion.div variants={itemVariants}><UpgradeCTA /></motion.div>}
+
+      {isSavedView ? <PremiumContent /> : (
+        <PremiumRoute navigate={onNavigate} email={email}>
+            <PremiumContent />
+        </PremiumRoute>
+      )}
+
       <motion.div variants={itemVariants}><AnalysisInfo /></motion.div>
       {!isSavedView && <motion.div variants={itemVariants}><ShareButtons shareText={shareText} /></motion.div>}
 

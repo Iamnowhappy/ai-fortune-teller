@@ -27,16 +27,17 @@ export const AstrologyResultDisplay: React.FC<AstrologyResultDisplayProps> = ({ 
   const shareText = `AI가 분석한 저의 별자리는 ${result.zodiac_sign}입니다.\n\n[성격 분석]\n${result.analysis.personality}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
   
   const PremiumContent = () => (
-     <div className="space-y-6 mt-8">
-        <motion.div variants={itemVariants} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
-            <h3 className="text-xl font-bold text-white mb-3 font-display">연애 및 관계 (프리미엄)</h3>
-            <TypingResult text={result.analysis.love_life} className="text-slate-400 leading-relaxed" />
-        </motion.div>
-        <motion.div variants={itemVariants} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
-            <h3 className="text-xl font-bold text-white mb-3 font-display">직업 및 경력 (프리미엄)</h3>
-            <TypingResult text={result.analysis.work_career} className="text-slate-400 leading-relaxed" />
-        </motion.div>
-      </div>
+     <motion.div variants={itemVariants} className="space-y-6 mt-8">
+        <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display text-center">상세 운세 분석 (프리미엄)</h2>
+        <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+            <h3 className="text-xl font-bold text-white mb-3 font-display">연애 및 관계</h3>
+            <p className="text-slate-400 leading-relaxed">{result.analysis.love_life}</p>
+        </div>
+        <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+            <h3 className="text-xl font-bold text-white mb-3 font-display">직업 및 경력</h3>
+            <p className="text-slate-400 leading-relaxed">{result.analysis.work_career}</p>
+        </div>
+      </motion.div>
   );
 
   return (
@@ -47,7 +48,7 @@ export const AstrologyResultDisplay: React.FC<AstrologyResultDisplayProps> = ({ 
       animate="visible"
     >
       <motion.div variants={itemVariants} className="bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8 text-center">
-        <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-2 font-display">당신의 별자리</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-2 font-display">당신의 별자리 (무료)</h2>
         <p className="text-4xl sm:text-5xl font-bold text-white mb-4">{result.zodiac_sign}</p>
         <div className="flex justify-center gap-6 text-slate-300">
             <span>수호성: {result.ruling_planet}</span>
@@ -55,12 +56,12 @@ export const AstrologyResultDisplay: React.FC<AstrologyResultDisplayProps> = ({ 
         </div>
       </motion.div>
 
-      <div className="space-y-6 mt-8">
-        <motion.div variants={itemVariants} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+      <motion.div variants={itemVariants} className="space-y-6 mt-8">
+        <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
             <h3 className="text-xl font-bold text-white mb-3 font-display">성격 분석 (무료)</h3>
             <TypingResult text={result.analysis.personality} className="text-slate-400 leading-relaxed" />
-        </motion.div>
-      </div>
+        </div>
+      </motion.div>
       
       {!isSavedView && <motion.div variants={itemVariants}><UpgradeCTA /></motion.div>}
 

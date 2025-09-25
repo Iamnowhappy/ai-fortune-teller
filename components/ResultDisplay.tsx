@@ -44,20 +44,23 @@ export const ResultDisplay: React.FC<ResultDisplayProps> = ({ result, onReset, o
   const shareText = `AI 관상가로 분석한 저의 관상 결과입니다:\n\n[총평]\n${result.overall_impression}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
 
   const PremiumContent = () => (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-      {result.features.map((feature, index) => (
-        <motion.div variants={itemVariants} key={index} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 flex flex-col gap-4 transition-transform duration-300 hover:scale-105 hover:border-cyan-500">
-          <div className="flex items-center gap-4">
-            {getFeatureIcon(feature.feature)}
-            <div>
-              <h3 className="text-xl font-bold text-white">{feature.feature} (프리미엄)</h3>
-              <p className="text-sm text-cyan-400 font-semibold">{feature.shape}</p>
+    <motion.div variants={itemVariants}>
+      <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 my-6 font-display text-center">부위별 상세 분석 (프리미엄)</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {result.features.map((feature, index) => (
+          <motion.div variants={itemVariants} key={index} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 flex flex-col gap-4 transition-transform duration-300 hover:scale-105 hover:border-cyan-500">
+            <div className="flex items-center gap-4">
+              {getFeatureIcon(feature.feature)}
+              <div>
+                <h3 className="text-xl font-bold text-white">{feature.feature}</h3>
+                <p className="text-sm text-cyan-400 font-semibold">{feature.shape}</p>
+              </div>
             </div>
-          </div>
-          <p className="text-slate-400 leading-relaxed text-left text-base">{feature.analysis}</p>
-        </motion.div>
-      ))}
-    </div>
+            <p className="text-slate-400 leading-relaxed text-left text-base">{feature.analysis}</p>
+          </motion.div>
+        ))}
+      </div>
+    </motion.div>
   );
 
   return (

@@ -32,7 +32,7 @@ export const ImpressionResultDisplay: React.FC<ImpressionResultDisplayProps> = (
         </div>
         <div>
             <h3 className="text-xl font-bold text-yellow-300 mb-2 font-display">첫인상 개선을 위한 TIP (프리미엄)</h3>
-            <TypingResult text={result.improvement_tip} className="text-slate-400 leading-relaxed" />
+            <p className="text-slate-400 leading-relaxed">{result.improvement_tip}</p>
         </div>
       </motion.div>
   );
