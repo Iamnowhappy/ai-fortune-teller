@@ -1,4 +1,5 @@
 
+
 import './index.css';
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
@@ -49,6 +50,16 @@ const HomePage: React.FC<{ onNavigate: (page: Page) => void; }> = ({ onNavigate 
     }));
   }, []);
 
+  useEffect(() => {
+    // Check for payment success message in URL hash
+    const hashParams = new URLSearchParams(window.location.hash.split('?')[1]);
+    if (hashParams.get("payment") === "success") {
+        alert("결제가 성공적으로 완료되었습니다! 30일간 프리미엄 기능을 이용하실 수 있습니다.");
+        // Clean up the URL
+        const newUrl = window.location.pathname + window.location.hash.split('?')[0];
+        window.history.replaceState({}, document.title, newUrl);
+    }
+  }, []);
 
   useEffect(() => {
     const fetchFortuneImage = async () => {
@@ -344,7 +355,34 @@ const HomePage: React.FC<{ onNavigate: (page: Page) => void; }> = ({ onNavigate 
 };
 
 // --- CheckoutPage Component ---
-const CheckoutPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
+const CheckoutPage: React.FC<{ onBack: () => void; email: string | null; }> = ({ onBack, email }) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleCheckout = async () => {
+    if (!email) {
+      setError("프리미엄 결제를 위해 이메일을 먼저 입력해주세요.");
+      return;
+    }
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || '결제 세션 생성에 실패했습니다.');
+      }
+      window.location.href = data.url;
+    } catch (err: any) {
+      setError(err.message);
+      setIsLoading(false);
+    }
+  };
+
   return (
     <>
       <Header
@@ -360,11 +398,13 @@ const CheckoutPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
             모든 상세 분석 리포트, 광고 제거, 분석 결과 무제한 저장 등 특별한 혜택을 누려보세요.
           </p>
           <button
-            onClick={() => alert('결제 기능은 현재 준비 중입니다.')}
-            className="w-full py-3 px-6 bg-cyan-500 text-slate-900 font-bold text-lg rounded-lg shadow-md transition-all duration-300 hover:bg-cyan-400 hover:shadow-cyan-400/30"
+            onClick={handleCheckout}
+            disabled={isLoading}
+            className="w-full py-3 px-6 bg-cyan-500 text-slate-900 font-bold text-lg rounded-lg shadow-md transition-all duration-300 hover:bg-cyan-400 hover:shadow-cyan-400/30 disabled:opacity-50 disabled:cursor-wait"
           >
-            ₩990원으로 시작하기
+            {isLoading ? '세션 생성 중...' : '₩990원으로 시작하기'}
           </button>
+           {error && <p className="text-red-400 mt-4">{error}</p>}
         </div>
       </main>
     </>
@@ -373,7 +413,7 @@ const CheckoutPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
 
 
 // --- FaceReaderPage Component ---
-const FaceReaderPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) => void; }> = ({ onBack, onNavigate }) => {
+const FaceReaderPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) => void; email: string | null; }> = ({ onBack, onNavigate, email }) => {
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imageUrl, setImageUrl] = useState<string | null>(null);
     const [analysisResult, setAnalysisResult] = useState<PhysiognomyResult | null>(null);
@@ -444,7 +484,7 @@ const FaceReaderPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) =>
                 {isLoading ? (
                 <Loader />
                 ) : analysisResult ? (
-                <ResultDisplay result={analysisResult} onReset={handleReset} onBack={onBack} onSave={handleSave} isSaved={isSaved} onNavigate={onNavigate} />
+                <ResultDisplay result={analysisResult} onReset={handleReset} onBack={onBack} onSave={handleSave} isSaved={isSaved} onNavigate={onNavigate} email={email} />
                 ) : (
                 <ImageUploader
                     onImageSelect={handleImageSelect}
@@ -466,7 +506,7 @@ const FaceReaderPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) =>
 };
 
 // --- PalmReaderPage Component ---
-const PalmReaderPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) => void; }> = ({ onBack, onNavigate }) => {
+const PalmReaderPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) => void; email: string | null; }> = ({ onBack, onNavigate, email }) => {
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imageUrl, setImageUrl] = useState<string | null>(null);
     const [analysisResult, setAnalysisResult] = useState<PalmistryResult | null>(null);
@@ -545,7 +585,7 @@ const PalmReaderPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) =>
                 {isLoading ? (
                 <Loader messages={palmReadingMessages} />
                 ) : analysisResult ? (
-                <PalmResultDisplay result={analysisResult} onReset={handleReset} onBack={onBack} onSave={handleSave} isSaved={isSaved} onNavigate={onNavigate} />
+                <PalmResultDisplay result={analysisResult} onReset={handleReset} onBack={onBack} onSave={handleSave} isSaved={isSaved} onNavigate={onNavigate} email={email} />
                 ) : (
                 <ImageUploader
                     onImageSelect={handleImageSelect}
@@ -568,7 +608,7 @@ const PalmReaderPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) =>
 };
 
 // --- ImpressionAnalyzerPage Component ---
-const ImpressionAnalyzerPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) => void; }> = ({ onBack, onNavigate }) => {
+const ImpressionAnalyzerPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) => void; email: string | null; }> = ({ onBack, onNavigate, email }) => {
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imageUrl, setImageUrl] = useState<string | null>(null);
     const [analysisResult, setAnalysisResult] = useState<ImpressionAnalysisResult | null>(null);
@@ -647,7 +687,7 @@ const ImpressionAnalyzerPage: React.FC<{ onBack: () => void; onNavigate: (page: 
                 {isLoading ? (
                     <Loader messages={impressionAnalysisMessages} />
                 ) : analysisResult ? (
-                    <ImpressionResultDisplay result={analysisResult} onReset={handleReset} onBack={onBack} onSave={handleSave} isSaved={isSaved} onNavigate={onNavigate} />
+                    <ImpressionResultDisplay result={analysisResult} onReset={handleReset} onBack={onBack} onSave={handleSave} isSaved={isSaved} onNavigate={onNavigate} email={email} />
                 ) : (
                     <ImageUploader
                         onImageSelect={handleImageSelect}
@@ -670,7 +710,7 @@ const ImpressionAnalyzerPage: React.FC<{ onBack: () => void; onNavigate: (page: 
 };
 
 // --- AstrologyReaderPage Component ---
-const AstrologyReaderPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) => void; }> = ({ onBack, onNavigate }) => {
+const AstrologyReaderPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) => void; email: string | null; }> = ({ onBack, onNavigate, email }) => {
     const [analysisResult, setAnalysisResult] = useState<AstrologyResult | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
@@ -733,7 +773,7 @@ const AstrologyReaderPage: React.FC<{ onBack: () => void; onNavigate: (page: Pag
                 {isLoading ? (
                     <Loader messages={astrologyMessages} />
                 ) : analysisResult ? (
-                    <AstrologyResultDisplay result={analysisResult} onReset={handleReset} onBack={onBack} onSave={handleSave} isSaved={isSaved} onNavigate={onNavigate} />
+                    <AstrologyResultDisplay result={analysisResult} onReset={handleReset} onBack={onBack} onSave={handleSave} isSaved={isSaved} onNavigate={onNavigate} email={email} />
                 ) : (
                     <BirthDateInput
                         onAnalyze={handleAnalyze}
@@ -752,7 +792,7 @@ const AstrologyReaderPage: React.FC<{ onBack: () => void; onNavigate: (page: Pag
 };
 
 // --- SajuAnalyzerPage Component ---
-const SajuAnalyzerPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) => void; }> = ({ onBack, onNavigate }) => {
+const SajuAnalyzerPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) => void; email: string | null; }> = ({ onBack, onNavigate, email }) => {
     const [analysisResult, setAnalysisResult] = useState<SajuResult | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
@@ -815,7 +855,7 @@ const SajuAnalyzerPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) 
                 {isLoading ? (
                     <Loader messages={sajuMessages} />
                 ) : analysisResult ? (
-                    <SajuResultDisplay result={analysisResult} onReset={handleReset} onBack={onBack} onSave={handleSave} isSaved={isSaved} onNavigate={onNavigate} />
+                    <SajuResultDisplay result={analysisResult} onReset={handleReset} onBack={onBack} onSave={handleSave} isSaved={isSaved} onNavigate={onNavigate} email={email} />
                 ) : (
                     <BirthDateInput
                         onAnalyze={handleAnalyze}
@@ -835,7 +875,7 @@ const SajuAnalyzerPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) 
 };
 
 // --- JuyeokReaderPage Component ---
-const JuyeokReaderPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) => void; }> = ({ onBack, onNavigate }) => {
+const JuyeokReaderPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) => void; email: string | null; }> = ({ onBack, onNavigate, email }) => {
     const [question, setQuestion] = useState<string>('');
     const [analysisResult, setAnalysisResult] = useState<JuyeokResult | null>(null);
     const [juyeokReading, setJuyeokReading] = useState<JuyeokReading | null>(null);
@@ -911,7 +951,7 @@ const JuyeokReaderPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) 
                 {isLoading ? (
                     <Loader messages={juyeokMessages} />
                 ) : analysisResult && juyeokReading ? (
-                    <JuyeokResultDisplay result={analysisResult} reading={juyeokReading} onReset={handleReset} onBack={onBack} onSave={handleSave} isSaved={isSaved} question={question} onNavigate={onNavigate} />
+                    <JuyeokResultDisplay result={analysisResult} reading={juyeokReading} onReset={handleReset} onBack={onBack} onSave={handleSave} isSaved={isSaved} question={question} onNavigate={onNavigate} email={email} />
                 ) : (
                     <div className="w-full max-w-md flex flex-col items-center gap-8 p-6 bg-slate-800/50 rounded-2xl shadow-lg border border-slate-700">
                         <div className="w-full flex flex-col gap-4">
@@ -948,7 +988,7 @@ const JuyeokReaderPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) 
 };
 
 // --- YukhyoAnalyzerPage Component ---
-const YukhyoAnalyzerPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) => void; }> = ({ onBack, onNavigate }) => {
+const YukhyoAnalyzerPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) => void; email: string | null; }> = ({ onBack, onNavigate, email }) => {
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imageUrl, setImageUrl] = useState<string | null>(null);
     const [question, setQuestion] = useState<string>('');
@@ -1035,7 +1075,7 @@ const YukhyoAnalyzerPage: React.FC<{ onBack: () => void; onNavigate: (page: Page
                 {isLoading ? (
                     <Loader messages={yukhyoMessages} />
                 ) : analysisResult ? (
-                    <YukhyoResultDisplay result={analysisResult} onReset={handleReset} onBack={onBack} onSave={handleSave} isSaved={isSaved} question={question} onNavigate={onNavigate} />
+                    <YukhyoResultDisplay result={analysisResult} onReset={handleReset} onBack={onBack} onSave={handleSave} isSaved={isSaved} question={question} onNavigate={onNavigate} email={email} />
                 ) : (
                     <ImageAndQuestionUploader
                         onImageSelect={handleImageSelect}
@@ -1059,55 +1099,79 @@ const YukhyoAnalyzerPage: React.FC<{ onBack: () => void; onNavigate: (page: Page
 };
 
 
+// --- UserAuth Component for testing ---
+const UserAuth: React.FC<{ email: string | null; onLogin: (email: string) => void; onLogout: () => void; }> = ({ email, onLogin, onLogout }) => {
+    const [inputEmail, setInputEmail] = useState('');
+    if (email) {
+        return (
+            <div className="absolute top-4 right-4 text-sm text-slate-300 flex items-center gap-2">
+                <span>{email}</span>
+                <button onClick={onLogout} className="bg-slate-600 text-xs p-1 rounded hover:bg-slate-500">Logout</button>
+            </div>
+        );
+    }
+    return (
+        <form onSubmit={(e) => { e.preventDefault(); onLogin(inputEmail); }} className="absolute top-4 right-4 flex gap-2 items-center z-20">
+            <input 
+                type="email" 
+                value={inputEmail} 
+                onChange={e => setInputEmail(e.target.value)} 
+                placeholder="테스트 이메일 입력" 
+                className="bg-slate-700/80 border border-slate-600 text-sm p-2 rounded-md text-white w-48"
+                required
+            />
+            <button type="submit" className="bg-cyan-600 text-white text-sm py-2 px-3 rounded-md hover:bg-cyan-500 transition-colors">로그인</button>
+        </form>
+    );
+};
+
+
 // --- Main App Component (Router) ---
 const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<Page>('home');
+  const [userEmail, setUserEmail] = useState<string | null>(null);
 
-  // This function is for programmatic navigation by components
   const navigateTo = (page: Page) => {
     window.location.hash = page === 'home' ? '' : page;
   };
 
-  // This effect synchronizes the URL hash with the component state
   useEffect(() => {
     const handleHashChange = () => {
-      const pageFromHash = (window.location.hash.substring(1) || 'home') as Page;
+      const pageFromHash = (window.location.hash.substring(1).split('?')[0] || 'home') as Page;
       setCurrentPage(pageFromHash);
       window.scrollTo(0, 0);
     };
 
     window.addEventListener('hashchange', handleHashChange);
-    // Initial page load
     handleHashChange();
 
     return () => window.removeEventListener('hashchange', handleHashChange);
-  }, []); // Empty dependency array ensures this runs only once
+  }, []);
 
   const renderPage = () => {
     switch (currentPage) {
       case 'face-reader':
-        return <FaceReaderPage onBack={() => navigateTo('home')} onNavigate={navigateTo} />;
+        return <FaceReaderPage onBack={() => navigateTo('home')} onNavigate={navigateTo} email={userEmail} />;
       case 'palm-reader':
-        return <PalmReaderPage onBack={() => navigateTo('home')} onNavigate={navigateTo} />;
+        return <PalmReaderPage onBack={() => navigateTo('home')} onNavigate={navigateTo} email={userEmail} />;
       case 'impression-analyzer':
-        return <ImpressionAnalyzerPage onBack={() => navigateTo('home')} onNavigate={navigateTo} />;
+        return <ImpressionAnalyzerPage onBack={() => navigateTo('home')} onNavigate={navigateTo} email={userEmail} />;
       case 'astrology-reader':
-        return <AstrologyReaderPage onBack={() => navigateTo('home')} onNavigate={navigateTo} />;
+        return <AstrologyReaderPage onBack={() => navigateTo('home')} onNavigate={navigateTo} email={userEmail} />;
       case 'saju-analyzer':
-        return <SajuAnalyzerPage onBack={() => navigateTo('home')} onNavigate={navigateTo} />;
+        return <SajuAnalyzerPage onBack={() => navigateTo('home')} onNavigate={navigateTo} email={userEmail} />;
       case 'tarot-reader':
-        return <TarotReaderPage onBack={() => navigateTo('home')} onNavigate={navigateTo} />;
+        return <TarotReaderPage onBack={() => navigateTo('home')} onNavigate={navigateTo} email={userEmail} />;
       case 'juyeok-reader':
-        return <JuyeokReaderPage onBack={() => navigateTo('home')} onNavigate={navigateTo} />;
+        return <JuyeokReaderPage onBack={() => navigateTo('home')} onNavigate={navigateTo} email={userEmail} />;
       case 'yukhyo-analyzer':
-        return <YukhyoAnalyzerPage onBack={() => navigateTo('home')} onNavigate={navigateTo} />;
+        return <YukhyoAnalyzerPage onBack={() => navigateTo('home')} onNavigate={navigateTo} email={userEmail} />;
       case 'daily-tarot':
         return <DailyTarotPage onBack={() => navigateTo('home')} />;
       case 'saved-results':
         return (
-          <PremiumRoute navigate={navigateTo}>
-            {/* FIX: Pass navigateTo to SavedResultsPage to be used by its children */}
-            <SavedResultsPage onBack={() => navigateTo('home')} onNavigate={navigateTo} />
+          <PremiumRoute navigate={navigateTo} email={userEmail}>
+            <SavedResultsPage onBack={() => navigateTo('home')} onNavigate={navigateTo} email={userEmail} />
           </PremiumRoute>
         );
       case 'about':
@@ -1121,7 +1185,7 @@ const App: React.FC = () => {
       case 'changelog':
         return <ChangelogPage onBack={() => navigateTo('home')} />;
       case 'checkout':
-        return <CheckoutPage onBack={() => navigateTo('home')} />;
+        return <CheckoutPage onBack={() => navigateTo('home')} email={userEmail} />;
       case 'home':
       default:
         return <HomePage onNavigate={navigateTo} />;
@@ -1129,7 +1193,8 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white flex flex-col items-center p-4 sm:p-6 lg:p-8">
+    <div className="min-h-screen bg-slate-900 text-white flex flex-col items-center p-4 sm:p-6 lg:p-8 relative">
+       <UserAuth email={userEmail} onLogin={setUserEmail} onLogout={() => setUserEmail(null)} />
       <div className="w-full max-w-7xl mx-auto flex flex-col flex-grow">
         {renderPage()}
         <Footer onNavigate={navigateTo} />
