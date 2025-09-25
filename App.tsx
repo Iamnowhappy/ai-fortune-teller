@@ -989,8 +989,6 @@ const JuyeokReaderPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) 
 
 // --- YukhyoAnalyzerPage Component ---
 const YukhyoAnalyzerPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) => void; email: string | null; }> = ({ onBack, onNavigate, email }) => {
-    const [imageFile, setImageFile] = useState<File | null>(null);
-    const [imageUrl, setImageUrl] = useState<string | null>(null);
     const [question, setQuestion] = useState<string>('');
     const [analysisResult, setAnalysisResult] = useState<YukhyoResult | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -999,27 +997,15 @@ const YukhyoAnalyzerPage: React.FC<{ onBack: () => void; onNavigate: (page: Page
 
     const yukhyoMessages = [
         "오늘의 천기를 살피고 있습니다...",
-        "이미지의 기운을 읽어 괘를 세우는 중...",
+        "질문의 기운을 읽어 괘를 세우는 중...",
         "육친과 세응을 배치하고 있습니다...",
         "길흉을 판단할 용신을 찾는 중...",
         "곧 구체적인 예측이 완성됩니다."
     ];
 
-    const handleImageSelect = (file: File) => {
-        setImageFile(file);
-        setImageUrl(URL.createObjectURL(file));
-        setAnalysisResult(null);
-        setError(null);
-        setIsSaved(false);
-    };
-
     const handleAnalyze = useCallback(async () => {
         if (!question.trim()) {
             setError('질문을 입력해주세요.');
-            return;
-        }
-        if (!imageFile) {
-            setError('이미지를 선택해주세요.');
             return;
         }
 
@@ -1029,7 +1015,7 @@ const YukhyoAnalyzerPage: React.FC<{ onBack: () => void; onNavigate: (page: Page
         setIsSaved(false);
         
         try {
-            const result = await analyzeYukhyo(imageFile, question);
+            const result = await analyzeYukhyo(question);
             setAnalysisResult(result);
         } catch (err) {
             console.error(err);
@@ -1037,7 +1023,7 @@ const YukhyoAnalyzerPage: React.FC<{ onBack: () => void; onNavigate: (page: Page
         } finally {
             setIsLoading(false);
         }
-    }, [imageFile, question]);
+    }, [question]);
 
     const handleSave = useCallback(() => {
         if (!analysisResult) return;
@@ -1055,8 +1041,6 @@ const YukhyoAnalyzerPage: React.FC<{ onBack: () => void; onNavigate: (page: Page
     }, [analysisResult, question]);
     
     const handleReset = () => {
-        setImageFile(null);
-        setImageUrl(null);
         setQuestion('');
         setAnalysisResult(null);
         setError(null);
@@ -1068,7 +1052,7 @@ const YukhyoAnalyzerPage: React.FC<{ onBack: () => void; onNavigate: (page: Page
             <Header
                 icon={<YukhyoIcon className="w-10 h-10 text-cyan-400" />}
                 title="AI 육효 분석가"
-                description="질문과 관련된 이미지를 올리면 AI가 구체적인 길흉을 예측합니다."
+                description="질문을 입력하면 AI가 시점의 기운으로 구체적인 길흉을 예측합니다."
                 onBack={onBack}
             />
             <main className="flex-grow flex flex-col items-center justify-center text-center py-10">
@@ -1077,15 +1061,28 @@ const YukhyoAnalyzerPage: React.FC<{ onBack: () => void; onNavigate: (page: Page
                 ) : analysisResult ? (
                     <YukhyoResultDisplay result={analysisResult} onReset={handleReset} onBack={onBack} onSave={handleSave} isSaved={isSaved} question={question} onNavigate={onNavigate} email={email} />
                 ) : (
-                    <ImageAndQuestionUploader
-                        onImageSelect={handleImageSelect}
-                        imageUrl={imageUrl}
-                        question={question}
-                        onQuestionChange={setQuestion}
-                        onAnalyze={handleAnalyze}
-                        hasImage={!!imageFile}
-                        buttonText="육효점 보기"
-                    />
+                    <div className="w-full max-w-md flex flex-col items-center gap-8 p-6 bg-slate-800/50 rounded-2xl shadow-lg border border-slate-700">
+                        <div className="w-full flex flex-col gap-4">
+                            <label htmlFor="yukhyo-question" className="block text-lg font-medium text-slate-300">
+                                어떤 점이 궁금하신가요?
+                            </label>
+                            <textarea
+                                id="yukhyo-question"
+                                value={question}
+                                onChange={(e) => setQuestion(e.target.value)}
+                                placeholder="예) 이번 시험에 합격할 수 있을까요?"
+                                className="w-full p-3 h-32 bg-slate-700/50 border border-slate-600 rounded-lg text-white resize-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                                aria-label="육효 질문"
+                            />
+                        </div>
+                        <button
+                          onClick={handleAnalyze}
+                          disabled={!question.trim()}
+                          className="w-full py-3 px-6 bg-cyan-500 text-slate-900 font-bold text-lg rounded-lg shadow-md transition-all duration-300 hover:bg-cyan-400 hover:shadow-cyan-400/30 disabled:bg-slate-600 disabled:text-slate-400 disabled:cursor-not-allowed disabled:shadow-none"
+                        >
+                          육효점 보기
+                        </button>
+                    </div>
                 )}
                 {error && (
                     <div className="mt-6 bg-red-500/20 border border-red-500 text-red-300 px-4 py-3 rounded-lg relative" role="alert">
