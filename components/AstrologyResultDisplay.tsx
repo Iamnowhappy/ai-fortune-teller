@@ -3,7 +3,7 @@ import type { AstrologyResult } from '../types';
 import { RefreshIcon, HomeIcon, SaveIcon, ArrowLeftIcon } from './icons';
 import { AnalysisInfo } from './AnalysisInfo';
 import { ShareButtons } from './ShareButtons';
-import { PremiumPlaceholder } from './PremiumPlaceholder';
+import { UpgradeCTA } from './PremiumPlaceholder';
 import { TypingResult } from './TypingResult';
 // FIX: Import Variants type from framer-motion to resolve typing errors.
 import { motion, Variants } from 'framer-motion';
@@ -56,7 +56,7 @@ export const AstrologyResultDisplay: React.FC<AstrologyResultDisplayProps> = ({ 
         </motion.div>
       </div>
       
-      {!isSavedView && <motion.div variants={itemVariants}><PremiumPlaceholder /></motion.div>}
+      {!isSavedView && <motion.div variants={itemVariants}><UpgradeCTA /></motion.div>}
       <motion.div variants={itemVariants}><AnalysisInfo /></motion.div>
       {!isSavedView && <motion.div variants={itemVariants}><ShareButtons shareText={shareText} /></motion.div>}
 
