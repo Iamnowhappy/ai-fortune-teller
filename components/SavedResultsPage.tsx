@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import type { SavedResult, CardDraw, JuyeokReading } from '../types';
 import { getSavedResults, deleteResult } from '../utils/storage';
@@ -12,7 +13,7 @@ import { JuyeokResultDisplay } from './JuyeokResultDisplay';
 import { YukhyoResultDisplay } from './YukhyoResultDisplay';
 import { BoxIcon, TrashIcon, HomeIcon } from './icons';
 
-export const SavedResultsPage: React.FC<{ onBack: () => void; }> = ({ onBack: navigateToHome }) => {
+export const SavedResultsPage: React.FC<{ onBack: () => void; onNavigate: (page: string) => void; email: string | null; }> = ({ onBack: navigateToHome, onNavigate, email }) => {
   const [savedResults, setSavedResults] = useState<SavedResult[]>([]);
   const [selectedResult, setSelectedResult] = useState<SavedResult | null>(null);
 
@@ -34,6 +35,8 @@ export const SavedResultsPage: React.FC<{ onBack: () => void; }> = ({ onBack: na
       onBack: () => setSelectedResult(null),
       onReset: () => {}, // No-op, not used in saved view
       isSavedView: true,
+      onNavigate: onNavigate,
+      email: email,
     };
 
     switch (selectedResult.type) {
@@ -48,11 +51,11 @@ export const SavedResultsPage: React.FC<{ onBack: () => void; }> = ({ onBack: na
       case 'saju-analyzer':
         return <SajuResultDisplay result={selectedResult.result} {...props} />;
       case 'tarot-reader':
-        return <TarotResultDisplay result={selectedResult.result} drawnCards={selectedResult.context?.drawnCards as CardDraw[]} {...props} />;
+        return <TarotResultDisplay result={selectedResult.result} drawnCards={selectedResult.context?.drawnCards as CardDraw[]} question={selectedResult.context?.question} {...props} />;
       case 'juyeok-reader':
-         return <JuyeokResultDisplay result={selectedResult.result} reading={selectedResult.context?.reading as JuyeokReading} {...props} />;
+         return <JuyeokResultDisplay result={selectedResult.result} reading={selectedResult.context?.reading as JuyeokReading} question={selectedResult.context?.question} {...props} />;
       case 'yukhyo-analyzer':
-        return <YukhyoResultDisplay result={selectedResult.result} {...props} />;
+        return <YukhyoResultDisplay result={selectedResult.result} question={selectedResult.context?.question} {...props} />;
       default:
         return (
           <div className="text-center p-8">

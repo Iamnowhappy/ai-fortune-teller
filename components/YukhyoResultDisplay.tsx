@@ -17,12 +17,13 @@ interface YukhyoResultDisplayProps {
   isSavedView?: boolean;
   question?: string;
   onNavigate: (page: string) => void;
+  email: string | null;
 }
 
 const containerVariants: Variants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
 const itemVariants: Variants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } } };
 
-export const YukhyoResultDisplay: React.FC<YukhyoResultDisplayProps> = ({ result, onReset, onBack, onSave, isSaved, isSavedView, question, onNavigate }) => {
+export const YukhyoResultDisplay: React.FC<YukhyoResultDisplayProps> = ({ result, onReset, onBack, onSave, isSaved, isSavedView, question, onNavigate, email }) => {
   const shareText = `질문: "${question || '나의 운세'}"\n괘: ${result.hexagram_name}\n\n[종합 해설]\n${result.overall_interpretation}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
   
   const PremiumContent = () => (
@@ -81,7 +82,7 @@ export const YukhyoResultDisplay: React.FC<YukhyoResultDisplayProps> = ({ result
       {!isSavedView && <motion.div variants={itemVariants}><UpgradeCTA /></motion.div>}
 
       {isSavedView ? <PremiumContent /> : (
-        <PremiumRoute navigate={onNavigate}>
+        <PremiumRoute navigate={onNavigate} email={email}>
           <PremiumContent />
         </PremiumRoute>
       )}

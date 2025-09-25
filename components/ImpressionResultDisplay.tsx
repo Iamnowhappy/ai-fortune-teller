@@ -16,12 +16,13 @@ interface ImpressionResultDisplayProps {
   isSaved?: boolean;
   isSavedView?: boolean;
   onNavigate: (page: string) => void;
+  email: string | null;
 }
 
 const containerVariants: Variants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
 const itemVariants: Variants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } } };
 
-export const ImpressionResultDisplay: React.FC<ImpressionResultDisplayProps> = ({ result, onReset, onBack, onSave, isSaved, isSavedView, onNavigate }) => {
+export const ImpressionResultDisplay: React.FC<ImpressionResultDisplayProps> = ({ result, onReset, onBack, onSave, isSaved, isSavedView, onNavigate, email }) => {
   const shareText = `AI가 분석한 저의 첫인상 키워드는 '${result.keywords.join(', ')}' 입니다.\n\n[상세 분석]\n${result.detailed_analysis}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
   
   const PremiumContent = () => (
@@ -58,7 +59,7 @@ export const ImpressionResultDisplay: React.FC<ImpressionResultDisplayProps> = (
       {!isSavedView && <motion.div variants={itemVariants}><UpgradeCTA /></motion.div>}
 
       {isSavedView ? <PremiumContent /> : (
-          <PremiumRoute navigate={onNavigate}>
+          <PremiumRoute navigate={onNavigate} email={email}>
               <PremiumContent />
           </PremiumRoute>
       )}

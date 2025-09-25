@@ -16,12 +16,13 @@ interface SajuResultDisplayProps {
   isSaved?: boolean;
   isSavedView?: boolean;
   onNavigate: (page: string) => void;
+  email: string | null;
 }
 
 const containerVariants: Variants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
 const itemVariants: Variants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } } };
 
-export const SajuResultDisplay: React.FC<SajuResultDisplayProps> = ({ result, onReset, onBack, onSave, isSaved, isSavedView, onNavigate }) => {
+export const SajuResultDisplay: React.FC<SajuResultDisplayProps> = ({ result, onReset, onBack, onSave, isSaved, isSavedView, onNavigate, email }) => {
   const shareText = `AI 사주 분석 결과, 저의 일간은 ${result.day_master} 입니다.\n\n[종합 분석]\n${result.overall_analysis}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
   
   const PremiumContent = () => (
@@ -71,7 +72,7 @@ export const SajuResultDisplay: React.FC<SajuResultDisplayProps> = ({ result, on
       {!isSavedView && <motion.div variants={itemVariants}><UpgradeCTA /></motion.div>}
 
       {isSavedView ? <PremiumContent /> : (
-        <PremiumRoute navigate={onNavigate}>
+        <PremiumRoute navigate={onNavigate} email={email}>
             <PremiumContent />
         </PremiumRoute>
       )}

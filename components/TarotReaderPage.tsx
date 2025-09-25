@@ -11,7 +11,7 @@ import { fileToBase64 } from '../utils/fileUtils';
 
 
 // --- TarotReaderPage Component ---
-export const TarotReaderPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
+export const TarotReaderPage: React.FC<{ onBack: () => void; onNavigate: (page: string) => void; email: string | null; }> = ({ onBack, onNavigate, email }) => {
     type Step = 'input' | 'upload' | 'result';
 
     const [question, setQuestion] = useState<string>('');
@@ -199,7 +199,7 @@ export const TarotReaderPage: React.FC<{ onBack: () => void; }> = ({ onBack }) =
                 {step === 'result' && isLoading && <Loader messages={tarotMessages} />}
                 
                 {step === 'result' && !isLoading && analysisResult && (
-                    <TarotResultDisplay result={analysisResult} drawnCards={drawnCards} onReset={handleReset} onBack={onBack} onSave={handleSave} isSaved={isSaved} question={question} />
+                    <TarotResultDisplay result={analysisResult} drawnCards={drawnCards} onReset={handleReset} onBack={onBack} onSave={handleSave} isSaved={isSaved} question={question} onNavigate={onNavigate} email={email} />
                 )}
 
                 {step === 'input' && renderInputStep()}

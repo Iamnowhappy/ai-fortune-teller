@@ -7,38 +7,49 @@ type NavigateFunction = (page: string) => void;
 interface PremiumRouteProps {
   children: React.ReactNode;
   navigate: NavigateFunction;
+  email: string | null;
 }
 
-// Mock function to simulate checking premium status from a server
-const mockCheckPremium = async (): Promise<boolean> => {
-  return new Promise((resolve) => {
-    // Simulate a network request delay
-    setTimeout(() => {
-      // For this demonstration, we'll always return false
-      // to trigger the redirect to the checkout page.
-      resolve(false); 
-    }, 1500);
-  });
+const checkPremiumStatus = async (email: string): Promise<boolean> => {
+    try {
+        const response = await fetch(`/api/check-premium?email=${encodeURIComponent(email)}`);
+        if (!response.ok) {
+            console.error('Failed to check premium status');
+            return false;
+        }
+        const data = await response.json();
+        return data.isPremium;
+    } catch (error) {
+        console.error('Error checking premium status:', error);
+        return false;
+    }
 };
 
-export const PremiumRoute: React.FC<PremiumRouteProps> = ({ children, navigate }) => {
+export const PremiumRoute: React.FC<PremiumRouteProps> = ({ children, navigate, email }) => {
   const [isChecking, setIsChecking] = useState(true);
   const [isPremium, setIsPremium] = useState<boolean | null>(null);
 
   useEffect(() => {
     const checkStatus = async () => {
-      const premiumStatus = await mockCheckPremium();
+      if (!email) {
+          // If no email, user is not logged in, so not premium.
+          setIsPremium(false);
+          setIsChecking(false);
+          navigate('checkout'); // Or a login page if one existed
+          return;
+      }
+
+      const premiumStatus = await checkPremiumStatus(email);
       setIsPremium(premiumStatus);
       setIsChecking(false);
 
       if (!premiumStatus) {
-        // If not premium, navigate to the checkout page
         navigate('checkout');
       }
     };
 
     checkStatus();
-  }, [navigate]);
+  }, [navigate, email]);
 
   if (isChecking) {
     return (

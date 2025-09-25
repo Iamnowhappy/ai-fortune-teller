@@ -16,6 +16,7 @@ interface ResultDisplayProps {
   isSaved?: boolean;
   isSavedView?: boolean;
   onNavigate: (page: string) => void;
+  email: string | null;
 }
 
 const featureIcons: { [key: string]: React.ReactNode } = {
@@ -39,7 +40,7 @@ const getFeatureIcon = (featureName: string) => {
 const containerVariants: Variants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
 const itemVariants: Variants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } } };
 
-export const ResultDisplay: React.FC<ResultDisplayProps> = ({ result, onReset, onBack, onSave, isSaved, isSavedView, onNavigate }) => {
+export const ResultDisplay: React.FC<ResultDisplayProps> = ({ result, onReset, onBack, onSave, isSaved, isSavedView, onNavigate, email }) => {
   const shareText = `AI 관상가로 분석한 저의 관상 결과입니다:\n\n[총평]\n${result.overall_impression}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
 
   const PremiumContent = () => (
@@ -74,7 +75,7 @@ export const ResultDisplay: React.FC<ResultDisplayProps> = ({ result, onReset, o
       {!isSavedView && <motion.div variants={itemVariants}><UpgradeCTA /></motion.div>}
 
       {isSavedView ? <PremiumContent /> : (
-        <PremiumRoute navigate={onNavigate}>
+        <PremiumRoute navigate={onNavigate} email={email}>
             <PremiumContent />
         </PremiumRoute>
       )}
