@@ -5,8 +5,8 @@ import { AnalysisInfo } from './AnalysisInfo';
 import { ShareButtons } from './ShareButtons';
 import { UpgradeCTA } from './PremiumPlaceholder';
 import { TypingResult } from './TypingResult';
-// FIX: Import Variants type from framer-motion to resolve typing errors.
 import { motion, Variants } from 'framer-motion';
+import { PremiumRoute } from './shared/PremiumRoute';
 
 interface SajuResultDisplayProps {
   result: SajuResult;
@@ -15,16 +15,28 @@ interface SajuResultDisplayProps {
   onSave?: () => void;
   isSaved?: boolean;
   isSavedView?: boolean;
+  onNavigate: (page: string) => void;
 }
 
-// FIX: Explicitly type animation variants to satisfy framer-motion's stricter type requirements.
 const containerVariants: Variants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
 const itemVariants: Variants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } } };
 
-
-export const SajuResultDisplay: React.FC<SajuResultDisplayProps> = ({ result, onReset, onBack, onSave, isSaved, isSavedView }) => {
+export const SajuResultDisplay: React.FC<SajuResultDisplayProps> = ({ result, onReset, onBack, onSave, isSaved, isSavedView, onNavigate }) => {
   const shareText = `AI 사주 분석 결과, 저의 일간은 ${result.day_master} 입니다.\n\n[종합 분석]\n${result.overall_analysis}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
   
+  const PremiumContent = () => (
+     <div className="space-y-6 mt-8">
+        <motion.div variants={itemVariants} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+            <h3 className="text-xl font-bold text-white mb-3 font-display">오행의 균형 (프리미엄)</h3>
+            <TypingResult text={result.elemental_analysis} className="text-slate-400 leading-relaxed whitespace-pre-wrap" />
+        </motion.div>
+        <motion.div variants={itemVariants} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+            <h3 className="text-xl font-bold text-white mb-3 font-display">삶의 조언 (프리미엄)</h3>
+            <TypingResult text={result.life_advice} className="text-slate-400 leading-relaxed whitespace-pre-wrap" />
+        </motion.div>
+      </div>
+  );
+
   return (
     <motion.div 
       className="w-full max-w-3xl"
@@ -51,20 +63,19 @@ export const SajuResultDisplay: React.FC<SajuResultDisplayProps> = ({ result, on
 
       <div className="space-y-6 mt-8">
         <motion.div variants={itemVariants} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
-            <h3 className="text-xl font-bold text-white mb-3 font-display">종합 분석</h3>
+            <h3 className="text-xl font-bold text-white mb-3 font-display">종합 분석 (무료)</h3>
             <TypingResult text={result.overall_analysis} className="text-slate-400 leading-relaxed whitespace-pre-wrap" />
-        </motion.div>
-        <motion.div variants={itemVariants} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
-            <h3 className="text-xl font-bold text-white mb-3 font-display">오행의 균형</h3>
-            <TypingResult text={result.elemental_analysis} className="text-slate-400 leading-relaxed whitespace-pre-wrap" />
-        </motion.div>
-        <motion.div variants={itemVariants} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
-            <h3 className="text-xl font-bold text-white mb-3 font-display">삶의 조언</h3>
-            <TypingResult text={result.life_advice} className="text-slate-400 leading-relaxed whitespace-pre-wrap" />
         </motion.div>
       </div>
       
       {!isSavedView && <motion.div variants={itemVariants}><UpgradeCTA /></motion.div>}
+
+      {isSavedView ? <PremiumContent /> : (
+        <PremiumRoute navigate={onNavigate}>
+            <PremiumContent />
+        </PremiumRoute>
+      )}
+
       <motion.div variants={itemVariants}><AnalysisInfo /></motion.div>
       {!isSavedView && <motion.div variants={itemVariants}><ShareButtons shareText={shareText} /></motion.div>}
 

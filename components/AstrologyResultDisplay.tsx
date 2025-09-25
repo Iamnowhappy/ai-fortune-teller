@@ -5,8 +5,8 @@ import { AnalysisInfo } from './AnalysisInfo';
 import { ShareButtons } from './ShareButtons';
 import { UpgradeCTA } from './PremiumPlaceholder';
 import { TypingResult } from './TypingResult';
-// FIX: Import Variants type from framer-motion to resolve typing errors.
 import { motion, Variants } from 'framer-motion';
+import { PremiumRoute } from './shared/PremiumRoute';
 
 interface AstrologyResultDisplayProps {
   result: AstrologyResult;
@@ -15,16 +15,29 @@ interface AstrologyResultDisplayProps {
   onSave?: () => void;
   isSaved?: boolean;
   isSavedView?: boolean;
+  onNavigate: (page: string) => void;
 }
 
-// FIX: Explicitly type animation variants to satisfy framer-motion's stricter type requirements.
 const containerVariants: Variants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
 const itemVariants: Variants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } } };
 
 
-export const AstrologyResultDisplay: React.FC<AstrologyResultDisplayProps> = ({ result, onReset, onBack, onSave, isSaved, isSavedView }) => {
+export const AstrologyResultDisplay: React.FC<AstrologyResultDisplayProps> = ({ result, onReset, onBack, onSave, isSaved, isSavedView, onNavigate }) => {
   const shareText = `AI가 분석한 저의 별자리는 ${result.zodiac_sign}입니다.\n\n[성격 분석]\n${result.analysis.personality}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
   
+  const PremiumContent = () => (
+     <div className="space-y-6 mt-8">
+        <motion.div variants={itemVariants} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+            <h3 className="text-xl font-bold text-white mb-3 font-display">연애 및 관계 (프리미엄)</h3>
+            <TypingResult text={result.analysis.love_life} className="text-slate-400 leading-relaxed" />
+        </motion.div>
+        <motion.div variants={itemVariants} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+            <h3 className="text-xl font-bold text-white mb-3 font-display">직업 및 경력 (프리미엄)</h3>
+            <TypingResult text={result.analysis.work_career} className="text-slate-400 leading-relaxed" />
+        </motion.div>
+      </div>
+  );
+
   return (
     <motion.div 
       className="w-full max-w-3xl"
@@ -43,20 +56,19 @@ export const AstrologyResultDisplay: React.FC<AstrologyResultDisplayProps> = ({ 
 
       <div className="space-y-6 mt-8">
         <motion.div variants={itemVariants} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
-            <h3 className="text-xl font-bold text-white mb-3 font-display">성격 분석</h3>
+            <h3 className="text-xl font-bold text-white mb-3 font-display">성격 분석 (무료)</h3>
             <TypingResult text={result.analysis.personality} className="text-slate-400 leading-relaxed" />
-        </motion.div>
-        <motion.div variants={itemVariants} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
-            <h3 className="text-xl font-bold text-white mb-3 font-display">연애 및 관계</h3>
-            <TypingResult text={result.analysis.love_life} className="text-slate-400 leading-relaxed" />
-        </motion.div>
-        <motion.div variants={itemVariants} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
-            <h3 className="text-xl font-bold text-white mb-3 font-display">직업 및 경력</h3>
-            <TypingResult text={result.analysis.work_career} className="text-slate-400 leading-relaxed" />
         </motion.div>
       </div>
       
       {!isSavedView && <motion.div variants={itemVariants}><UpgradeCTA /></motion.div>}
+
+      {isSavedView ? <PremiumContent /> : (
+        <PremiumRoute navigate={onNavigate}>
+            <PremiumContent />
+        </PremiumRoute>
+      )}
+
       <motion.div variants={itemVariants}><AnalysisInfo /></motion.div>
       {!isSavedView && <motion.div variants={itemVariants}><ShareButtons shareText={shareText} /></motion.div>}
 

@@ -5,8 +5,8 @@ import { AnalysisInfo } from './AnalysisInfo';
 import { ShareButtons } from './ShareButtons';
 import { UpgradeCTA } from './PremiumPlaceholder';
 import { TypingResult } from './TypingResult';
-// FIX: Import Variants type from framer-motion to resolve typing errors.
 import { motion, Variants } from 'framer-motion';
+import { PremiumRoute } from './shared/PremiumRoute';
 
 interface ImpressionResultDisplayProps {
   result: ImpressionAnalysisResult;
@@ -15,16 +15,27 @@ interface ImpressionResultDisplayProps {
   onSave?: () => void;
   isSaved?: boolean;
   isSavedView?: boolean;
+  onNavigate: (page: string) => void;
 }
 
-// FIX: Explicitly type animation variants to satisfy framer-motion's stricter type requirements.
 const containerVariants: Variants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
 const itemVariants: Variants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } } };
 
-
-export const ImpressionResultDisplay: React.FC<ImpressionResultDisplayProps> = ({ result, onReset, onBack, onSave, isSaved, isSavedView }) => {
+export const ImpressionResultDisplay: React.FC<ImpressionResultDisplayProps> = ({ result, onReset, onBack, onSave, isSaved, isSavedView, onNavigate }) => {
   const shareText = `AI가 분석한 저의 첫인상 키워드는 '${result.keywords.join(', ')}' 입니다.\n\n[상세 분석]\n${result.detailed_analysis}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
   
+  const PremiumContent = () => (
+     <motion.div variants={itemVariants} className="mt-8 bg-slate-800/50 border border-slate-700 rounded-2xl p-6 flex items-start gap-4">
+        <div className="flex-shrink-0 pt-1">
+            <LightbulbIcon className="w-8 h-8 text-yellow-400" />
+        </div>
+        <div>
+            <h3 className="text-xl font-bold text-yellow-300 mb-2 font-display">첫인상 개선을 위한 TIP (프리미엄)</h3>
+            <TypingResult text={result.improvement_tip} className="text-slate-400 leading-relaxed" />
+        </div>
+      </motion.div>
+  );
+
   return (
     <motion.div 
       className="w-full max-w-3xl"
@@ -33,7 +44,7 @@ export const ImpressionResultDisplay: React.FC<ImpressionResultDisplayProps> = (
       animate="visible"
     >
       <motion.div variants={itemVariants} className="bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8">
-        <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display">첫인상 분석 결과</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display">첫인상 분석 결과 (무료)</h2>
         <div className="flex flex-wrap gap-3 mb-6">
             {result.keywords.map((keyword, index) => (
                 <span key={index} className="bg-cyan-500/20 text-cyan-300 text-sm font-semibold px-3 py-1 rounded-full">
@@ -44,17 +55,14 @@ export const ImpressionResultDisplay: React.FC<ImpressionResultDisplayProps> = (
         <TypingResult text={result.detailed_analysis} className="text-slate-300 leading-relaxed whitespace-pre-wrap" />
       </motion.div>
 
-      <motion.div variants={itemVariants} className="mt-8 bg-slate-800/50 border border-slate-700 rounded-2xl p-6 flex items-start gap-4">
-        <div className="flex-shrink-0 pt-1">
-            <LightbulbIcon className="w-8 h-8 text-yellow-400" />
-        </div>
-        <div>
-            <h3 className="text-xl font-bold text-yellow-300 mb-2 font-display">첫인상 개선을 위한 TIP</h3>
-            <TypingResult text={result.improvement_tip} className="text-slate-400 leading-relaxed" />
-        </div>
-      </motion.div>
-      
       {!isSavedView && <motion.div variants={itemVariants}><UpgradeCTA /></motion.div>}
+
+      {isSavedView ? <PremiumContent /> : (
+          <PremiumRoute navigate={onNavigate}>
+              <PremiumContent />
+          </PremiumRoute>
+      )}
+      
       <motion.div variants={itemVariants}><AnalysisInfo /></motion.div>
       {!isSavedView && <motion.div variants={itemVariants}><ShareButtons shareText={shareText} /></motion.div>}
 

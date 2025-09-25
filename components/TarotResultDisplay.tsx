@@ -6,8 +6,8 @@ import { getCardVisualComponent } from '../utils/tarotUtils';
 import { ShareButtons } from './ShareButtons';
 import { UpgradeCTA } from './PremiumPlaceholder';
 import { TypingResult } from './TypingResult';
-// FIX: Import Variants type from framer-motion to resolve typing errors.
 import { motion, Variants } from 'framer-motion';
+import { PremiumRoute } from './shared/PremiumRoute';
 
 interface TarotResultDisplayProps {
   result: TarotResult;
@@ -18,6 +18,7 @@ interface TarotResultDisplayProps {
   isSaved?: boolean;
   isSavedView?: boolean;
   question?: string;
+  onNavigate: (page: string) => void;
 }
 
 const Card: React.FC<{ card: CardDraw; index: number }> = ({ card, index }) => {
@@ -83,15 +84,43 @@ const getSpreadLabels = (count: number): string[] => {
     }
 };
 
-// FIX: Explicitly type animation variants to satisfy framer-motion's stricter type requirements.
 const containerVariants: Variants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
 const itemVariants: Variants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } } };
 
-
-export const TarotResultDisplay: React.FC<TarotResultDisplayProps> = ({ result, drawnCards, onReset, onBack, onSave, isSaved, isSavedView, question }) => {
+export const TarotResultDisplay: React.FC<TarotResultDisplayProps> = ({ result, drawnCards, onReset, onBack, onSave, isSaved, isSavedView, question, onNavigate }) => {
   const cardNames = drawnCards.map(c => `${c.name}(${c.orientation})`).join(', ');
   const shareText = `질문: "${question || '나의 운세'}"\n뽑힌 카드: ${cardNames}\n\n[종합 리딩]\n${result.overall_reading}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
   const spreadLabels = getSpreadLabels(drawnCards.length);
+  
+  const PremiumContent = () => (
+    <div className="space-y-6 mt-8">
+      <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display text-center">카드별 상세 해석 (프리미엄)</h2>
+      {result.cards.map((interp, index) => {
+        const correspondingCard = drawnCards[index];
+        return (
+          <motion.div variants={itemVariants} key={index} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 sm:p-8 flex flex-col gap-4">
+            {correspondingCard?.imageData && correspondingCard?.mimeType && (
+              <div className="w-full max-w-sm mx-auto rounded-lg overflow-hidden relative shadow-lg my-2">
+                <img 
+                  src={`data:${correspondingCard.mimeType};base64,${correspondingCard.imageData}`} 
+                  alt={`${interp.card_name} user image`} 
+                  className="w-full h-auto object-contain" 
+                />
+                <div className="absolute inset-0 bg-black/10 pointer-events-none"></div>
+              </div>
+            )}
+            <div className="text-center">
+              <h3 className="text-2xl font-bold text-white font-display">{interp.card_name}</h3>
+              <p className={`text-lg font-medium ${interp.orientation === '역방향' ? 'text-yellow-400' : 'text-cyan-400'}`}>
+                ({interp.orientation})
+              </p>
+            </div>
+            <TypingResult text={interp.meaning} className="text-slate-400 leading-relaxed whitespace-pre-wrap" />
+          </motion.div>
+        );
+      })}
+    </div>
+  );
   
   return (
     <motion.div 
@@ -110,38 +139,18 @@ export const TarotResultDisplay: React.FC<TarotResultDisplayProps> = ({ result, 
       </motion.div>
       
       <motion.div variants={itemVariants} className="bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8">
-        <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display">종합 리딩</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display">종합 리딩 (무료)</h2>
         <TypingResult text={result.overall_reading} className="text-slate-300 leading-relaxed whitespace-pre-wrap" />
       </motion.div>
-
-      <div className="space-y-6 mt-8">
-        {result.cards.map((interp, index) => {
-          const correspondingCard = drawnCards[index];
-          return (
-            <motion.div variants={itemVariants} key={index} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 sm:p-8 flex flex-col gap-4">
-              {correspondingCard?.imageData && correspondingCard?.mimeType && (
-                <div className="w-full max-w-sm mx-auto rounded-lg overflow-hidden relative shadow-lg my-2">
-                  <img 
-                    src={`data:${correspondingCard.mimeType};base64,${correspondingCard.imageData}`} 
-                    alt={`${interp.card_name} user image`} 
-                    className="w-full h-auto object-contain" 
-                  />
-                  <div className="absolute inset-0 bg-black/10 pointer-events-none"></div>
-                </div>
-              )}
-              <div className="text-center">
-                <h3 className="text-2xl font-bold text-white font-display">{interp.card_name}</h3>
-                <p className={`text-lg font-medium ${interp.orientation === '역방향' ? 'text-yellow-400' : 'text-cyan-400'}`}>
-                  ({interp.orientation})
-                </p>
-              </div>
-              <TypingResult text={interp.meaning} className="text-slate-400 leading-relaxed whitespace-pre-wrap" />
-            </motion.div>
-          );
-        })}
-      </div>
       
       {!isSavedView && <motion.div variants={itemVariants}><UpgradeCTA /></motion.div>}
+
+      {isSavedView ? <PremiumContent /> : (
+        <PremiumRoute navigate={onNavigate}>
+            <PremiumContent />
+        </PremiumRoute>
+      )}
+
       <motion.div variants={itemVariants}><AnalysisInfo /></motion.div>
       {!isSavedView && <motion.div variants={itemVariants}><ShareButtons shareText={shareText} /></motion.div>}
 

@@ -6,6 +6,7 @@ import { ShareButtons } from './ShareButtons';
 import { UpgradeCTA } from './PremiumPlaceholder';
 import { TypingResult } from './TypingResult';
 import { motion, Variants } from 'framer-motion';
+import { PremiumRoute } from './shared/PremiumRoute';
 
 interface YukhyoResultDisplayProps {
   result: YukhyoResult;
@@ -15,14 +16,22 @@ interface YukhyoResultDisplayProps {
   isSaved?: boolean;
   isSavedView?: boolean;
   question?: string;
+  onNavigate: (page: string) => void;
 }
 
 const containerVariants: Variants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
 const itemVariants: Variants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } } };
 
-export const YukhyoResultDisplay: React.FC<YukhyoResultDisplayProps> = ({ result, onReset, onBack, onSave, isSaved, isSavedView, question }) => {
+export const YukhyoResultDisplay: React.FC<YukhyoResultDisplayProps> = ({ result, onReset, onBack, onSave, isSaved, isSavedView, question, onNavigate }) => {
   const shareText = `질문: "${question || '나의 운세'}"\n괘: ${result.hexagram_name}\n\n[종합 해설]\n${result.overall_interpretation}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
   
+  const PremiumContent = () => (
+     <motion.div variants={itemVariants} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 mt-8">
+        <h3 className="text-xl font-bold text-white mb-3 font-display">종합 해설 및 조언 (프리미엄)</h3>
+        <TypingResult text={result.overall_interpretation} className="text-slate-400 leading-relaxed whitespace-pre-wrap" />
+    </motion.div>
+  );
+
   return (
     <motion.div 
       className="w-full max-w-4xl"
@@ -64,16 +73,19 @@ export const YukhyoResultDisplay: React.FC<YukhyoResultDisplayProps> = ({ result
 
       <div className="space-y-6 mt-8">
         <motion.div variants={itemVariants} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
-            <h3 className="text-xl font-bold text-white mb-3 font-display">핵심 분석 (용신)</h3>
+            <h3 className="text-xl font-bold text-white mb-3 font-display">핵심 분석 (용신) - 무료</h3>
             <TypingResult text={result.yongsin} className="text-slate-400 leading-relaxed whitespace-pre-wrap" />
-        </motion.div>
-        <motion.div variants={itemVariants} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
-            <h3 className="text-xl font-bold text-white mb-3 font-display">종합 해설 및 조언</h3>
-            <TypingResult text={result.overall_interpretation} className="text-slate-400 leading-relaxed whitespace-pre-wrap" />
         </motion.div>
       </div>
       
       {!isSavedView && <motion.div variants={itemVariants}><UpgradeCTA /></motion.div>}
+
+      {isSavedView ? <PremiumContent /> : (
+        <PremiumRoute navigate={onNavigate}>
+          <PremiumContent />
+        </PremiumRoute>
+      )}
+
       <motion.div variants={itemVariants}><AnalysisInfo /></motion.div>
       {!isSavedView && <motion.div variants={itemVariants}><ShareButtons shareText={shareText} /></motion.div>}
 

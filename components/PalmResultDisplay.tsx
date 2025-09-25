@@ -5,8 +5,8 @@ import { AnalysisInfo } from './AnalysisInfo';
 import { ShareButtons } from './ShareButtons';
 import { UpgradeCTA } from './PremiumPlaceholder';
 import { TypingResult } from './TypingResult';
-// FIX: Import Variants type from framer-motion to resolve typing errors.
 import { motion, Variants } from 'framer-motion';
+import { PremiumRoute } from './shared/PremiumRoute';
 
 interface PalmResultDisplayProps {
   result: PalmistryResult;
@@ -15,6 +15,7 @@ interface PalmResultDisplayProps {
   onSave?: () => void;
   isSaved?: boolean;
   isSavedView?: boolean;
+  onNavigate: (page: string) => void;
 }
 
 const lineIcons: { [key: string]: React.ReactNode } = {
@@ -32,13 +33,29 @@ const getLineIcon = (lineName: string) => {
     return <LineIcon className="w-8 h-8 text-cyan-400" />; // Fallback
 }
 
-// FIX: Explicitly type animation variants to satisfy framer-motion's stricter type requirements.
 const containerVariants: Variants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
 const itemVariants: Variants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } } };
 
-export const PalmResultDisplay: React.FC<PalmResultDisplayProps> = ({ result, onReset, onBack, onSave, isSaved, isSavedView }) => {
+export const PalmResultDisplay: React.FC<PalmResultDisplayProps> = ({ result, onReset, onBack, onSave, isSaved, isSavedView, onNavigate }) => {
   const shareText = `AI 손금 분석 결과입니다:\n\n[총평]\n${result.overall_analysis}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
   
+  const PremiumContent = () => (
+    <div className="space-y-6 mt-8">
+      <h2 className="text-2xl font-bold text-cyan-300 font-display">주요 손금 상세 분석 (프리미엄)</h2>
+      {result.lines.map((line, index) => (
+        <motion.div variants={itemVariants} key={index} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 flex items-start gap-4 transition-transform duration-300 hover:scale-105 hover:border-cyan-500">
+          <div className="flex-shrink-0 pt-1">
+              {getLineIcon(line.line_name)}
+          </div>
+          <div>
+            <h3 className="text-xl font-bold text-white">{line.line_name}</h3>
+            <TypingResult text={line.analysis} className="text-slate-400 leading-relaxed mt-2" />
+          </div>
+        </motion.div>
+      ))}
+    </div>
+  );
+
   return (
     <motion.div 
       className="w-full max-w-3xl"
@@ -47,7 +64,7 @@ export const PalmResultDisplay: React.FC<PalmResultDisplayProps> = ({ result, on
       animate="visible"
     >
       <motion.div variants={itemVariants} className="bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8">
-        <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display">손금 분석 총평</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display">손금 분석 총평 (무료)</h2>
         <TypingResult text={result.overall_analysis} className="text-slate-300 leading-relaxed whitespace-pre-wrap" />
       </motion.div>
 
@@ -59,21 +76,14 @@ export const PalmResultDisplay: React.FC<PalmResultDisplayProps> = ({ result, on
         </div>
       </motion.div>
 
-      <div className="space-y-6 mt-8">
-        {result.lines.map((line, index) => (
-          <motion.div variants={itemVariants} key={index} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 flex items-start gap-4 transition-transform duration-300 hover:scale-105 hover:border-cyan-500">
-            <div className="flex-shrink-0 pt-1">
-                {getLineIcon(line.line_name)}
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-white">{line.line_name}</h3>
-              <TypingResult text={line.analysis} className="text-slate-400 leading-relaxed mt-2" />
-            </div>
-          </motion.div>
-        ))}
-      </div>
-
       {!isSavedView && <motion.div variants={itemVariants}><UpgradeCTA /></motion.div>}
+
+      {isSavedView ? <PremiumContent /> : (
+        <PremiumRoute navigate={onNavigate}>
+          <PremiumContent />
+        </PremiumRoute>
+      )}
+
       <motion.div variants={itemVariants}><AnalysisInfo /></motion.div>
       {!isSavedView && <motion.div variants={itemVariants}><ShareButtons shareText={shareText} /></motion.div>}
 

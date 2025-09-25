@@ -5,8 +5,8 @@ import { AnalysisInfo } from './AnalysisInfo';
 import { ShareButtons } from './ShareButtons';
 import { UpgradeCTA } from './PremiumPlaceholder';
 import { TypingResult } from './TypingResult';
-// FIX: Import Variants type from framer-motion to resolve typing errors.
 import { motion, Variants } from 'framer-motion';
+import { PremiumRoute } from './shared/PremiumRoute';
 
 interface ResultDisplayProps {
   result: PhysiognomyResult;
@@ -15,6 +15,7 @@ interface ResultDisplayProps {
   onSave?: () => void;
   isSaved?: boolean;
   isSavedView?: boolean;
+  onNavigate: (page: string) => void;
 }
 
 const featureIcons: { [key: string]: React.ReactNode } = {
@@ -35,12 +36,28 @@ const getFeatureIcon = (featureName: string) => {
     return null;
 }
 
-// FIX: Explicitly type animation variants to satisfy framer-motion's stricter type requirements.
 const containerVariants: Variants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
 const itemVariants: Variants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } } };
 
-export const ResultDisplay: React.FC<ResultDisplayProps> = ({ result, onReset, onBack, onSave, isSaved, isSavedView }) => {
+export const ResultDisplay: React.FC<ResultDisplayProps> = ({ result, onReset, onBack, onSave, isSaved, isSavedView, onNavigate }) => {
   const shareText = `AI 관상가로 분석한 저의 관상 결과입니다:\n\n[총평]\n${result.overall_impression}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
+
+  const PremiumContent = () => (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+      {result.features.map((feature, index) => (
+        <motion.div variants={itemVariants} key={index} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 flex flex-col gap-4 transition-transform duration-300 hover:scale-105 hover:border-cyan-500">
+          <div className="flex items-center gap-4">
+            {getFeatureIcon(feature.feature)}
+            <div>
+              <h3 className="text-xl font-bold text-white">{feature.feature} (프리미엄)</h3>
+              <p className="text-sm text-cyan-400 font-semibold">{feature.shape}</p>
+            </div>
+          </div>
+          <p className="text-slate-400 leading-relaxed text-left text-base">{feature.analysis}</p>
+        </motion.div>
+      ))}
+    </div>
+  );
 
   return (
     <motion.div 
@@ -50,26 +67,18 @@ export const ResultDisplay: React.FC<ResultDisplayProps> = ({ result, onReset, o
       animate="visible"
     >
       <motion.div variants={itemVariants} className="bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8">
-        <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display">관상 분석 총평</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display">관상 분석 총평 (무료)</h2>
         <TypingResult text={result.overall_impression} className="text-slate-300 leading-relaxed whitespace-pre-wrap" />
       </motion.div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-        {result.features.map((feature, index) => (
-          <motion.div variants={itemVariants} key={index} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 flex flex-col gap-4 transition-transform duration-300 hover:scale-105 hover:border-cyan-500">
-            <div className="flex items-center gap-4">
-              {getFeatureIcon(feature.feature)}
-              <div>
-                <h3 className="text-xl font-bold text-white">{feature.feature}</h3>
-                <p className="text-sm text-cyan-400 font-semibold">{feature.shape}</p>
-              </div>
-            </div>
-            <p className="text-slate-400 leading-relaxed text-left text-base">{feature.analysis}</p>
-          </motion.div>
-        ))}
-      </div>
-
+      
       {!isSavedView && <motion.div variants={itemVariants}><UpgradeCTA /></motion.div>}
+
+      {isSavedView ? <PremiumContent /> : (
+        <PremiumRoute navigate={onNavigate}>
+            <PremiumContent />
+        </PremiumRoute>
+      )}
+
       <motion.div variants={itemVariants}><AnalysisInfo /></motion.div>
       {!isSavedView && <motion.div variants={itemVariants}><ShareButtons shareText={shareText} /></motion.div>}
 
