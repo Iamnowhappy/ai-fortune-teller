@@ -122,4 +122,4 @@ export const YukhyoResultDisplay: React.FC<YukhyoResultDisplayProps> = ({ result
       </motion.div>
     </motion.div>
   );
-}
+};

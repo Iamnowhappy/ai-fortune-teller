@@ -7,6 +7,7 @@ interface PremiumRouteProps {
   navigate: NavigateFunction;
   email: string | null;
   redirectOnFail?: boolean; // New prop to control redirection
+  featureName?: string;
 }
 
 const checkPremiumStatus = async (email: string): Promise<boolean> => {
@@ -24,9 +25,14 @@ const checkPremiumStatus = async (email: string): Promise<boolean> => {
     }
 };
 
-export const PremiumRoute: React.FC<PremiumRouteProps> = ({ children, navigate, email, redirectOnFail = false }) => {
+export const PremiumRoute: React.FC<PremiumRouteProps> = ({ children, navigate, email, redirectOnFail = false, featureName }) => {
   const [isChecking, setIsChecking] = useState(true);
   const [isPremium, setIsPremium] = useState<boolean | null>(null);
+
+  const navigateToCheckout = () => {
+    const featureQuery = featureName ? `?feature=${encodeURIComponent(featureName)}` : '';
+    navigate(`checkout${featureQuery}`);
+  };
 
   useEffect(() => {
     const checkStatus = async () => {
@@ -35,7 +41,7 @@ export const PremiumRoute: React.FC<PremiumRouteProps> = ({ children, navigate, 
           setIsPremium(false);
           setIsChecking(false);
           if (redirectOnFail) {
-            navigate('checkout');
+            navigateToCheckout();
           }
           return;
       }
@@ -45,12 +51,13 @@ export const PremiumRoute: React.FC<PremiumRouteProps> = ({ children, navigate, 
       setIsChecking(false);
 
       if (!premiumStatus && redirectOnFail) {
-        navigate('checkout');
+        navigateToCheckout();
       }
     };
 
     checkStatus();
-  }, [email, navigate, redirectOnFail]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [email, navigate, redirectOnFail, featureName]);
 
   if (isChecking) {
     // For full-page routes, show a full loader. For inline, show a smaller one.
