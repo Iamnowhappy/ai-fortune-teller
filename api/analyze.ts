@@ -240,7 +240,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         
         if (type === 'face-stretch') {
             const prompt = `사진 속 인물의 얼굴을 세로로 길게, 위아래로 최대한 늘려서 과장되고 재미있는 이미지로 만들어줘. 그리고 이 변형된 얼굴에 대한 재미있는 한 줄 평을 함께 알려줘.`;
-            // Note: client-side file util already strips prefix
             const response = await ai.models.generateContent({
                 model: 'gemini-2.5-flash-image-preview',
                 contents: { parts: [{ text: prompt }, { inlineData: { mimeType: payload.mimeType, data: payload.data } }] },
@@ -304,7 +303,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 payload.cards.forEach((card: any) => {
                     contentParts.push({ text: `\n--- \nCard: ${card.name} (${card.orientation})` });
                     if (card.imageData && card.mimeType) {
-                        contentParts.push({ inlineData: { mimeType: card.mimeType, data: card.imageData } }); // data is already clean
+                        contentParts.push({ inlineData: { mimeType: card.mimeType, data: card.imageData } });
                     }
                 });
                 schema = tarotAnalysisSchema;
@@ -335,26 +334,36 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 return res.status(400).json({ error: 'Invalid analysis type' });
         }
         
-        // --- Model Selection Logic ---
+        // --- Model Selection & Config Logic ---
         let model = "gemini-2.5-flash"; // Default to fast text model
         const imageBasedTypes = ['face', 'palm', 'impression'];
         const isImageTarot = type === 'tarot' && payload.cards.some((c: any) => c.imageData);
-        if (imageBasedTypes.includes(type) || isImageTarot) {
+        const isImageBased = imageBasedTypes.includes(type) || isImageTarot;
+
+        if (isImageBased) {
             model = "gemini-1.5-pro"; // Use powerful multimodal model for image analysis
         }
         console.log(`📌 [API/analyze] Selected Model: ${model}`);
 
         // --- Gemini API Call ---
+        const config: any = {};
+        if (isImageBased) {
+            // For multimodal requests, DO NOT use responseSchema as it can cause 400 errors.
+            // Rely on the prompt to return JSON.
+        } else {
+            config.responseMimeType = "application/json";
+            config.responseSchema = schema;
+        }
+
         const response = await ai.models.generateContent({
             model,
             contents,
-            config: {
-                responseMimeType: "application/json",
-                responseSchema: schema,
-            },
+            config,
         });
         
         let jsonText = response.text.trim();
+        
+        // Clean up potential markdown code fences from the response
         if (jsonText.startsWith("```json")) {
             jsonText = jsonText.substring(7, jsonText.length - 3).trim();
         } else if (jsonText.startsWith("```")) {
