@@ -22,15 +22,16 @@ import { Loader } from './components/Loader';
 import { analyzeFace, analyzePalm, analyzeImpression, analyzeAstrology, analyzeSaju, analyzeTarotReading, analyzeJuyeok, analyzeYukhyo, generateFortuneImage } from './services/geminiService';
 import type { PhysiognomyResult, PalmistryResult, ImpressionAnalysisResult, AstrologyResult, SajuResult, TarotResult, JuyeokResult, YukhyoResult, CardDraw, JuyeokReading, SavedResult } from './types';
 import { Footer } from './components/Footer';
-import { FaceIcon, PalmIcon, ImpressionIcon, AstrologyIcon, SajuIcon, TarotIcon, JuyeokIcon, YukhyoIcon, BoxIcon, TheSunIcon, StarIcon, LockIcon } from './components/icons';
+import { FaceIcon, PalmIcon, ImpressionIcon, AstrologyIcon, SajuIcon, TarotIcon, JuyeokIcon, YukhyoIcon, BoxIcon, TheSunIcon, StarIcon, LockIcon, HappyFaceIcon } from './components/icons';
 import { generateIChingReading, getDailyFortune } from './utils/divinationUtils';
 import { saveResult } from './utils/storage';
 import { TarotReaderPage } from './components/TarotReaderPage';
 import { ChangelogPage } from './components/Changelog';
 import { ImageAndQuestionUploader } from './components/ImageAndQuestionUploader';
 import { PremiumRoute } from './components/shared/PremiumRoute';
+import { FaceStretcherPage } from './components/FaceStretcherPage';
 
-type Page = 'home' | 'face-reader' | 'palm-reader' | 'impression-analyzer' | 'astrology-reader' | 'saju-analyzer' | 'tarot-reader' | 'juyeok-reader' | 'yukhyo-analyzer' | 'daily-tarot' | 'saved-results' | 'about' | 'privacy' | 'terms' | 'guide' | 'changelog' | 'checkout';
+type Page = 'home' | 'face-reader' | 'palm-reader' | 'impression-analyzer' | 'astrology-reader' | 'saju-analyzer' | 'tarot-reader' | 'juyeok-reader' | 'yukhyo-analyzer' | 'daily-tarot' | 'saved-results' | 'about' | 'privacy' | 'terms' | 'guide' | 'changelog' | 'checkout' | 'face-stretcher';
 
 // --- HomePage Component ---
 const HomePage: React.FC<{ onNavigate: (page: Page) => void; }> = ({ onNavigate }) => {
@@ -312,6 +313,20 @@ const HomePage: React.FC<{ onNavigate: (page: Page) => void; }> = ({ onNavigate 
           <YukhyoIcon className="w-16 h-16 text-white transition-transform duration-500 group-hover:rotate-12 group-hover:scale-110" />
           <h2 className="text-2xl font-bold text-white">AI 육효 분석가</h2>
           <p className="text-slate-200">질문 시점의 기운으로 구체적인 길흉을 예측합니다.</p>
+        </div>
+        
+        {/* Face Stretcher Card */}
+        <div
+          onClick={() => onNavigate('face-stretcher')}
+          className="bg-[#EC4899]/80 border border-[#DB2777] rounded-2xl p-6 flex flex-col items-center gap-4 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:border-[#F472B6] cursor-pointer group shadow-lg"
+          role="button"
+          tabIndex={0}
+          aria-label="AI 얼굴 늘리기 실행하기"
+          onKeyDown={(e) => e.key === 'Enter' && onNavigate('face-stretcher')}
+        >
+          <HappyFaceIcon className="w-16 h-16 text-white transition-transform duration-500 group-hover:rotate-12 group-hover:scale-110" />
+          <h2 className="text-2xl font-bold text-white">AI 얼굴 늘리기</h2>
+          <p className="text-slate-200">AI가 당신의 얼굴을 재미있게 변형시켜 드립니다.</p>
         </div>
         
         {/* Saved Results Card (Premium) */}
@@ -1176,6 +1191,8 @@ const App: React.FC = () => {
         return <YukhyoAnalyzerPage onBack={() => navigateTo('home')} onNavigate={navigateTo} email={userEmail} />;
       case 'daily-tarot':
         return <DailyTarotPage onBack={() => navigateTo('home')} />;
+      case 'face-stretcher':
+        return <FaceStretcherPage onBack={() => navigateTo('home')} />;
       case 'saved-results':
         return (
           <PremiumRoute navigate={navigateTo} email={userEmail} redirectOnFail={true} featureName="나의 운세함">

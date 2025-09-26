@@ -1,5 +1,5 @@
 import { fileToBase64 } from '../utils/fileUtils';
-import type { PhysiognomyResult, PalmistryResult, ImpressionAnalysisResult, AstrologyResult, SajuResult, TarotResult, CardDraw, JuyeokReading, JuyeokResult, Hexagram, YukhyoResult, DailyTarotResult, FortuneImageResult } from '../types';
+import type { PhysiognomyResult, PalmistryResult, ImpressionAnalysisResult, AstrologyResult, SajuResult, TarotResult, CardDraw, JuyeokReading, JuyeokResult, Hexagram, YukhyoResult, DailyTarotResult, FortuneImageResult, FaceStretchResult } from '../types';
 
 /**
  * 범용 분석 함수. 프론트엔드의 모든 요청을 백엔드 API 라우트로 보냅니다.
@@ -9,7 +9,7 @@ import type { PhysiognomyResult, PalmistryResult, ImpressionAnalysisResult, Astr
  */
 async function analyze<T>(type: string, payload: any): Promise<T> {
     try {
-        if (['face', 'palm', 'impression'].includes(type) && payload.data) {
+        if (['face', 'palm', 'impression', 'face-stretch'].includes(type) && payload.data) {
             console.log(`📤 [geminiService] Sending '${type}' request. Image base64 length: ${payload.data.length}`);
         }
 
@@ -35,6 +35,8 @@ async function analyze<T>(type: string, payload: any): Promise<T> {
                 userMessage = '요청 데이터가 올바르지 않습니다. 페이지를 새로고침하고 다시 시도해주세요.';
             } else if (response.status === 500) {
                  userMessage = '서버 내부 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+            } else {
+                 userMessage = errorData.error || userMessage;
             }
             throw new Error(userMessage);
         }
@@ -66,6 +68,12 @@ export const analyzeImpression = async (imageFile: File): Promise<ImpressionAnal
   const data = await fileToBase64(imageFile);
   const mimeType = imageFile.type;
   return analyze<ImpressionAnalysisResult>('impression', { data, mimeType });
+};
+
+export const stretchFace = async (imageFile: File): Promise<FaceStretchResult> => {
+  const data = await fileToBase64(imageFile);
+  const mimeType = imageFile.type;
+  return analyze<FaceStretchResult>('face-stretch', { data, mimeType });
 };
 
 export const analyzeAstrology = async (birthDate: string): Promise<AstrologyResult> => {
