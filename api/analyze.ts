@@ -1,6 +1,12 @@
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
+// --- Base64 Cleaner ---
+function cleanBase64(data: string) {
+  if (!data) return '';
+  return data.replace(/^data:image\/[a-zA-Z]+;base64,/, "");
+}
+
 // --- All schema definitions are now on the server ---
 
 const analysisSchema = {
@@ -203,6 +209,7 @@ const yukhyoAnalysisSchema = {
     required: ["ganji_date", "hexagram_name", "yongsin", "lines", "overall_interpretation"]
 };
 
+
 // --- Serverless Function Handler ---
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method !== 'POST') {
@@ -223,6 +230,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(500).json({ error: 'Server configuration error.' });
         }
         const ai = new GoogleGenAI({ apiKey });
+
+        // --- Clean Base64 if exists ---
+        if (payload?.data) {
+          payload.data = cleanBase64(payload.data);
+        }
+        if (payload?.cards) {
+          payload.cards = payload.cards.map((card: any) => {
+            if (card.imageData) {
+              card.imageData = cleanBase64(card.imageData);
+            }
+            return card;
+          });
+        }
 
         // --- Special Handlers for Image Generation/Editing ---
         if (type === 'daily-fortune-image') {
@@ -261,47 +281,44 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         let schema: any;
 
         switch (type) {
-            case 'face': {
-                if (!payload || !payload.data) return res.status(400).json({ error: "Image data not sent." });
-                const prompt = `업로드된 사진 속 얼굴을 재미와 엔터테인먼트 목적으로 해석해 주세요. 절대 건강, 질병, 운명, 수명, 정치, 종교 등 민감한 주제는 언급하지 마세요. 긍정적인 성격 특징, 인상, 분위기, 매력 포인트만 간단히 설명해 주세요. 얼굴의 각 부위(눈, 코, 입 등)가 주는 느낌과 전반적인 인상을 긍정적이고 희망적인 관점에서 설명해주세요. 친절하고 부드러운 말투를 사용하고, 결과는 반드시 다음 JSON 형식으로만 반환해야 합니다.`;
+            case 'face':
+                if (!payload?.data) return res.status(400).json({ error: "Image data not sent." });
                 schema = analysisSchema;
                 contents = {
                     parts: [
-                        { text: prompt },
+                        { text: `업로드된 사진 속 얼굴을 재미와 엔터테인먼트 목적으로 해석해 주세요. 절대 건강, 질병, 운명, 수명, 정치, 종교 등 민감한 주제는 언급하지 마세요. 긍정적인 특징만 설명하고, 반드시 JSON 형식으로만 답변하세요.`},
                         { inlineData: { mimeType: payload.mimeType, data: payload.data } },
                     ],
                 };
                 break;
-            }
-            case 'palm': {
-                if (!payload || !payload.data) return res.status(400).json({ error: "Image data not sent." });
-                const prompt = `당신은 수십 년간 손금을 연구해 온 세계 최고의 손금 전문가입니다. 당신의 임무는 사용자가 제공한 손 사진을 보고, 주요 3대 손금(생명선, 감정선, 두뇌선)의 특징과 그것이 의미하는 바를 상세히 설명하는 것입니다. 각 손금이 의미하는 장점과 함께 주의해야 할 점이나 개선할 점을 균형 있게 설명해주세요. 분석은 현실적이어야 하지만, 사용자가 긍정적인 마음으로 자신의 삶을 개척해나갈 수 있도록 격려하는 톤을 유지해주세요. 마지막으로, 이 분석에 대한 신뢰도 점수(70~95% 사이의 정수)와 함께, 손금은 정해진 미래가 아닌 가능성을 보여주는 지표라는 점을 설명하는 코멘트를 추가해주세요. 결과는 반드시 다음 JSON 형식으로만 반환해야 합니다.`;
+
+            case 'palm':
+                if (!payload?.data) return res.status(400).json({ error: "Image data not sent." });
                 schema = palmAnalysisSchema;
                 contents = {
                     parts: [
-                        { text: prompt },
+                        { text: `손금 사진을 분석해 주세요. 반드시 JSON 형식으로 답변하세요.` },
                         { inlineData: { mimeType: payload.mimeType, data: payload.data } },
                     ],
                 };
                 break;
-            }
-            case 'impression': {
-                if (!payload || !payload.data) return res.status(400).json({ error: "Image data not sent." });
-                const prompt = `당신은 사회 심리학 및 인간 인식 분야의 전문가입니다. 당신의 임무는 사용자가 제공한 인물 사진을 보고 그 사람의 첫인상을 분석하는 것입니다. 사진 속 인물의 표정, 분위기, 스타일 등을 종합적으로 고려하여 다른 사람에게 어떤 느낌을 주는지 객관적으로 분석해주세요. 분석은 격려가 되고 긍정적인 방향으로 제공되어야 하지만, 현실적인 조언도 포함해야 합니다. 결과는 반드시 다음 JSON 형식으로만 반환해야 합니다.`;
+
+            case 'impression':
+                if (!payload?.data) return res.status(400).json({ error: "Image data not sent." });
                 schema = impressionAnalysisSchema;
                 contents = {
                     parts: [
-                        { text: prompt },
+                        { text: `인물의 첫인상을 분석해 주세요. 반드시 JSON 형식으로 답변하세요.` },
                         { inlineData: { mimeType: payload.mimeType, data: payload.data } },
                     ],
                 };
                 break;
-            }
+
             case 'tarot': {
-                const introPrompt = `You are a wise Tarot Master. Provide a reading for the user's question: "${payload.question}". Interpret these cards. When an image is provided with a card, integrate its symbolism. The result must be a single JSON object.`;
+                const introPrompt = `You are a wise Tarot Master. User's question: "${payload.question}". Interpret these cards. Output must be JSON.`;
                 const contentParts: any[] = [{ text: introPrompt }];
                 payload.cards.forEach((card: any) => {
-                    contentParts.push({ text: `\n--- \nCard: ${card.name} (${card.orientation})` });
+                    contentParts.push({ text: `Card: ${card.name} (${card.orientation})` });
                     if (card.imageData && card.mimeType) {
                         contentParts.push({ inlineData: { mimeType: card.mimeType, data: card.imageData } });
                     }
@@ -310,47 +327,53 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 contents = { parts: contentParts };
                 break;
             }
+            
             case 'astrology':
                 schema = astrologyAnalysisSchema;
-                contents = `당신은 세계적으로 유명한 점성술사입니다. 사용자의 생년월일인 ${payload.birthDate}를 기반으로 서양 점성술(별자리) 운세를 분석해주세요. 결과는 반드시 JSON 형식으로 반환해야 합니다. 다음 정보를 포함해주세요: 1. zodiac_sign: 해당하는 별자리. 2. ruling_planet: 지배 행성. 3. element: 4원소 (불, 흙, 공기, 물). 4. analysis: 성격, 연애, 직업에 대한 상세 분석.`;
+                contents = `사용자의 생년월일 ${payload.birthDate}를 기반으로 별자리 분석을 해주세요. 반드시 JSON으로 반환하세요.`;
                 break;
+
             case 'saju':
                 schema = sajuAnalysisSchema;
-                contents = `당신은 수십 년 경력의 사주 명리학 대가입니다. 사용자의 생년월일시인 ${payload.birthDate} ${payload.birthTime}를 기반으로 사주팔자를 분석해주세요. 만약 출생 시간이 '모름'으로 입력되었다면 시주(時柱)는 알 수 없는 것으로 간주하고 분석하세요. 결과는 반드시 JSON 형식으로 반환해야 합니다. 다음 정보를 포함해주세요: 1. four_pillars: 60갑자를 이용한 연주, 월주, 일주, 시주. 2. day_master: 사주의 핵심인 일간(日干). 3. overall_analysis: 사주 전체 구조에 대한 종합 해설. 4. elemental_analysis: 사주에 나타난 오행(목, 화, 토, 금, 수)의 분포와 균형 분석. 5. life_advice: 타고난 기질을 바탕으로 삶을 더 풍요롭게 만들기 위한 조언.`;
+                contents = `사용자의 생년월일시 ${payload.birthDate} ${payload.birthTime} 기반으로 사주를 분석해 주세요. 반드시 JSON으로 반환하세요.`;
                 break;
+
             case 'daily-tarot':
                 schema = dailyTarotAnalysisSchema;
-                contents = `당신은 희망을 주는 타로 마스터입니다. 오늘 사용자가 뽑은 카드는 '${payload.card.name}' (${payload.card.orientation}) 입니다. 이 카드를 바탕으로 오늘 하루를 위한 짧고 긍정적인 조언을 딱 한 문장으로 만들어주세요. 결과는 반드시 JSON 형식으로 반환해야 합니다.`;
+                contents = `오늘 뽑은 카드 '${payload.card.name}' (${payload.card.orientation})를 기반으로 긍정적인 하루 조언을 JSON으로 반환하세요.`;
                 break;
+            
             case 'juyeok':
                 schema = juyeokAnalysisSchema;
-                contents = `당신은 주역(I-Ching)의 대가입니다. 사용자의 질문에 대해 뽑힌 주역 괘를 해석해주세요. 질문: "${payload.question}", 본괘: ${payload.reading.presentHexagram.name}, 변괘: ${payload.reading.changingHexagram ? payload.reading.changingHexagram.name : '없음'}, 변효: ${payload.reading.changingLines.join(', ')}. 본괘, 변괘, 변효를 종합하여 질문에 대한 최종 조언을 제공합니다. 결과는 반드시 JSON 형식으로 반환해야 합니다.`;
+                contents = `질문: "${payload.question}", 본괘: ${payload.reading.presentHexagram.name}, 변괘: ${payload.reading.changingHexagram?.name || '없음'}, 변효: ${payload.reading.changingLines.join(', ') || '없음'}. 반드시 JSON으로 반환하세요.`;
                 break;
+
             case 'yukhyo':
                 schema = yukhyoAnalysisSchema;
-                contents = `당신은 시공간의 기운을 읽어내는 육효점의 대가입니다. 사용자의 질문("${payload.question}")에 대해, 현재 시점의 기운을 바탕으로 주역 64괘 중 하나를 도출하고, 육효의 원리에 따라 해석하여 답을 주세요. 결과는 반드시 JSON 형식으로 반환해야 합니다.`;
+                contents = `질문: "${payload.question}"을 기반으로 육효 해석을 해주세요. 반드시 JSON으로 반환하세요.`;
                 break;
+
             default:
                 return res.status(400).json({ error: 'Invalid analysis type' });
         }
         
         // --- Model Selection & Config Logic ---
-        let model = "gemini-2.5-flash"; // Default to fast text model
-        const imageBasedTypes = ['face', 'palm', 'impression'];
-        const isImageTarot = type === 'tarot' && payload.cards.some((c: any) => c.imageData);
-        const isImageBased = imageBasedTypes.includes(type) || isImageTarot;
+        let model = "gemini-2.5-flash";
+        let useSchema = true;
 
-        if (isImageBased) {
-            model = "gemini-1.5-pro"; // Use powerful multimodal model for image analysis
+        const imageBasedTypes = ['face', 'palm', 'impression'];
+        const isImageTarot = type === 'tarot' && payload.cards?.some((c: any) => c.imageData);
+        
+        if (imageBasedTypes.includes(type) || isImageTarot) {
+            model = "gemini-1.5-pro"; // multimodal model
+            useSchema = false; // For image analysis, remove schema to avoid 400 errors
         }
-        console.log(`📌 [API/analyze] Selected Model: ${model}`);
+
+        console.log(`📌 [API/analyze] Selected Model: ${model}, Use Schema: ${useSchema}`);
 
         // --- Gemini API Call ---
         const config: any = {};
-        if (isImageBased) {
-            // For multimodal requests, DO NOT use responseSchema as it can cause 400 errors.
-            // Rely on the prompt to return JSON.
-        } else {
+        if (useSchema) {
             config.responseMimeType = "application/json";
             config.responseSchema = schema;
         }
