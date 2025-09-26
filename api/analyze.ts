@@ -368,7 +368,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         
         if (isImageBased) {
             model = "gemini-1.5-pro-latest";
-            console.log(`📌 [API/analyze] Image-based request. Model: ${model}. Omitting responseSchema.`);
+            console.log(`📌 [API/analyze] Image-based request. Model: ${model}. Omitting config.`);
         } else {
             config = {
                 responseMimeType: "application/json",
@@ -381,7 +381,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const response = await ai.models.generateContent({
             model,
             contents,
-            ...(Object.keys(config).length > 0 ? { config } : {}),
+            ...config, // Correctly spread the config object
         });
         
         let jsonText = response.text.trim();
