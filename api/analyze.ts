@@ -240,10 +240,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         
         if (type === 'face-stretch') {
             const prompt = `사진 속 인물의 얼굴을 세로로 길게, 위아래로 최대한 늘려서 과장되고 재미있는 이미지로 만들어줘. 그리고 이 변형된 얼굴에 대한 재미있는 한 줄 평을 함께 알려줘.`;
-            const cleanBase64 = payload.data.includes(',') ? payload.data.split(',')[1] : payload.data;
+            // Note: client-side file util already strips prefix
             const response = await ai.models.generateContent({
                 model: 'gemini-2.5-flash-image-preview',
-                contents: { parts: [{ text: prompt }, { inlineData: { mimeType: payload.mimeType, data: cleanBase64 } }] },
+                contents: { parts: [{ text: prompt }, { inlineData: { mimeType: payload.mimeType, data: payload.data } }] },
                 config: { responseModalities: [Modality.IMAGE, Modality.TEXT] },
             });
             let stretchedImageBase64 = '', comment = '';
@@ -258,37 +258,44 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         // --- Main Analysis Logic ---
-        let model: string;
         let contents: any;
-        let config: any;
+        let schema: any;
 
-        const cleanBase64 = (data: string) => data.includes(',') ? data.split(',')[1] : data;
-        const hasImages = (type === 'tarot' && payload.cards.some((c: any) => c.imageData)) || ['face', 'palm', 'impression'].includes(type);
-
-        // Model selection
-        model = 'gemini-2.5-flash';
-        
-        // Configuration and Contents preparation
         switch (type) {
-            case 'face':
-            case 'palm':
+            case 'face': {
+                if (!payload || !payload.data) return res.status(400).json({ error: "Image data not sent." });
+                const prompt = `업로드된 사진 속 얼굴을 재미와 엔터테인먼트 목적으로 해석해 주세요. 절대 건강, 질병, 운명, 수명, 정치, 종교 등 민감한 주제는 언급하지 마세요. 긍정적인 성격 특징, 인상, 분위기, 매력 포인트만 간단히 설명해 주세요. 얼굴의 각 부위(눈, 코, 입 등)가 주는 느낌과 전반적인 인상을 긍정적이고 희망적인 관점에서 설명해주세요. 친절하고 부드러운 말투를 사용하고, 결과는 반드시 다음 JSON 형식으로만 반환해야 합니다.`;
+                schema = analysisSchema;
+                contents = {
+                    parts: [
+                        { text: prompt },
+                        { inlineData: { mimeType: payload.mimeType, data: payload.data } },
+                    ],
+                };
+                break;
+            }
+            case 'palm': {
+                if (!payload || !payload.data) return res.status(400).json({ error: "Image data not sent." });
+                const prompt = `당신은 수십 년간 손금을 연구해 온 세계 최고의 손금 전문가입니다. 당신의 임무는 사용자가 제공한 손 사진을 보고, 주요 3대 손금(생명선, 감정선, 두뇌선)의 특징과 그것이 의미하는 바를 상세히 설명하는 것입니다. 각 손금이 의미하는 장점과 함께 주의해야 할 점이나 개선할 점을 균형 있게 설명해주세요. 분석은 현실적이어야 하지만, 사용자가 긍정적인 마음으로 자신의 삶을 개척해나갈 수 있도록 격려하는 톤을 유지해주세요. 마지막으로, 이 분석에 대한 신뢰도 점수(70~95% 사이의 정수)와 함께, 손금은 정해진 미래가 아닌 가능성을 보여주는 지표라는 점을 설명하는 코멘트를 추가해주세요. 결과는 반드시 다음 JSON 형식으로만 반환해야 합니다.`;
+                schema = palmAnalysisSchema;
+                contents = {
+                    parts: [
+                        { text: prompt },
+                        { inlineData: { mimeType: payload.mimeType, data: payload.data } },
+                    ],
+                };
+                break;
+            }
             case 'impression': {
                 if (!payload || !payload.data) return res.status(400).json({ error: "Image data not sent." });
-                const imagePart = { inlineData: { mimeType: payload.mimeType, data: cleanBase64(payload.data) } };
-                let prompt;
-                let schema;
-                if (type === 'face') {
-                    schema = analysisSchema;
-                    prompt = `업로드된 사진 속 얼굴을 재미와 엔터테인먼트 목적으로 해석해 주세요. 절대 건강, 질병, 운명, 수명, 정치, 종교 등 민감한 주제는 언급하지 마세요. 긍정적인 성격 특징, 인상, 분위기, 매력 포인트만 간단히 설명해 주세요. 얼굴의 각 부위(눈, 코, 입 등)가 주는 느낌과 전반적인 인상을 긍정적이고 희망적인 관점에서 설명해주세요. 친절하고 부드러운 말투를 사용하고, 결과는 반드시 다음 JSON 형식으로만 반환해야 합니다: ${JSON.stringify(schema.properties)}`;
-                } else if (type === 'palm') {
-                    schema = palmAnalysisSchema;
-                    prompt = `당신은 수십 년간 손금을 연구해 온 세계 최고의 손금 전문가입니다. 당신의 임무는 사용자가 제공한 손 사진을 보고, 주요 3대 손금(생명선, 감정선, 두뇌선)의 특징과 그것이 의미하는 바를 상세히 설명하는 것입니다. 각 손금이 의미하는 장점과 함께 주의해야 할 점이나 개선할 점을 균형 있게 설명해주세요. 분석은 현실적이어야 하지만, 사용자가 긍정적인 마음으로 자신의 삶을 개척해나갈 수 있도록 격려하는 톤을 유지해주세요. 마지막으로, 이 분석에 대한 신뢰도 점수(70~95% 사이의 정수)와 함께, 손금은 정해진 미래가 아닌 가능성을 보여주는 지표라는 점을 설명하는 코멘트를 추가해주세요. 결과는 반드시 다음 JSON 형식으로만 반환해야 합니다: ${JSON.stringify(schema.properties)}`;
-                } else { // impression
-                    schema = impressionAnalysisSchema;
-                    prompt = `당신은 사회 심리학 및 인간 인식 분야의 전문가입니다. 당신의 임무는 사용자가 제공한 인물 사진을 보고 그 사람의 첫인상을 분석하는 것입니다. 사진 속 인물의 표정, 분위기, 스타일 등을 종합적으로 고려하여 다른 사람에게 어떤 느낌을 주는지 객관적으로 분석해주세요. 분석은 격려가 되고 긍정적인 방향으로 제공되어야 하지만, 현실적인 조언도 포함해야 합니다. 결과는 반드시 다음 JSON 형식으로만 반환해야 합니다: ${JSON.stringify(schema.properties)}`;
-                }
-                contents = { parts: [{ text: prompt }, imagePart] };
-                config = undefined; // For vision tasks, omit schema enforcement to improve reliability
+                const prompt = `당신은 사회 심리학 및 인간 인식 분야의 전문가입니다. 당신의 임무는 사용자가 제공한 인물 사진을 보고 그 사람의 첫인상을 분석하는 것입니다. 사진 속 인물의 표정, 분위기, 스타일 등을 종합적으로 고려하여 다른 사람에게 어떤 느낌을 주는지 객관적으로 분석해주세요. 분석은 격려가 되고 긍정적인 방향으로 제공되어야 하지만, 현실적인 조언도 포함해야 합니다. 결과는 반드시 다음 JSON 형식으로만 반환해야 합니다.`;
+                schema = impressionAnalysisSchema;
+                contents = {
+                    parts: [
+                        { text: prompt },
+                        { inlineData: { mimeType: payload.mimeType, data: payload.data } },
+                    ],
+                };
                 break;
             }
             case 'tarot': {
@@ -297,42 +304,57 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 payload.cards.forEach((card: any) => {
                     contentParts.push({ text: `\n--- \nCard: ${card.name} (${card.orientation})` });
                     if (card.imageData && card.mimeType) {
-                        contentParts.push({ inlineData: { mimeType: card.mimeType, data: cleanBase64(card.imageData) } });
+                        contentParts.push({ inlineData: { mimeType: card.mimeType, data: card.imageData } }); // data is already clean
                     }
                 });
+                schema = tarotAnalysisSchema;
                 contents = { parts: contentParts };
-                config = hasImages ? undefined : { responseMimeType: "application/json", responseSchema: tarotAnalysisSchema };
                 break;
             }
-            // Text-only cases below
             case 'astrology':
+                schema = astrologyAnalysisSchema;
                 contents = `당신은 세계적으로 유명한 점성술사입니다. 사용자의 생년월일인 ${payload.birthDate}를 기반으로 서양 점성술(별자리) 운세를 분석해주세요. 결과는 반드시 JSON 형식으로 반환해야 합니다. 다음 정보를 포함해주세요: 1. zodiac_sign: 해당하는 별자리. 2. ruling_planet: 지배 행성. 3. element: 4원소 (불, 흙, 공기, 물). 4. analysis: 성격, 연애, 직업에 대한 상세 분석.`;
-                config = { responseMimeType: "application/json", responseSchema: astrologyAnalysisSchema };
                 break;
             case 'saju':
+                schema = sajuAnalysisSchema;
                 contents = `당신은 수십 년 경력의 사주 명리학 대가입니다. 사용자의 생년월일시인 ${payload.birthDate} ${payload.birthTime}를 기반으로 사주팔자를 분석해주세요. 만약 출생 시간이 '모름'으로 입력되었다면 시주(時柱)는 알 수 없는 것으로 간주하고 분석하세요. 결과는 반드시 JSON 형식으로 반환해야 합니다. 다음 정보를 포함해주세요: 1. four_pillars: 60갑자를 이용한 연주, 월주, 일주, 시주. 2. day_master: 사주의 핵심인 일간(日干). 3. overall_analysis: 사주 전체 구조에 대한 종합 해설. 4. elemental_analysis: 사주에 나타난 오행(목, 화, 토, 금, 수)의 분포와 균형 분석. 5. life_advice: 타고난 기질을 바탕으로 삶을 더 풍요롭게 만들기 위한 조언.`;
-                config = { responseMimeType: "application/json", responseSchema: sajuAnalysisSchema };
                 break;
             case 'daily-tarot':
+                schema = dailyTarotAnalysisSchema;
                 contents = `당신은 희망을 주는 타로 마스터입니다. 오늘 사용자가 뽑은 카드는 '${payload.card.name}' (${payload.card.orientation}) 입니다. 이 카드를 바탕으로 오늘 하루를 위한 짧고 긍정적인 조언을 딱 한 문장으로 만들어주세요. 결과는 반드시 JSON 형식으로 반환해야 합니다.`;
-                config = { responseMimeType: "application/json", responseSchema: dailyTarotAnalysisSchema };
                 break;
             case 'juyeok':
+                schema = juyeokAnalysisSchema;
                 contents = `당신은 주역(I-Ching)의 대가입니다. 사용자의 질문에 대해 뽑힌 주역 괘를 해석해주세요. 질문: "${payload.question}", 본괘: ${payload.reading.presentHexagram.name}, 변괘: ${payload.reading.changingHexagram ? payload.reading.changingHexagram.name : '없음'}, 변효: ${payload.reading.changingLines.join(', ')}. 본괘, 변괘, 변효를 종합하여 질문에 대한 최종 조언을 제공합니다. 결과는 반드시 JSON 형식으로 반환해야 합니다.`;
-                config = { responseMimeType: "application/json", responseSchema: juyeokAnalysisSchema };
                 break;
             case 'yukhyo':
+                schema = yukhyoAnalysisSchema;
                 contents = `당신은 시공간의 기운을 읽어내는 육효점의 대가입니다. 사용자의 질문("${payload.question}")에 대해, 현재 시점의 기운을 바탕으로 주역 64괘 중 하나를 도출하고, 육효의 원리에 따라 해석하여 답을 주세요. 결과는 반드시 JSON 형식으로 반환해야 합니다.`;
-                config = { responseMimeType: "application/json", responseSchema: yukhyoAnalysisSchema };
                 break;
             default:
                 return res.status(400).json({ error: 'Invalid analysis type' });
         }
         
-        const response = await ai.models.generateContent({ model, contents, config });
+        // --- Model Selection Logic ---
+        let model = "gemini-2.5-flash"; // Default to fast text model
+        const imageBasedTypes = ['face', 'palm', 'impression'];
+        const isImageTarot = type === 'tarot' && payload.cards.some((c: any) => c.imageData);
+        if (imageBasedTypes.includes(type) || isImageTarot) {
+            model = "gemini-1.5-pro"; // Use powerful multimodal model for image analysis
+        }
+        console.log(`📌 [API/analyze] Selected Model: ${model}`);
+
+        // --- Gemini API Call ---
+        const response = await ai.models.generateContent({
+            model,
+            contents,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: schema,
+            },
+        });
         
         let jsonText = response.text.trim();
-        // Handle markdown code fence if present
         if (jsonText.startsWith("```json")) {
             jsonText = jsonText.substring(7, jsonText.length - 3).trim();
         } else if (jsonText.startsWith("```")) {
