@@ -367,12 +367,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const isImageBased = imageBasedTypes.includes(type) || isImageTarot;
         
         if (isImageBased) {
-            model = "gemini-1.5-pro-latest"; // ✅ Use powerful multimodal model for images
+            model = "gemini-1.5-pro-latest";
             console.log(`📌 [API/analyze] Image-based request. Model: ${model}. Omitting responseSchema.`);
         } else {
-            // For text-only analysis, use the schema for reliable, structured output.
-            config.responseMimeType = "application/json";
-            config.responseSchema = schema;
+            config = {
+                responseMimeType: "application/json",
+                responseSchema: schema,
+            };
             console.log(`📌 [API/analyze] Text-based request. Model: ${model}. Using responseSchema.`);
         }
 
@@ -380,7 +381,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const response = await ai.models.generateContent({
             model,
             contents,
-            // Conditionally include the config object only if it's not empty.
             ...(Object.keys(config).length > 0 ? { config } : {}),
         });
         
