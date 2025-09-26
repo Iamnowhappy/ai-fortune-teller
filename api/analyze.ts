@@ -209,13 +209,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method Not Allowed' });
     }
+    
+    console.log("📩 [API/analyze] Request received:", {
+      type: req.body?.type,
+      hasPayload: !!req.body?.payload,
+      imageLength: req.body?.payload?.data?.length ?? 'N/A',
+    });
 
     try {
         const { type, payload } = req.body;
-
-        if (['face', 'palm', 'impression'].includes(type) && payload.data) {
-            console.log(`[api/analyze] Received image for type '${type}'. MimeType: ${payload.mimeType}, Base64 Length: ${payload.data.length}`);
-        }
 
         const apiKey = process.env.API_KEY;
         if (!apiKey) {
@@ -251,7 +253,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         switch (type) {
             case 'face':
-                prompt = `당신은 사용자의 사진에서 나타나는 인상을 재미있게 해석해주는 AI 어시스턴트입니다. 얼굴의 각 부위(눈, 코, 입 등)가 주는 느낌과 전반적인 인상을 긍정적이고 희망적인 관점에서 설명해주세요. 예를 들어, '크고 맑은 눈은 호기심이 많고 열정적인 성격을 나타낼 수 있습니다'와 같이 해석합니다. 이 분석은 과학적 근거가 없는 오락용 콘텐츠이며, 사람을 판단하는 기준이 될 수 없다는 점을 분명히 해주세요. 친절하고 부드러운 말투를 사용하고, 결과는 반드시 JSON 형식으로 반환해야 합니다.`;
+                prompt = `이 사진 속 얼굴을 관상학적으로 해석하지 말고, 오직 재미와 엔터테인먼트 목적으로 인상이나 분위기를 가볍게 풀이해주세요. 얼굴의 각 부위(눈, 코, 입 등)가 주는 느낌과 전반적인 인상을 긍정적이고 희망적인 관점에서 설명해주세요. 건강, 운명, 수명, 의학적 진단과 관련된 내용은 절대 언급하지 마세요. 친절하고 부드러운 말투를 사용하고, 결과는 반드시 JSON 형식으로 반환해야 합니다.`;
                 schema = analysisSchema;
                 contents = {
                     parts: [
@@ -373,7 +375,7 @@ Now, analyze the following cards:`;
 
     } catch (error: any) {
         const type = req.body?.type || 'unknown';
-        console.error(`--- [API ERROR] ---`);
+        console.error(`--- ❌ [API ERROR] ---`);
         console.error(`Analysis Type: ${type}`);
         console.error(`Timestamp: ${new Date().toISOString()}`);
         console.error("Error Message:", error.message);

@@ -10,7 +10,7 @@ import type { PhysiognomyResult, PalmistryResult, ImpressionAnalysisResult, Astr
 async function analyze<T>(type: string, payload: any): Promise<T> {
     try {
         if (['face', 'palm', 'impression'].includes(type) && payload.data) {
-            console.log(`[geminiService] Sending '${type}' image data (first 50 chars): ${payload.data.substring(0, 50)}...`);
+            console.log(`📤 [geminiService] Sending '${type}' request. Image base64 length: ${payload.data.length}`);
         }
 
         const response = await fetch('/api/analyze', {
@@ -20,10 +20,12 @@ async function analyze<T>(type: string, payload: any): Promise<T> {
             },
             body: JSON.stringify({ type, payload }),
         });
+        
+        console.log(`📥 [geminiService] Server response status for type '${type}':`, response.status);
 
         if (!response.ok) {
             const errorData = await response.json();
-            console.error('API Error Response:', errorData);
+            console.error('❌ [geminiService] API Error Response Body:', errorData);
             let userMessage = '분석 중 서버에서 오류가 발생했습니다.';
             const details = errorData.details || '';
 
@@ -39,7 +41,7 @@ async function analyze<T>(type: string, payload: any): Promise<T> {
 
         return await response.json() as T;
     } catch (error) {
-        console.error(`'${type}' 분석 중 네트워크 또는 파싱 오류 발생:`, error);
+        console.error(`❌ [geminiService] Network or parsing error during '${type}' analysis:`, error);
         // If it's not a custom error from above, create a generic network error message.
         if (error instanceof Error && !error.message.startsWith('분석 중') && !error.message.startsWith('이미지') && !error.message.startsWith('요청') && !error.message.startsWith('서버')) {
             throw new Error('서버와 통신할 수 없습니다. 네트워크 연결을 확인해주세요.');
