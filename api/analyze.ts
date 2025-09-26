@@ -210,14 +210,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(405).json({ error: 'Method Not Allowed' });
     }
     
-    console.log("📩 [API/analyze] Request received:", {
+    console.log("📌 [API/analyze] 요청 수신:", {
       type: req.body?.type,
-      hasPayload: !!req.body?.payload,
-      imageLength: req.body?.payload?.data?.length ?? 'N/A',
+      imageLength: req.body?.payload?.data?.length ?? '없음',
     });
 
     try {
         const { type, payload } = req.body;
+        
+        if (['face', 'palm', 'impression'].includes(type) && (!payload || !payload.data)) {
+            console.error("❌ [API/analyze] 이미지 데이터 없음");
+            return res.status(400).json({ error: "이미지가 전송되지 않았습니다.", details: "No image data received in payload." });
+        }
+
 
         const apiKey = process.env.API_KEY;
         if (!apiKey) {
@@ -253,7 +258,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         switch (type) {
             case 'face':
-                prompt = `이 사진 속 얼굴을 관상학적으로 해석하지 말고, 오직 재미와 엔터테인먼트 목적으로 인상이나 분위기를 가볍게 풀이해주세요. 얼굴의 각 부위(눈, 코, 입 등)가 주는 느낌과 전반적인 인상을 긍정적이고 희망적인 관점에서 설명해주세요. 건강, 운명, 수명, 의학적 진단과 관련된 내용은 절대 언급하지 마세요. 친절하고 부드러운 말투를 사용하고, 결과는 반드시 JSON 형식으로 반환해야 합니다.`;
+                prompt = `업로드된 사진 속 얼굴을 재미와 엔터테인먼트 목적으로 해석해 주세요. 절대 건강, 질병, 운명, 수명, 정치, 종교 등 민감한 주제는 언급하지 마세요. 긍정적인 성격 특징, 인상, 분위기, 매력 포인트만 간단히 설명해 주세요. 얼굴의 각 부위(눈, 코, 입 등)가 주는 느낌과 전반적인 인상을 긍정적이고 희망적인 관점에서 설명해주세요. 친절하고 부드러운 말투를 사용하고, 결과는 반드시 JSON 형식으로 반환해야 합니다.`;
                 schema = analysisSchema;
                 contents = {
                     parts: [
@@ -369,13 +374,14 @@ Now, analyze the following cards:`;
         });
         
         const jsonText = response.text.trim();
+        console.log("✅ [API/analyze] Gemini 응답 (raw text):", jsonText.slice(0, 500) + (jsonText.length > 500 ? '...' : ''));
         const result = JSON.parse(jsonText);
 
         res.status(200).json(result);
 
     } catch (error: any) {
         const type = req.body?.type || 'unknown';
-        console.error(`--- ❌ [API ERROR] ---`);
+        console.error("❌ [API/analyze] API 오류 발생");
         console.error(`Analysis Type: ${type}`);
         console.error(`Timestamp: ${new Date().toISOString()}`);
         console.error("Error Message:", error.message);
@@ -383,8 +389,10 @@ Now, analyze the following cards:`;
             console.error("Error Cause:", error.cause);
         }
         console.error("Full Error Object:", JSON.stringify(error, null, 2));
-        console.error(`--- [END API ERROR] ---`);
 
-        res.status(500).json({ error: 'An internal server error occurred.', details: error.message });
+        res.status(500).json({
+          error: '서버 내부 오류가 발생했습니다.', 
+          details: error.message || "알 수 없는 오류" 
+        });
     }
 }
