@@ -356,6 +356,15 @@ const HomePage: React.FC<{ onNavigate: (page: Page) => void; }> = ({ onNavigate 
 const CheckoutPage: React.FC<{ onBack: () => void; email: string | null; }> = ({ onBack, email }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [featureName, setFeatureName] = useState<string | null>(null);
+
+  useEffect(() => {
+    const hashParams = new URLSearchParams(window.location.hash.split('?')[1]);
+    const feature = hashParams.get('feature');
+    if (feature) {
+        setFeatureName(decodeURIComponent(feature));
+    }
+  }, []);
 
   const handleCheckout = async () => {
     if (!email) {
@@ -376,7 +385,11 @@ const CheckoutPage: React.FC<{ onBack: () => void; email: string | null; }> = ({
       }
       window.location.href = data.url;
     } catch (err: any) {
-      setError(err.message);
+      if (err.message && err.message.includes('Stripe Price ID is not configured')) {
+        setError('결제 설정이 완료되지 않았습니다. 관리자에게 문의하세요.');
+      } else {
+        setError(err.message);
+      }
       setIsLoading(false);
     }
   };
@@ -385,8 +398,8 @@ const CheckoutPage: React.FC<{ onBack: () => void; email: string | null; }> = ({
     <>
       <Header
         icon={<LockIcon className="w-10 h-10 text-cyan-400" />}
-        title="프리미엄 전용 기능"
-        description="더욱 상세한 분석을 원하시면 프리미엄 플랜을 이용해보세요."
+        title={featureName ? `프리미엄 - ${featureName}` : "프리미엄 전용 기능"}
+        description={featureName ? `'${featureName}'의 모든 상세 분석을 이용하려면 플랜을 업그레이드하세요.` : "더욱 상세한 분석을 원하시면 프리미엄 플랜을 이용해보세요."}
         onBack={onBack}
       />
       <main className="flex-grow flex flex-col items-center justify-center text-center py-10">
@@ -1126,7 +1139,7 @@ const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<Page>('home');
   const [userEmail, setUserEmail] = useState<string | null>(null);
 
-  const navigateTo = (page: Page) => {
+  const navigateTo = (page: Page | string) => {
     window.location.hash = page === 'home' ? '' : page;
   };
 
@@ -1165,7 +1178,7 @@ const App: React.FC = () => {
         return <DailyTarotPage onBack={() => navigateTo('home')} />;
       case 'saved-results':
         return (
-          <PremiumRoute navigate={navigateTo} email={userEmail} redirectOnFail={true}>
+          <PremiumRoute navigate={navigateTo} email={userEmail} redirectOnFail={true} featureName="나의 운세함">
             <SavedResultsPage onBack={() => navigateTo('home')} onNavigate={navigateTo} email={userEmail} />
           </PremiumRoute>
         );

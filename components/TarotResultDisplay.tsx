@@ -92,6 +92,7 @@ export const TarotResultDisplay: React.FC<TarotResultDisplayProps> = ({ result, 
   const cardNames = drawnCards.map(c => `${c.name}(${c.orientation})`).join(', ');
   const shareText = `질문: "${question || '나의 운세'}"\n뽑힌 카드: ${cardNames}\n\n[종합 리딩]\n${result.overall_reading}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
   const spreadLabels = getSpreadLabels(drawnCards.length);
+  const featureName = "AI 타로 마스터";
   
   const PremiumContent = () => (
     <motion.div variants={itemVariants} className="space-y-6 mt-8">
@@ -144,10 +145,10 @@ export const TarotResultDisplay: React.FC<TarotResultDisplayProps> = ({ result, 
         <TypingResult text={result.overall_reading} className="text-slate-300 leading-relaxed whitespace-pre-wrap" />
       </motion.div>
       
-      {!isSavedView && <motion.div variants={itemVariants}><UpgradeCTA /></motion.div>}
+      {!isSavedView && <motion.div variants={itemVariants}><UpgradeCTA featureName={featureName} /></motion.div>}
 
       {isSavedView ? <PremiumContent /> : (
-        <PremiumRoute navigate={onNavigate} email={email}>
+        <PremiumRoute navigate={onNavigate} email={email} featureName={featureName}>
             <PremiumContent />
         </PremiumRoute>
       )}

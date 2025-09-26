@@ -49,6 +49,7 @@ const itemVariants: Variants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, vis
 
 export const JuyeokResultDisplay: React.FC<JuyeokResultDisplayProps> = ({ result, reading, onReset, onBack, onSave, isSaved, isSavedView, question, onNavigate, email }) => {
   const shareText = `질문: "${question || '나의 운세'}"\n본괘: ${result.present_hexagram_name}\n\n[종합 해설]\n${result.interpretation}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
+  const featureName = "AI 주역 전문가";
   
   const PremiumContent = () => (
     <>
@@ -101,10 +102,10 @@ export const JuyeokResultDisplay: React.FC<JuyeokResultDisplayProps> = ({ result
         <TypingResult text={result.interpretation} className="text-slate-300 leading-relaxed whitespace-pre-wrap" />
       </motion.div>
 
-      {!isSavedView && <motion.div variants={itemVariants}><UpgradeCTA /></motion.div>}
+      {!isSavedView && <motion.div variants={itemVariants}><UpgradeCTA featureName={featureName} /></motion.div>}
 
       {isSavedView ? <PremiumContent /> : (
-        <PremiumRoute navigate={onNavigate} email={email}>
+        <PremiumRoute navigate={onNavigate} email={email} featureName={featureName}>
             <PremiumContent />
         </PremiumRoute>
       )}

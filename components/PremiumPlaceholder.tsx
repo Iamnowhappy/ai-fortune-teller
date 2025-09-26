@@ -1,10 +1,14 @@
 import React from 'react';
 import { LockIcon } from './icons';
 
-export const UpgradeCTA: React.FC = () => {
+interface UpgradeCTAProps {
+    featureName?: string;
+}
+
+export const UpgradeCTA: React.FC<UpgradeCTAProps> = ({ featureName }) => {
     const handleUpgradeClick = () => {
-        // Navigate to the checkout page using hash routing
-        window.location.hash = 'checkout';
+        const featureQuery = featureName ? `?feature=${encodeURIComponent(featureName)}` : '';
+        window.location.hash = `checkout${featureQuery}`;
     };
 
     return (

@@ -24,6 +24,7 @@ const itemVariants: Variants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, vis
 
 export const ImpressionResultDisplay: React.FC<ImpressionResultDisplayProps> = ({ result, onReset, onBack, onSave, isSaved, isSavedView, onNavigate, email }) => {
   const shareText = `AI가 분석한 저의 첫인상 키워드는 '${result.keywords.join(', ')}' 입니다.\n\n[상세 분석]\n${result.detailed_analysis}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
+  const featureName = "AI 첫인상 분석";
   
   const PremiumContent = () => (
      <motion.div variants={itemVariants} className="mt-8 bg-slate-800/50 border border-slate-700 rounded-2xl p-6 flex items-start gap-4">
@@ -56,10 +57,10 @@ export const ImpressionResultDisplay: React.FC<ImpressionResultDisplayProps> = (
         <TypingResult text={result.detailed_analysis} className="text-slate-300 leading-relaxed whitespace-pre-wrap" />
       </motion.div>
 
-      {!isSavedView && <motion.div variants={itemVariants}><UpgradeCTA /></motion.div>}
+      {!isSavedView && <motion.div variants={itemVariants}><UpgradeCTA featureName={featureName} /></motion.div>}
 
       {isSavedView ? <PremiumContent /> : (
-          <PremiumRoute navigate={onNavigate} email={email}>
+          <PremiumRoute navigate={onNavigate} email={email} featureName={featureName}>
               <PremiumContent />
           </PremiumRoute>
       )}

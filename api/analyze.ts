@@ -213,6 +213,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     try {
         const { type, payload } = req.body;
 
+        if (['face', 'palm', 'impression'].includes(type) && payload.data) {
+            console.log(`[api/analyze] Received image for type '${type}'. MimeType: ${payload.mimeType}, Base64 Length: ${payload.data.length}`);
+        }
+
         const apiKey = process.env.API_KEY;
         if (!apiKey) {
             console.error("API_KEY environment variable is not set.");

@@ -25,6 +25,7 @@ const itemVariants: Variants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, vis
 
 export const AstrologyResultDisplay: React.FC<AstrologyResultDisplayProps> = ({ result, onReset, onBack, onSave, isSaved, isSavedView, onNavigate, email }) => {
   const shareText = `AI가 분석한 저의 별자리는 ${result.zodiac_sign}입니다.\n\n[성격 분석]\n${result.analysis.personality}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
+  const featureName = "AI 별자리 운세";
   
   const PremiumContent = () => (
      <motion.div variants={itemVariants} className="space-y-6 mt-8">
@@ -63,10 +64,10 @@ export const AstrologyResultDisplay: React.FC<AstrologyResultDisplayProps> = ({ 
         </div>
       </motion.div>
       
-      {!isSavedView && <motion.div variants={itemVariants}><UpgradeCTA /></motion.div>}
+      {!isSavedView && <motion.div variants={itemVariants}><UpgradeCTA featureName={featureName} /></motion.div>}
 
       {isSavedView ? <PremiumContent /> : (
-        <PremiumRoute navigate={onNavigate} email={email}>
+        <PremiumRoute navigate={onNavigate} email={email} featureName={featureName}>
             <PremiumContent />
         </PremiumRoute>
       )}

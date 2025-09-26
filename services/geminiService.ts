@@ -9,6 +9,10 @@ import type { PhysiognomyResult, PalmistryResult, ImpressionAnalysisResult, Astr
  */
 async function analyze<T>(type: string, payload: any): Promise<T> {
     try {
+        if (['face', 'palm', 'impression'].includes(type) && payload.data) {
+            console.log(`[geminiService] Sending '${type}' image data (first 50 chars): ${payload.data.substring(0, 50)}...`);
+        }
+
         const response = await fetch('/api/analyze', {
             method: 'POST',
             headers: {

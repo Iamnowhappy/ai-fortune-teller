@@ -25,6 +25,7 @@ const itemVariants: Variants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, vis
 
 export const YukhyoResultDisplay: React.FC<YukhyoResultDisplayProps> = ({ result, onReset, onBack, onSave, isSaved, isSavedView, question, onNavigate, email }) => {
   const shareText = `질문: "${question || '나의 운세'}"\n괘: ${result.hexagram_name}\n\n[종합 해설]\n${result.overall_interpretation}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
+  const featureName = "AI 육효 분석가";
   
   const PremiumContent = () => (
      <motion.div variants={itemVariants} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 mt-8">
@@ -79,10 +80,10 @@ export const YukhyoResultDisplay: React.FC<YukhyoResultDisplayProps> = ({ result
         </div>
       </motion.div>
       
-      {!isSavedView && <motion.div variants={itemVariants}><UpgradeCTA /></motion.div>}
+      {!isSavedView && <motion.div variants={itemVariants}><UpgradeCTA featureName={featureName} /></motion.div>}
 
       {isSavedView ? <PremiumContent /> : (
-        <PremiumRoute navigate={onNavigate} email={email}>
+        <PremiumRoute navigate={onNavigate} email={email} featureName={featureName}>
           <PremiumContent />
         </PremiumRoute>
       )}
@@ -121,4 +122,4 @@ export const YukhyoResultDisplay: React.FC<YukhyoResultDisplayProps> = ({ result
       </motion.div>
     </motion.div>
   );
-};
+}

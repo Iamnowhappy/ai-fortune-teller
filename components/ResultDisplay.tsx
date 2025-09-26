@@ -42,6 +42,7 @@ const itemVariants: Variants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, vis
 
 export const ResultDisplay: React.FC<ResultDisplayProps> = ({ result, onReset, onBack, onSave, isSaved, isSavedView, onNavigate, email }) => {
   const shareText = `AI 관상가로 분석한 저의 관상 결과입니다:\n\n[총평]\n${result.overall_impression}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
+  const featureName = "AI 관상가";
 
   const PremiumContent = () => (
     <motion.div variants={itemVariants}>
@@ -75,10 +76,10 @@ export const ResultDisplay: React.FC<ResultDisplayProps> = ({ result, onReset, o
         <TypingResult text={result.overall_impression} className="text-slate-300 leading-relaxed whitespace-pre-wrap" />
       </motion.div>
       
-      {!isSavedView && <motion.div variants={itemVariants}><UpgradeCTA /></motion.div>}
+      {!isSavedView && <motion.div variants={itemVariants}><UpgradeCTA featureName={featureName} /></motion.div>}
 
       {isSavedView ? <PremiumContent /> : (
-        <PremiumRoute navigate={onNavigate} email={email}>
+        <PremiumRoute navigate={onNavigate} email={email} featureName={featureName}>
             <PremiumContent />
         </PremiumRoute>
       )}

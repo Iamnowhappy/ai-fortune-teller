@@ -24,6 +24,7 @@ const itemVariants: Variants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, vis
 
 export const SajuResultDisplay: React.FC<SajuResultDisplayProps> = ({ result, onReset, onBack, onSave, isSaved, isSavedView, onNavigate, email }) => {
   const shareText = `AI 사주 분석 결과, 저의 일간은 ${result.day_master} 입니다.\n\n[종합 분석]\n${result.overall_analysis}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
+  const featureName = "AI 사주 분석";
   
   const PremiumContent = () => (
      <motion.div variants={itemVariants} className="space-y-6 mt-8">
@@ -70,10 +71,10 @@ export const SajuResultDisplay: React.FC<SajuResultDisplayProps> = ({ result, on
         </div>
       </motion.div>
       
-      {!isSavedView && <motion.div variants={itemVariants}><UpgradeCTA /></motion.div>}
+      {!isSavedView && <motion.div variants={itemVariants}><UpgradeCTA featureName={featureName} /></motion.div>}
 
       {isSavedView ? <PremiumContent /> : (
-        <PremiumRoute navigate={onNavigate} email={email}>
+        <PremiumRoute navigate={onNavigate} email={email} featureName={featureName}>
             <PremiumContent />
         </PremiumRoute>
       )}
