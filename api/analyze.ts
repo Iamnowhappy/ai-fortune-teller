@@ -247,7 +247,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         switch (type) {
             case 'face':
-                prompt = `당신은 수십 년간 관상을 연구해 온 세계 최고의 관상가입니다. 당신의 임무는 사용자가 제공한 얼굴 사진을 보고, 각 부위별(눈, 코, 입, 이마, 턱, 귀) 특징과 그것이 의미하는 관상학적 해석을 상세하고 긍정적인 방향으로 설명해주는 것입니다. 전문적이고 깊이 있는 분석을 제공하되, 사용자가 쉽게 이해할 수 있도록 친절하고 희망을 주는 말투를 사용하세요. 분석 결과는 반드시 JSON 형식으로 반환해야 합니다.`;
+                prompt = `당신은 사용자의 사진에서 나타나는 인상을 재미있게 해석해주는 AI 어시스턴트입니다. 얼굴의 각 부위(눈, 코, 입 등)가 주는 느낌과 전반적인 인상을 긍정적이고 희망적인 관점에서 설명해주세요. 예를 들어, '크고 맑은 눈은 호기심이 많고 열정적인 성격을 나타낼 수 있습니다'와 같이 해석합니다. 이 분석은 과학적 근거가 없는 오락용 콘텐츠이며, 사람을 판단하는 기준이 될 수 없다는 점을 분명히 해주세요. 친절하고 부드러운 말투를 사용하고, 결과는 반드시 JSON 형식으로 반환해야 합니다.`;
                 schema = analysisSchema;
                 contents = {
                     parts: [
@@ -368,7 +368,17 @@ Now, analyze the following cards:`;
         res.status(200).json(result);
 
     } catch (error: any) {
-        console.error('Error in /api/analyze:', error);
+        const type = req.body?.type || 'unknown';
+        console.error(`--- [API ERROR] ---`);
+        console.error(`Analysis Type: ${type}`);
+        console.error(`Timestamp: ${new Date().toISOString()}`);
+        console.error("Error Message:", error.message);
+        if (error.cause) {
+            console.error("Error Cause:", error.cause);
+        }
+        console.error("Full Error Object:", JSON.stringify(error, null, 2));
+        console.error(`--- [END API ERROR] ---`);
+
         res.status(500).json({ error: 'An internal server error occurred.', details: error.message });
     }
 }

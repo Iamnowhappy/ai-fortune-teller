@@ -1,5 +1,3 @@
-
-
 import './index.css';
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
@@ -91,7 +89,7 @@ const HomePage: React.FC<{ onNavigate: (page: Page) => void; }> = ({ onNavigate 
         } else {
             throw new Error("No image data received");
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error("Failed to generate fortune image", err);
         setFortuneImage({ loading: false, url: null, error: true });
       }
@@ -442,9 +440,9 @@ const FaceReaderPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) =>
         try {
         const result = await analyzeFace(imageFile);
         setAnalysisResult(result);
-        } catch (err) {
+        } catch (err: any) {
         console.error(err);
-        setError('분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+        setError(err.message || '알 수 없는 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
         } finally {
         setIsLoading(false);
         }
@@ -543,9 +541,9 @@ const PalmReaderPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) =>
         try {
             const result = await analyzePalm(imageFile);
             setAnalysisResult(result);
-        } catch (err) {
+        } catch (err: any) {
             console.error(err);
-            setError('분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+            setError(err.message || '알 수 없는 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
         } finally {
             setIsLoading(false);
         }
@@ -645,9 +643,9 @@ const ImpressionAnalyzerPage: React.FC<{ onBack: () => void; onNavigate: (page: 
         try {
             const result = await analyzeImpression(imageFile);
             setAnalysisResult(result);
-        } catch (err) {
+        } catch (err: any) {
             console.error(err);
-            setError('분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+            setError(err.message || '알 수 없는 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
         } finally {
             setIsLoading(false);
         }
@@ -733,9 +731,9 @@ const AstrologyReaderPage: React.FC<{ onBack: () => void; onNavigate: (page: Pag
         try {
             const result = await analyzeAstrology(birthDate);
             setAnalysisResult(result);
-        } catch (err) {
+        } catch (err: any) {
             console.error(err);
-            setError('분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+            setError(err.message || '알 수 없는 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
         } finally {
             setIsLoading(false);
         }
@@ -815,9 +813,9 @@ const SajuAnalyzerPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) 
         try {
             const result = await analyzeSaju(birthDate, birthTime);
             setAnalysisResult(result);
-        } catch (err) {
+        } catch (err: any) {
             console.error(err);
-            setError('분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+            setError(err.message || '알 수 없는 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
         } finally {
             setIsLoading(false);
         }
@@ -908,9 +906,9 @@ const JuyeokReaderPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) 
         try {
             const result = await analyzeJuyeok(question, reading);
             setAnalysisResult(result);
-        } catch (err) {
+        } catch (err: any) {
             console.error(err);
-            setError('분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+            setError(err.message || '알 수 없는 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
         } finally {
             setIsLoading(false);
         }
@@ -1017,9 +1015,9 @@ const YukhyoAnalyzerPage: React.FC<{ onBack: () => void; onNavigate: (page: Page
         try {
             const result = await analyzeYukhyo(question);
             setAnalysisResult(result);
-        } catch (err) {
+        } catch (err: any) {
             console.error(err);
-            setError('분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+            setError(err.message || '알 수 없는 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
         } finally {
             setIsLoading(false);
         }
@@ -1167,7 +1165,7 @@ const App: React.FC = () => {
         return <DailyTarotPage onBack={() => navigateTo('home')} />;
       case 'saved-results':
         return (
-          <PremiumRoute navigate={navigateTo} email={userEmail}>
+          <PremiumRoute navigate={navigateTo} email={userEmail} redirectOnFail={true}>
             <SavedResultsPage onBack={() => navigateTo('home')} onNavigate={navigateTo} email={userEmail} />
           </PremiumRoute>
         );

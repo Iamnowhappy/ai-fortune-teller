@@ -1,5 +1,3 @@
-
-
 import { fileToBase64 } from '../utils/fileUtils';
 import type { PhysiognomyResult, PalmistryResult, ImpressionAnalysisResult, AstrologyResult, SajuResult, TarotResult, CardDraw, JuyeokReading, JuyeokResult, Hexagram, YukhyoResult, DailyTarotResult, FortuneImageResult } from '../types';
 
@@ -22,12 +20,26 @@ async function analyze<T>(type: string, payload: any): Promise<T> {
         if (!response.ok) {
             const errorData = await response.json();
             console.error('API Error Response:', errorData);
-            throw new Error(errorData.error || 'API 요청에 실패했습니다.');
+            let userMessage = '분석 중 서버에서 오류가 발생했습니다.';
+            const details = errorData.details || '';
+
+            if (details.includes('SAFETY')) {
+                userMessage = '이미지 또는 요청 내용이 안전 정책에 위배되어 분석할 수 없습니다. 다른 콘텐츠를 이용해주세요.';
+            } else if (details.toLowerCase().includes('invalid')) {
+                userMessage = '요청 데이터가 올바르지 않습니다. 페이지를 새로고침하고 다시 시도해주세요.';
+            } else if (response.status === 500) {
+                 userMessage = '서버 내부 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+            }
+            throw new Error(userMessage);
         }
 
         return await response.json() as T;
     } catch (error) {
         console.error(`'${type}' 분석 중 네트워크 또는 파싱 오류 발생:`, error);
+        // If it's not a custom error from above, create a generic network error message.
+        if (error instanceof Error && !error.message.startsWith('분석 중') && !error.message.startsWith('이미지') && !error.message.startsWith('요청') && !error.message.startsWith('서버')) {
+            throw new Error('서버와 통신할 수 없습니다. 네트워크 연결을 확인해주세요.');
+        }
         throw error;
     }
 }

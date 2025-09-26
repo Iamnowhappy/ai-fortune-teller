@@ -49,9 +49,9 @@ export const DailyTarotPage: React.FC<{ onBack: () => void }> = ({ onBack }) => 
             localStorage.setItem(STORAGE_KEY, JSON.stringify(newData));
             setStoredData(newData);
             setTimeout(() => setIsFlipped(true), 100); // Short delay for animation
-        } catch (err) {
+        } catch (err: any) {
             console.error(err);
-            setError('카드 해석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+            setError(err.message || '카드 해석 중 알 수 없는 오류가 발생했습니다.');
         } finally {
             setIsLoading(false);
         }
