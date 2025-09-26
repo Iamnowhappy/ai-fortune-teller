@@ -259,6 +259,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
         
         if (type === 'face-stretch') {
+            if (!payload?.data) return res.status(400).json({ error: "Image data not sent." });
             const prompt = `사진 속 인물의 얼굴을 세로로 길게, 위아래로 최대한 늘려서 과장되고 재미있는 이미지로 만들어줘. 그리고 이 변형된 얼굴에 대한 재미있는 한 줄 평을 함께 알려줘.`;
             const response = await ai.models.generateContent({
                 model: 'gemini-2.5-flash-image-preview',
@@ -359,29 +360,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         
         // --- Model Selection & Config Logic ---
         let model = "gemini-2.5-flash";
-        let useSchema = true;
+        let config: any = {};
 
         const imageBasedTypes = ['face', 'palm', 'impression'];
         const isImageTarot = type === 'tarot' && payload.cards?.some((c: any) => c.imageData);
+        const isImageBased = imageBasedTypes.includes(type) || isImageTarot;
         
-        if (imageBasedTypes.includes(type) || isImageTarot) {
-            model = "gemini-1.5-pro"; // multimodal model
-            useSchema = false; // For image analysis, remove schema to avoid 400 errors
-        }
-
-        console.log(`📌 [API/analyze] Selected Model: ${model}, Use Schema: ${useSchema}`);
-
-        // --- Gemini API Call ---
-        const config: any = {};
-        if (useSchema) {
+        if (isImageBased) {
+            model = "gemini-1.5-pro-latest"; // ✅ Use powerful multimodal model for images
+            console.log(`📌 [API/analyze] Image-based request. Model: ${model}. Omitting responseSchema.`);
+        } else {
+            // For text-only analysis, use the schema for reliable, structured output.
             config.responseMimeType = "application/json";
             config.responseSchema = schema;
+            console.log(`📌 [API/analyze] Text-based request. Model: ${model}. Using responseSchema.`);
         }
 
+        // --- Gemini API Call ---
         const response = await ai.models.generateContent({
             model,
             contents,
-            config,
+            // Conditionally include the config object only if it's not empty.
+            ...(Object.keys(config).length > 0 ? { config } : {}),
         });
         
         let jsonText = response.text.trim();
@@ -393,8 +393,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
              jsonText = jsonText.substring(3, jsonText.length - 3).trim();
         }
         
-        console.log("✅ [API/analyze] Gemini response (cleaned):", jsonText.slice(0, 500) + (jsonText.length > 500 ? '...' : ''));
-        const result = JSON.parse(jsonText);
+        let result: any;
+        try {
+            result = JSON.parse(jsonText);
+        } catch (e) {
+            console.error("❌ JSON parse failed. Raw response:", jsonText);
+            throw new Error("AI response was not valid JSON.");
+        }
+        
+        console.log("✅ [API/analyze] Gemini response (parsed successfully)");
 
         res.status(200).json(result);
 
