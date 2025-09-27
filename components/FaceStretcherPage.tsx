@@ -6,6 +6,7 @@ import { stretchFace } from '../services/geminiService';
 import type { FaceStretchResult } from '../types';
 import { HappyFaceIcon, HomeIcon, RefreshIcon } from './icons';
 import { motion } from 'framer-motion';
+import { ErrorMessage } from './shared/ErrorMessage';
 
 export const FaceStretcherPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
     const [imageFile, setImageFile] = useState<File | null>(null);
@@ -13,14 +14,6 @@ export const FaceStretcherPage: React.FC<{ onBack: () => void; }> = ({ onBack })
     const [analysisResult, setAnalysisResult] = useState<FaceStretchResult | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
-
-    const faceStretcherMessages = [
-        "얼굴을 쭉쭉 늘리는 중...",
-        "더 재미있게 변형하는 중...",
-        "유쾌한 에너지를 불어넣고 있습니다...",
-        "거울 보고 놀라지 마세요!",
-        "거의 다 됐습니다... 웃을 준비 하세요!"
-    ];
 
     const handleImageSelect = (file: File) => {
         setImageFile(file);
@@ -106,7 +99,8 @@ export const FaceStretcherPage: React.FC<{ onBack: () => void; }> = ({ onBack })
             />
             <main className="flex-grow flex flex-col items-center justify-center text-center py-10">
                 {isLoading ? (
-                    <Loader messages={faceStretcherMessages} />
+                    // FIX: Replaced 'messages' prop with 'type' prop to align with Loader's design and fix type error.
+                    <Loader type="face-stretch" />
                 ) : analysisResult ? (
                     <ResultView />
                 ) : (
@@ -118,12 +112,7 @@ export const FaceStretcherPage: React.FC<{ onBack: () => void; }> = ({ onBack })
                         buttonText="얼굴 늘리기"
                     />
                 )}
-                {error && (
-                    <div className="mt-6 bg-red-500/20 border border-red-500 text-red-300 px-4 py-3 rounded-lg relative" role="alert">
-                        <strong className="font-bold">오류:</strong>
-                        <span className="block sm:inline ml-2">{error}</span>
-                    </div>
-                )}
+                <ErrorMessage message={error} />
             </main>
         </>
     );

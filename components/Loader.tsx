@@ -1,20 +1,16 @@
 
-import React from 'react';
 
+import React from 'react';
+import { loaderMessages } from '../utils/loaderMessages';
+
+// FIX: Added optional 'messages' prop to allow passing custom messages and fix type errors.
 interface LoaderProps {
+    type?: string;
     messages?: string[];
 }
 
-export const Loader: React.FC<LoaderProps> = ({ messages: customMessages }) => {
-    const defaultMessages = [
-        "얼굴의 기운을 읽고 있습니다...",
-        "운명의 흐름을 분석하는 중...",
-        "이목구비의 조화를 살피고 있습니다...",
-        "잠재된 가능성을 탐색 중입니다...",
-        "곧 분석 결과가 나타납니다."
-    ];
-
-    const messages = customMessages || defaultMessages;
+export const Loader: React.FC<LoaderProps> = ({ type = 'default', messages: customMessages }) => {
+    const messages = customMessages || loaderMessages[type] || loaderMessages.default;
     const [message, setMessage] = React.useState(messages[0]);
     
     React.useEffect(() => {
@@ -25,7 +21,6 @@ export const Loader: React.FC<LoaderProps> = ({ messages: customMessages }) => {
         }, 2500);
 
         return () => clearInterval(intervalId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [messages]);
 
 

@@ -5,6 +5,7 @@ import { TarotIcon, TarotCardBackIcon, HomeIcon } from './icons';
 import { analyzeDailyTarot } from '../services/geminiService';
 import { drawOneCard, getCardVisualComponent } from '../utils/tarotUtils';
 import type { CardDraw, DailyTarotResult } from '../types';
+import { ErrorMessage } from './shared/ErrorMessage';
 
 const STORAGE_KEY = 'dailyTarotData';
 
@@ -121,12 +122,7 @@ export const DailyTarotPage: React.FC<{ onBack: () => void }> = ({ onBack }) => 
                     </div>
                 )}
 
-                {error && (
-                    <div className="mt-6 bg-red-500/20 border border-red-500 text-red-300 px-4 py-3 rounded-lg relative" role="alert">
-                        <strong className="font-bold">오류:</strong>
-                        <span className="block sm:inline ml-2">{error}</span>
-                    </div>
-                )}
+                <ErrorMessage message={error} />
                  <style>{`
                     @keyframes fade-in {
                     from { opacity: 0; transform: translateY(20px); }

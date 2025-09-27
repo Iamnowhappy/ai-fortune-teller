@@ -8,6 +8,7 @@ import { analyzeTarotReading } from '../services/geminiService';
 import { drawCards } from '../utils/tarotUtils';
 import { saveResult } from '../utils/storage';
 import { fileToBase64 } from '../utils/fileUtils';
+import { ErrorMessage } from './shared/ErrorMessage';
 
 
 // --- TarotReaderPage Component ---
@@ -23,14 +24,6 @@ export const TarotReaderPage: React.FC<{ onBack: () => void; onNavigate: (page: 
     const [isSaved, setIsSaved] = useState(false);
     const [step, setStep] = useState<Step>('input');
 
-    const tarotMessages = [
-        "카드를 섞고 있습니다...",
-        "당신의 질문에 집중하는 중...",
-        "운명의 카드를 선택하고 있습니다...",
-        "별들의 기운이 카드에 모이는 중...",
-        "곧 신비로운 해석이 도착합니다."
-    ];
-    
     const handleDrawAndProceed = () => {
         if (!question.trim()) {
             setError('질문을 입력해주세요.');
@@ -196,7 +189,8 @@ export const TarotReaderPage: React.FC<{ onBack: () => void; onNavigate: (page: 
                 onBack={onBack}
             />
             <main className="flex-grow flex flex-col items-center justify-center text-center py-10">
-                {step === 'result' && isLoading && <Loader messages={tarotMessages} />}
+                {/* FIX: Replaced 'messages' prop with 'type' prop to align with Loader's design and fix type error. */}
+                {step === 'result' && isLoading && <Loader type="tarot" />}
                 
                 {step === 'result' && !isLoading && analysisResult && (
                     <TarotResultDisplay result={analysisResult} drawnCards={drawnCards} onReset={handleReset} onBack={onBack} onSave={handleSave} isSaved={isSaved} question={question} onNavigate={onNavigate} email={email} />
@@ -205,12 +199,7 @@ export const TarotReaderPage: React.FC<{ onBack: () => void; onNavigate: (page: 
                 {step === 'input' && renderInputStep()}
                 {step === 'upload' && renderUploadStep()}
 
-                {error && (
-                    <div className="mt-6 bg-red-500/20 border border-red-500 text-red-300 px-4 py-3 rounded-lg relative" role="alert">
-                        <strong className="font-bold">오류:</strong>
-                        <span className="block sm:inline ml-2">{error}</span>
-                    </div>
-                )}
+                <ErrorMessage message={error} />
             </main>
         </>
     );

@@ -25,33 +25,53 @@ async function analyze<T>(type: string, payload: any): Promise<T> {
         console.log(`📥 [geminiService] Server response status for type '${type}':`, response.status);
 
         if (!response.ok) {
-            const errorData = await response.json();
+            let errorData;
+            try {
+                errorData = await response.json();
+            } catch (e) {
+                const genericMessage = `서버에서 문제가 발생했습니다. (오류 코드: ${response.status})`;
+                throw new Error(genericMessage);
+            }
+            
             console.error('❌ [geminiService] API Error Response Body:', errorData);
-            let userMessage = '분석 중 서버에서 오류가 발생했습니다.';
+            let userMessage = errorData.error || '분석 중 서버에서 알 수 없는 오류가 발생했습니다.';
             const details = errorData.details || '';
 
+            // Generate more specific user-friendly messages
             if (details.includes('SAFETY')) {
                 userMessage = '이미지 또는 요청 내용이 안전 정책에 위배되어 분석할 수 없습니다. 다른 콘텐츠를 이용해주세요.';
-            } else if (details.toLowerCase().includes('invalid')) {
-                userMessage = '요청 데이터가 올르지 않습니다. 페이지를 새로고침하고 다시 시도해주세요.';
-            } else if (response.status === 500) {
-                 userMessage = '서버 내부 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
-            } else {
-                 userMessage = errorData.error || userMessage;
+            } else if (response.status === 400 || details.toLowerCase().includes('invalid')) {
+                userMessage = '요청 데이터가 올바르지 않습니다. 페이지를 새로고침하고 다시 시도해주세요.';
+            } else if (response.status === 429) {
+                userMessage = '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.';
+            } else if (response.status >= 500) {
+                 userMessage = '서버에 일시적인 문제가 발생했습니다. 잠시 후 다시 시도해주세요.';
+                 if (details.includes("AI response was not valid JSON")) {
+                    userMessage = 'AI 모델로부터 유효한 응답을 받지 못했습니다. 다시 시도하면 해결될 수 있습니다.';
+                 } else if (details.toLowerCase().includes('timeout')) {
+                    userMessage = '분석 시간이 초과되었습니다. 네트워크 상태를 확인하거나 잠시 후 다시 시도해주세요.';
+                 }
             }
             throw new Error(userMessage);
         }
+        
+        try {
+            return await response.json() as T;
+        } catch (parseError) {
+            console.error(`❌ [geminiService] Failed to parse successful response for '${type}':`, parseError);
+            throw new Error('서버로부터 유효하지 않은 형식의 응답을 받았습니다.');
+        }
 
-        return await response.json() as T;
     } catch (error) {
         console.error(`❌ [geminiService] Network or parsing error during '${type}' analysis:`, error);
-        // If it's not a custom error from above, create a generic network error message.
-        if (error instanceof Error && !error.message.startsWith('분석 중') && !error.message.startsWith('이미지') && !error.message.startsWith('요청') && !error.message.startsWith('서버')) {
-            throw new Error('서버와 통신할 수 없습니다. 네트워크 연결을 확인해주세요.');
+        if (error instanceof TypeError && error.message.toLowerCase().includes('failed to fetch')) {
+             throw new Error('서버와 통신할 수 없습니다. 네트워크 연결을 확인해주세요.');
         }
+        // Re-throw custom errors from the !response.ok block, or JSON parsing errors
         throw error;
     }
 }
+
 
 export const analyzeFace = async (imageFile: File): Promise<PhysiognomyResult> => {
   const data = await fileToBase64(imageFile);

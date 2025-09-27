@@ -277,103 +277,90 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         let contents: any;
         let schema: any;
 
+        // Shared rule for all text-based analysis to ensure robust JSON output
+        const jsonOutputRule = `Your response MUST be a JSON object that strictly adheres to the provided schema. Do not add any text, explanation, or markdown formatting like \`\`\`json outside of the JSON object itself. Ensure every field in the JSON schema is populated with meaningful, relevant, and non-empty content. If a piece of information is uncertain, provide the most likely interpretation based on your knowledge.`;
+
         switch (type) {
             case 'face':
                 schema = analysisSchema;
                 contents = {
                     parts: [
-                        { text: `업로드된 사진 속 얼굴을 재미와 엔터테인먼트 목적으로 해석해 주세요. 민감한 주제(건강, 수명, 정치, 종교 등)는 절대 언급하지 마세요. 반드시 JSON 형식.`},
+                        { text: `You are an expert AI physiognomist. Analyze the facial features in the provided image. ${jsonOutputRule}` },
                         { inlineData: { mimeType: payload.mimeType, data: payload.data } },
                     ],
                 };
                 break;
-
             case 'palm':
                 schema = palmAnalysisSchema;
                 contents = {
                     parts: [
-                        { text: `손금 사진을 분석해 주세요. 반드시 JSON 형식으로 답변하세요.` },
+                        { text: `You are an expert AI palm reader. Analyze the main lines (Life, Heart, Head) in the provided palm image. The credibility score must be an integer from 70-95. The comment must briefly state that palmistry shows potential, not a fixed destiny. ${jsonOutputRule}` },
                         { inlineData: { mimeType: payload.mimeType, data: payload.data } },
                     ],
                 };
                 break;
-
             case 'impression':
                 schema = impressionAnalysisSchema;
                 contents = {
                     parts: [
-                        { text: `인물의 첫인상을 분석해 주세요. 반드시 JSON 형식으로 답변하세요.` },
+                        { text: `You are an AI that analyzes first impressions from an image. Provide 3-4 descriptive keywords, a detailed analysis focusing on positive aspects, and one practical tip for improvement. ${jsonOutputRule}` },
                         { inlineData: { mimeType: payload.mimeType, data: payload.data } },
                     ],
                 };
                 break;
-
             case 'tarot': {
-                const introPrompt = `You are a wise Tarot Master. User's question: "${payload.question}". Interpret these cards. Output must be JSON.`;
+                schema = tarotAnalysisSchema;
+                const introPrompt = `You are a wise Tarot Master. The user's question is: "${payload.question}". The drawn cards are provided, some with user images for inspiration. Provide a comprehensive overall reading and a detailed interpretation for each individual card. ${jsonOutputRule}`;
                 const contentParts: any[] = [{ text: introPrompt }];
                 payload.cards.forEach((card: any) => {
-                    contentParts.push({ text: `Card: ${card.name} (${card.orientation})` });
+                    let cardDescription = `Card: ${card.name} (${card.orientation})`;
+                    if (card.imageData) {
+                        cardDescription += " - with user image for inspiration.";
+                    }
+                    contentParts.push({ text: cardDescription });
                     if (card.imageData && card.mimeType) {
                         contentParts.push({ inlineData: { mimeType: card.mimeType, data: card.imageData } });
                     }
                 });
-                schema = tarotAnalysisSchema;
                 contents = { parts: contentParts };
                 break;
             }
-            
             case 'astrology':
                 schema = astrologyAnalysisSchema;
-                contents = `사용자의 생년월일 ${payload.birthDate}를 기반으로 별자리 분석을 해주세요. 반드시 JSON으로 반환하세요.`;
+                contents = `You are an expert astrologer. Based on the birth date: ${payload.birthDate}, generate a detailed astrological reading. Provide the zodiac sign, ruling planet, element, and detailed analyses of personality, love life, and career. ${jsonOutputRule}`;
                 break;
-
             case 'saju':
                 schema = sajuAnalysisSchema;
-                contents = `사용자의 생년월일시 ${payload.birthDate} ${payload.birthTime} 기반으로 사주를 분석해 주세요. 반드시 JSON으로 반환하세요.`;
+                contents = `You are an expert in Saju (Four Pillars of Destiny). Based on the birth date and time: ${payload.birthDate} ${payload.birthTime}, generate a Saju analysis. Determine the four pillars, the day master, and provide an overall analysis, elemental analysis, and life advice. ${jsonOutputRule}`;
                 break;
-
             case 'daily-tarot':
                 schema = dailyTarotAnalysisSchema;
-                contents = `오늘 뽑은 카드 '${payload.card.name}' (${payload.card.orientation})를 기반으로 긍정적인 하루 조언을 JSON으로 반환하세요.`;
+                contents = `You are a wise Tarot Master. The drawn card is '${payload.card.name}' (${payload.card.orientation}). Provide a single, short, positive, and insightful sentence of advice for the day. ${jsonOutputRule}`;
                 break;
-            
             case 'juyeok':
                 schema = juyeokAnalysisSchema;
-                contents = `질문: "${payload.question}", 본괘: ${payload.reading.presentHexagram.name}, 변괘: ${payload.reading.changingHexagram?.name || '없음'}, 변효: ${payload.reading.changingLines.join(', ') || '없음'}. 반드시 JSON으로 반환하세요.`;
+                contents = `You are an I-Ching Master. The user's question is: "${payload.question}". The reading resulted in a present hexagram of '${payload.reading.presentHexagram.name}' and a changing hexagram of '${payload.reading.changingHexagram?.name || 'none'}', with changing lines at positions: ${payload.reading.changingLines.join(', ') || 'none'}. Provide a comprehensive interpretation. If there are no changing lines, the 'changing_lines_interpretation' field must be null. ${jsonOutputRule}`;
                 break;
-
             case 'yukhyo':
                 schema = yukhyoAnalysisSchema;
-                contents = `질문: "${payload.question}"을 기반으로 육효 해석을 해주세요. 반드시 JSON으로 반환하세요.`;
+                contents = `You are a Yukhyo (Six Lines Divination) master. Based on the question "${payload.question}", perform a Yukhyo analysis for today's date. Determine the hexagram, the Yongsin (key element), and interpret the lines to provide a specific prediction and advice. ${jsonOutputRule}`;
                 break;
-
             default:
                 return res.status(400).json({ error: 'Invalid analysis type' });
         }
         
-        // --- Model Selection & Schema Usage Logic ---
-        const model = "gemini-2.5-flash"; // Use the powerful and versatile gemini-2.5-flash for all analyses.
-        let useSchema: boolean;
-
-        // For multimodal requests with images, relying on a direct JSON prompt can be more stable.
-        if (["face", "palm", "impression", "tarot"].includes(type)) {
-            useSchema = false;
-        } else {
-            useSchema = true;
-        }
+        const model = "gemini-2.5-flash";
         
-        console.log(`📌 [API/analyze] Request type: ${type}. Model: ${model}. Using responseSchema: ${useSchema}`);
+        console.log(`📌 [API/analyze] Requesting analysis for type: ${type}. Model: ${model}.`);
 
-        // --- Gemini API Call (Corrected) ---
+        // --- Gemini API Call ---
         const response = await ai.models.generateContent({
             model,
             contents,
-            ...(useSchema
-                ? {
-                    responseMimeType: "application/json",
-                    responseSchema: schema,
-                  }
-                : {}),
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: schema,
+            }
         });
         
         let jsonText = response.text.trim();
