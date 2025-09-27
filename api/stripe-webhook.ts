@@ -1,13 +1,13 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import Stripe from 'stripe';
-import { upsertUser } from '../../db';
+import { upsertUser } from '../../db/index.js';
 import { Readable } from 'stream';
 
-// FIX: Declare Buffer as any to resolve TypeScript errors for a variable that exists in the Node.js runtime.
-declare var Buffer: any;
+// FIX: Replaced 'declare var Buffer: any' with an explicit import to provide both the type and value for Buffer, resolving a TypeScript error where Buffer was used as a type.
+import { Buffer } from 'buffer';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  // FIX: Updated Stripe API version to match the required type.
+  // FIX: Updated Stripe API version to match the installed SDK's expected version.
   apiVersion: '2025-08-27.basil',
 });
 

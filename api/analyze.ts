@@ -7,14 +7,14 @@ function cleanBase64(data: string) {
   return data.replace(/^data:image\/[a-zA-Z]+;base64,/, "");
 }
 
-// --- All schema definitions are now on the server ---
+// --- All schema definitions are now on the server, in Korean ---
 
 const analysisSchema = {
   type: Type.OBJECT,
   properties: {
     overall_impression: {
       type: Type.STRING,
-      description: "사진 속 인물에 대한 전반적인 관상 총평을 2~3문장으로 작성합니다."
+      description: "사진 속 인물의 전반적인 관상 총평. 2~3 문장으로 작성합니다. 만약 얼굴 인식이 어렵다면, '얼굴을 인식하기 어렵습니다. 더 선명한 정면 사진을 사용해주세요.' 라고 응답해야 합니다."
     },
     features: {
       type: Type.ARRAY,
@@ -22,18 +22,9 @@ const analysisSchema = {
       items: {
         type: Type.OBJECT,
         properties: {
-          feature: {
-            type: Type.STRING,
-            description: "분석하는 얼굴 부위의 이름 (예: 눈, 코, 입, 이마, 턱, 귀)."
-          },
-          shape: {
-            type: Type.STRING,
-            description: "해당 부위의 구체적인 모양이나 특징에 대한 묘사."
-          },
-          analysis: {
-            type: Type.STRING,
-            description: "해당 부위의 특징이 관상학적으로 무엇을 의미하는지에 대한 상세한 설명."
-          }
+          feature: { type: Type.STRING, description: "분석하는 얼굴 부위의 이름 (예: 눈, 코, 입, 이마, 턱, 귀)." },
+          shape: { type: Type.STRING, description: "해당 부위의 구체적인 모양이나 특징에 대한 묘사." },
+          analysis: { type: Type.STRING, description: "해당 부위의 특징이 관상학적으로 무엇을 의미하는지에 대한 상세한 설명." }
         },
         required: ["feature", "shape", "analysis"]
       }
@@ -47,7 +38,7 @@ const palmAnalysisSchema = {
   properties: {
     overall_analysis: {
       type: Type.STRING,
-      description: "사진 속 손금에 대한 전반적인 총평을 2~3문장으로 작성합니다."
+      description: "사진 속 손금에 대한 전반적인 총평. 2~3 문장으로 작성합니다. 만약 손금 인식이 어렵다면, '손금을 인식하기 어렵습니다. 손바닥 전체가 선명하게 나온 사진을 사용해주세요.' 라고 응답해야 합니다."
     },
     lines: {
       type: Type.ARRAY,
@@ -55,25 +46,19 @@ const palmAnalysisSchema = {
       items: {
         type: Type.OBJECT,
         properties: {
-          line_name: {
-            type: Type.STRING,
-            description: "분석하는 손금의 이름 (예: 생명선, 감정선, 두뇌선)."
-          },
-          analysis: {
-            type: Type.STRING,
-            description: "해당 손금이 무엇을 의미하는지에 대한 상세한 설명. 강점과 함께 주의할 점이나 개선할 점을 균형 있게 포함합니다."
-          }
+          line_name: { type: Type.STRING, description: "분석하는 손금의 이름 (예: 생명선, 감정선, 두뇌선)." },
+          analysis: { type: Type.STRING, description: "해당 손금이 무엇을 의미하는지에 대한 상세한 설명. 강점과 함께 주의할 점이나 개선할 점을 균형 있게 포함합니다." }
         },
         required: ["line_name", "analysis"]
       }
     },
     credibility_score: {
         type: Type.INTEGER,
-        description: "이 손금 분석에 대한 신뢰도 점수 (70~95 사이의 정수)."
+        description: "이 손금 분석에 대한 신뢰도 점수 (70~95 사이의 정수). 분석이 어려울 경우 70점으로 설정합니다."
     },
     credibility_comment: {
         type: Type.STRING,
-        description: "손금은 정해진 미래가 아닌 가능성을 보여주는 지표라는 점을 설명하는 짧은 코멘트."
+        description: "손금은 정해진 미래가 아닌 가능성을 보여주는 지표라는 점, 그리고 사진 품질에 따라 정확도가 달라질 수 있다는 점을 설명하는 짧은 코멘트."
     }
   },
   required: ["overall_analysis", "lines", "credibility_score", "credibility_comment"]
@@ -89,7 +74,7 @@ const impressionAnalysisSchema = {
         },
         detailed_analysis: {
             type: Type.STRING,
-            description: "사진 속 인물의 표정, 분위기, 스타일 등을 종합하여 다른 사람에게 어떤 첫인상을 주는지 3-4문장으로 상세하게 분석합니다. 긍정적인 측면을 중심으로 서술합니다."
+            description: "사진 속 인물의 표정, 분위기, 스타일 등을 종합하여 다른 사람에게 어떤 첫인상을 주는지 3-4문장으로 상세하게 분석합니다. 긍정적인 측면을 중심으로 서술합니다. 만약 인물 인식이 어렵다면, '인물 인식이 어렵습니다. 더 선명한 사진을 사용해주세요.' 라고 응답해야 합니다."
         },
         improvement_tip: {
             type: Type.STRING,
@@ -277,15 +262,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         let contents: any;
         let schema: any;
 
-        // Shared rule for all text-based analysis to ensure robust JSON output
-        const jsonOutputRule = `Your response MUST be a JSON object that strictly adheres to the provided schema. Do not add any text, explanation, or markdown formatting like \`\`\`json outside of the JSON object itself. Ensure every field in the JSON schema is populated with meaningful, relevant, and non-empty content. If a piece of information is uncertain, provide the most likely interpretation based on your knowledge.`;
+        const jsonOutputRuleKo = `응답은 반드시 제공된 JSON 스키마를 엄격히 준수하는 JSON 객체여야 합니다. JSON 객체 자체 외에 어떠한 텍스트, 설명, 또는 \`\`\`json 같은 마크다운 서식도 추가해서는 안 됩니다. JSON 스키마의 모든 필드는 의미 있고, 관련성 있으며, 비어 있지 않은 내용으로 채워져야 합니다. 정보가 불확실할 경우, 지식을 바탕으로 가장 가능성 있는 해석을 제공하세요.`;
 
         switch (type) {
             case 'face':
                 schema = analysisSchema;
                 contents = {
                     parts: [
-                        { text: `You are an expert AI physiognomist. Analyze the facial features in the provided image. ${jsonOutputRule}` },
+                        { text: `당신은 AI 관상 전문가입니다. 제공된 이미지 속 인물의 얼굴 특징을 관상학적으로 상세히 분석하세요. ${jsonOutputRuleKo}` },
                         { inlineData: { mimeType: payload.mimeType, data: payload.data } },
                     ],
                 };
@@ -294,7 +278,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 schema = palmAnalysisSchema;
                 contents = {
                     parts: [
-                        { text: `You are an expert AI palm reader. Analyze the main lines (Life, Heart, Head) in the provided palm image. The credibility score must be an integer from 70-95. The comment must briefly state that palmistry shows potential, not a fixed destiny. ${jsonOutputRule}` },
+                        { text: `당신은 AI 손금 전문가입니다. 제공된 손금 이미지에서 주요 3대선(생명선, 감정선, 두뇌선)을 분석하세요. 신뢰도 점수는 70에서 95 사이의 정수여야 합니다. ${jsonOutputRuleKo}` },
                         { inlineData: { mimeType: payload.mimeType, data: payload.data } },
                     ],
                 };
@@ -303,19 +287,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 schema = impressionAnalysisSchema;
                 contents = {
                     parts: [
-                        { text: `You are an AI that analyzes first impressions from an image. Provide 3-4 descriptive keywords, a detailed analysis focusing on positive aspects, and one practical tip for improvement. ${jsonOutputRule}` },
+                        { text: `당신은 첫인상 분석 전문가입니다. 제공된 이미지 속 인물의 첫인상에 대해 긍정적인 측면을 중심으로 키워드 3~4개, 상세 분석, 개선을 위한 팁 한 가지를 제공하세요. ${jsonOutputRuleKo}` },
                         { inlineData: { mimeType: payload.mimeType, data: payload.data } },
                     ],
                 };
                 break;
             case 'tarot': {
                 schema = tarotAnalysisSchema;
-                const introPrompt = `You are a wise Tarot Master. The user's question is: "${payload.question}". The drawn cards are provided, some with user images for inspiration. Provide a comprehensive overall reading and a detailed interpretation for each individual card. ${jsonOutputRule}`;
+                const introPrompt = `당신은 지혜로운 타로 마스터입니다. 사용자의 질문은 다음과 같습니다: "${payload.question}". 뽑힌 카드와 함께 제공된 사용자 이미지를 영감의 원천으로 삼아, 종합적인 리딩과 각 카드에 대한 상세한 해석을 제공하세요. ${jsonOutputRuleKo}`;
                 const contentParts: any[] = [{ text: introPrompt }];
                 payload.cards.forEach((card: any) => {
-                    let cardDescription = `Card: ${card.name} (${card.orientation})`;
+                    let cardDescription = `카드: ${card.name} (${card.orientation})`;
                     if (card.imageData) {
-                        cardDescription += " - with user image for inspiration.";
+                        cardDescription += " - 해석에 영감을 줄 사용자 이미지 포함.";
                     }
                     contentParts.push({ text: cardDescription });
                     if (card.imageData && card.mimeType) {
@@ -327,23 +311,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             }
             case 'astrology':
                 schema = astrologyAnalysisSchema;
-                contents = `You are an expert astrologer. Based on the birth date: ${payload.birthDate}, generate a detailed astrological reading. Provide the zodiac sign, ruling planet, element, and detailed analyses of personality, love life, and career. ${jsonOutputRule}`;
+                contents = `당신은 점성술 전문가입니다. 생년월일 ${payload.birthDate}을(를) 바탕으로 상세한 별자리 운세를 생성하세요. 별자리, 수호성, 원소를 포함하여 성격, 연애, 직업에 대한 상세한 분석을 제공해야 합니다. ${jsonOutputRuleKo}`;
                 break;
             case 'saju':
                 schema = sajuAnalysisSchema;
-                contents = `You are an expert in Saju (Four Pillars of Destiny). Based on the birth date and time: ${payload.birthDate} ${payload.birthTime}, generate a Saju analysis. Determine the four pillars, the day master, and provide an overall analysis, elemental analysis, and life advice. ${jsonOutputRule}`;
+                contents = `당신은 사주 명리학 전문가입니다. 생년월일시 ${payload.birthDate} ${payload.birthTime}을(를) 바탕으로 사주 분석을 생성하세요. 사주팔자, 일간, 종합 분석, 오행 분석, 삶의 조언을 포함해야 합니다. ${jsonOutputRuleKo}`;
                 break;
             case 'daily-tarot':
                 schema = dailyTarotAnalysisSchema;
-                contents = `You are a wise Tarot Master. The drawn card is '${payload.card.name}' (${payload.card.orientation}). Provide a single, short, positive, and insightful sentence of advice for the day. ${jsonOutputRule}`;
+                contents = `당신은 지혜로운 타로 마스터입니다. 오늘의 카드는 '${payload.card.name}' (${payload.card.orientation}) 입니다. 오늘 하루를 위한 짧고 긍정적인 조언을 한 문장으로 제공하세요. ${jsonOutputRuleKo}`;
                 break;
             case 'juyeok':
                 schema = juyeokAnalysisSchema;
-                contents = `You are an I-Ching Master. The user's question is: "${payload.question}". The reading resulted in a present hexagram of '${payload.reading.presentHexagram.name}' and a changing hexagram of '${payload.reading.changingHexagram?.name || 'none'}', with changing lines at positions: ${payload.reading.changingLines.join(', ') || 'none'}. Provide a comprehensive interpretation. If there are no changing lines, the 'changing_lines_interpretation' field must be null. ${jsonOutputRule}`;
+                contents = `당신은 주역 전문가입니다. 사용자의 질문은 "${payload.question}" 입니다. 점괘 결과 현재 괘는 '${payload.reading.presentHexagram.name}', 미래 괘는 '${payload.reading.changingHexagram?.name || '변화 없음'}' 이며, 변효는 ${payload.reading.changingLines.join(', ') || '없음'} 입니다. 이를 바탕으로 종합적인 해석을 제공하세요. 변효가 없을 경우 'changing_lines_interpretation' 필드는 반드시 null이어야 합니다. ${jsonOutputRuleKo}`;
                 break;
             case 'yukhyo':
                 schema = yukhyoAnalysisSchema;
-                contents = `You are a Yukhyo (Six Lines Divination) master. Based on the question "${payload.question}", perform a Yukhyo analysis for today's date. Determine the hexagram, the Yongsin (key element), and interpret the lines to provide a specific prediction and advice. ${jsonOutputRule}`;
+                contents = `당신은 육효 전문가입니다. 오늘 날짜를 기준으로 "${payload.question}"이라는 질문에 대한 육효점을 치세요. 괘, 용신, 각 효를 분석하여 구체적인 예측과 조언을 제공해야 합니다. ${jsonOutputRuleKo}`;
                 break;
             default:
                 return res.status(400).json({ error: 'Invalid analysis type' });
@@ -393,6 +377,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         console.error("Error Message:", error.message);
         if (error.cause) console.error("Error Cause:", error.cause);
         console.error("Full Error Object:", JSON.stringify(error, null, 2));
+        
+        if (error.status === 429) {
+            return res.status(429).json({
+                error: '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.',
+                details: error.message || 'API rate limit exceeded.'
+            });
+        }
 
         res.status(500).json({
           error: 'Server internal error occurred.', 
