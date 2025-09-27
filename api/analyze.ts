@@ -238,25 +238,41 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           });
         }
         
-        // --- Face Stretch (special case) ---
+        // --- Face Stretch (special case with its own error handling) ---
         if (type === 'face-stretch') {
-            if (!payload?.data) return res.status(400).json({ error: "Image data not sent." });
-            const prompt = `사진 속 인물의 얼굴을 세로로 길게, 위아래로 최대한 늘려서 과장되고 재미있는 이미지로 만들어줘. 그리고 이 변형된 얼굴에 대한 재미있는 한 줄 평을 함께 알려줘.`;
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash-image-preview',
-                contents: { parts: [{ text: prompt }, { inlineData: { mimeType: payload.mimeType, data: payload.data } }] },
-                config: { responseModalities: [Modality.IMAGE, Modality.TEXT] },
-            });
-            let stretchedImageBase64 = '', comment = '';
-            if (response.candidates?.[0]?.content?.parts) {
-                for (const part of response.candidates[0].content.parts) {
-                    if (part.text) comment = part.text;
-                    else if (part.inlineData) stretchedImageBase64 = part.inlineData.data;
+            try {
+                if (!payload?.data) return res.status(400).json({ error: "Image data not sent." });
+                const prompt = `사진 속 인물의 얼굴을 세로로 길게, 위아래로 최대한 늘려서 과장되고 재미있는 이미지로 만들어줘. 그리고 이 변형된 얼굴에 대한 재미있는 한 줄 평을 함께 알려줘.`;
+                const response = await ai.models.generateContent({
+                    model: 'gemini-2.5-flash-image-preview',
+                    contents: { parts: [{ text: prompt }, { inlineData: { mimeType: payload.mimeType, data: payload.data } }] },
+                    config: { responseModalities: [Modality.IMAGE, Modality.TEXT] },
+                });
+                let stretchedImageBase64 = '', comment = '';
+                if (response.candidates?.[0]?.content?.parts) {
+                    for (const part of response.candidates[0].content.parts) {
+                        if (part.text) comment = part.text;
+                        else if (part.inlineData) stretchedImageBase64 = part.inlineData.data;
+                    }
                 }
+                if (!stretchedImageBase64 || !comment) throw new Error("AI failed to generate image or comment.");
+                
+                console.log("✅ [API/analyze] Face-stretch successful.");
+                return res.status(200).json({ stretchedImageBase64, comment });
+            } catch (error: any) {
+                // Graceful fallback specifically for face-stretcher on rate limit error
+                if (error.name === 'ApiError' && error.status === 429) {
+                    console.warn("⚠️ face-stretch fallback activated due to API rate limit.");
+                    return res.status(200).json({
+                        stretchedImageBase64: "", // Empty image signals frontend to handle this case
+                        comment: "현재 요청이 너무 많아 AI가 잠시 쉬고 있어요. 잠시 후 다시 시도해주세요."
+                    });
+                }
+                // For other errors in face-stretch, re-throw to be caught by the main handler
+                throw error;
             }
-            if (!stretchedImageBase64 || !comment) throw new Error("AI failed to generate image or comment.");
-            return res.status(200).json({ stretchedImageBase64, comment });
         }
+
 
         // --- Main Analysis Logic ---
         let contents: any;
@@ -370,22 +386,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     } catch (error: any) {
         const type = req.body?.type || 'unknown';
-        console.error("❌ [API/analyze] API error occurred");
+        console.error("❌ [API/analyze] API error occurred in main handler");
         console.error(`Analysis Type: ${type}`);
         console.error(`Timestamp: ${new Date().toISOString()}`);
         console.error("Error Name:", error.name);
         console.error("Error Message:", error.message);
         if (error.cause) console.error("Error Cause:", error.cause);
         console.error("Full Error Object:", JSON.stringify(error, null, 2));
-        
-        // Graceful fallback for face-stretcher on rate limit error
-        if ((type === 'face-stretch' || error.message.includes('face-stretch')) && error.name === 'ApiError' && error.status === 429) {
-            console.warn("⚠️ face-stretch fallback activated due to API rate limit.");
-            return res.status(200).json({
-                stretchedImageBase64: "", // Let frontend know there's no image
-                comment: "현재 요청이 너무 많아 AI가 잠시 쉬고 있어요. 잠시 후 다시 시도해주세요."
-            });
-        }
         
         if (error.name === 'ApiError' && error.status === 429) {
             return res.status(429).json({
