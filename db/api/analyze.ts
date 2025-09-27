@@ -353,28 +353,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
         
         // --- Model Selection & Config Logic ---
-        let model = "gemini-2.5-flash";
-        let config: any = {};
-
-        const imageBasedTypes = ['face', 'palm', 'impression'];
-        const isImageTarot = type === 'tarot' && payload.cards?.some((c: any) => c.imageData);
-        const isImageBased = imageBasedTypes.includes(type) || isImageTarot;
+        const model = "gemini-2.5-flash";
+        const config = {
+            responseMimeType: "application/json",
+            responseSchema: schema,
+        };
+        console.log(`📌 [API/analyze] Request type: ${type}. Model: ${model}. Using responseSchema to ensure stable JSON output.`);
         
-        if (isImageBased) {
-            console.log(`📌 [API/analyze] Image-based request. Model: ${model}. Omitting config.`);
-        } else {
-            config = {
-                responseMimeType: "application/json",
-                responseSchema: schema,
-            };
-            console.log(`📌 [API/analyze] Text-based request. Model: ${model}. Using responseSchema.`);
-        }
-
         // --- Gemini API Call ---
         const response = await ai.models.generateContent({
             model,
             contents,
-            config: config,
+            config,
         });
         
         let jsonText = response.text.trim();
