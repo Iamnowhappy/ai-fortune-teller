@@ -235,12 +235,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         
         const apiKey = process.env.API_KEY;
         if (!apiKey) {
-            console.error("API_KEY environment variable is not set.");
+            console.error("❌ API_KEY is not set");
             return res.status(500).json({ error: 'Server configuration error.' });
         }
         const ai = new GoogleGenAI({ apiKey });
 
-        // --- Clean Base64 if exists ---
+        // --- Base64 cleanup ---
         if (payload?.data) {
           payload.data = cleanBase64(payload.data);
         }
@@ -253,6 +253,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           });
         }
         
+        // --- Face Stretch (special case) ---
         if (type === 'face-stretch') {
             if (!payload?.data) return res.status(400).json({ error: "Image data not sent." });
             const prompt = `사진 속 인물의 얼굴을 세로로 길게, 위아래로 최대한 늘려서 과장되고 재미있는 이미지로 만들어줘. 그리고 이 변형된 얼굴에 대한 재미있는 한 줄 평을 함께 알려줘.`;
@@ -278,18 +279,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         switch (type) {
             case 'face':
-                if (!payload?.data) return res.status(400).json({ error: "Image data not sent." });
                 schema = analysisSchema;
                 contents = {
                     parts: [
-                        { text: `업로드된 사진 속 얼굴을 재미와 엔터테인먼트 목적으로 해석해 주세요. 절대 건강, 질병, 운명, 수명, 정치, 종교 등 민감한 주제는 언급하지 마세요. 긍정적인 특징만 설명하고, 반드시 JSON 형식으로만 답변하세요.`},
+                        { text: `업로드된 사진 속 얼굴을 재미와 엔터테인먼트 목적으로 해석해 주세요. 민감한 주제(건강, 수명, 정치, 종교 등)는 절대 언급하지 마세요. 반드시 JSON 형식.`},
                         { inlineData: { mimeType: payload.mimeType, data: payload.data } },
                     ],
                 };
                 break;
 
             case 'palm':
-                if (!payload?.data) return res.status(400).json({ error: "Image data not sent." });
                 schema = palmAnalysisSchema;
                 contents = {
                     parts: [
@@ -300,7 +299,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 break;
 
             case 'impression':
-                if (!payload?.data) return res.status(400).json({ error: "Image data not sent." });
                 schema = impressionAnalysisSchema;
                 contents = {
                     parts: [
@@ -353,22 +351,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 return res.status(400).json({ error: 'Invalid analysis type' });
         }
         
-        const model = "gemini-2.5-flash";
-        const useSchema = !["face", "palm", "impression", "tarot"].includes(type);
+        // --- Model Selection & Schema Usage Logic ---
+        const model = "gemini-2.5-flash"; // Use the powerful and versatile gemini-2.5-flash for all analyses.
+        let useSchema: boolean;
+
+        // For multimodal requests with images, relying on a direct JSON prompt can be more stable.
+        if (["face", "palm", "impression", "tarot"].includes(type)) {
+            useSchema = false;
+        } else {
+            useSchema = true;
+        }
         
         console.log(`📌 [API/analyze] Request type: ${type}. Model: ${model}. Using responseSchema: ${useSchema}`);
 
-        const generationConfig = useSchema ? {
-            responseMimeType: "application/json",
-            responseSchema: schema,
-        } : {};
-
-        // --- Gemini API Call (REVISED) ---
+        // --- Gemini API Call (Corrected) ---
         const response = await ai.models.generateContent({
             model,
             contents,
-            // Pass schema-related properties inside the `config` object.
-            ...(useSchema ? { config: generationConfig } : {}),
+            ...(useSchema
+                ? {
+                    responseMimeType: "application/json",
+                    responseSchema: schema,
+                  }
+                : {}),
         });
         
         let jsonText = response.text.trim();
