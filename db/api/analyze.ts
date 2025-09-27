@@ -178,11 +178,11 @@ const juyeokAnalysisSchema = {
     type: Type.OBJECT,
     properties: {
         present_hexagram_name: { type: Type.STRING, description: "현재 상황을 나타내는 본괘의 이름 (예: 건위천(乾爲天))." },
-        changing_hexagram_name: { type: Type.STRING, description: "미래의 변화를 나타내는 변괘의 이름. 변효가 없으면 null." },
+        changing_hexagram_name: { type: Type.STRING, nullable: true, description: "미래의 변화를 나타내는 변괘의 이름. 변효가 없으면 null." },
         interpretation: { type: Type.STRING, description: "사용자의 질문에 대해 본괘와 변괘가 의미하는 바를 종합적으로 해석한 내용." },
-        changing_lines_interpretation: { type: Type.STRING, description: "변화가 일어나는 효(변효)가 구체적으로 어떤 의미를 가지는지에 대한 상세한 설명. 변효가 없으면 null." }
+        changing_lines_interpretation: { type: Type.STRING, nullable: true, description: "변화가 일어나는 효(변효)가 구체적으로 어떤 의미를 가지는지에 대한 상세한 설명. 변효가 없으면 null." }
     },
-    required: ["present_hexagram_name", "interpretation"]
+    required: ["present_hexagram_name", "changing_hexagram_name", "interpretation", "changing_lines_interpretation"]
 };
 
 const yukhyoAnalysisSchema = {
@@ -199,9 +199,9 @@ const yukhyoAnalysisSchema = {
                     line_number: { type: Type.INTEGER, description: "효의 위치 (1~6)." },
                     six_relatives: { type: Type.STRING, description: "효에 붙는 육친 (부모, 형제, 자손, 처재, 관귀)." },
                     earthly_branch: { type: Type.STRING, description: "효에 붙는 12지지 (자, 축, 인, 묘...)." },
-                    marker: { type: Type.STRING, description: "세(世) 또는 응(應) 표시, 해당 없으면 null." }
+                    marker: { type: Type.STRING, nullable: true, description: "세(世) 또는 응(應) 표시, 해당 없으면 null." }
                 },
-                required: ["line_number", "six_relatives", "earthly_branch"]
+                required: ["line_number", "six_relatives", "earthly_branch", "marker"]
             }
         },
         overall_interpretation: { type: Type.STRING, description: "용신을 중심으로 괘 전체를 해석하여, 사용자의 질문에 대한 구체적인 길흉과 조언을 제공합니다." }
