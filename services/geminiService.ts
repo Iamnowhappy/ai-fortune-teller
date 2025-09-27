@@ -1,4 +1,4 @@
-import { compressImage, fileToBase64 } from '../utils/fileUtils';
+import { compressImage, fileToBase64 } from '../utils/imageUtils';
 import type { PhysiognomyResult, PalmistryResult, ImpressionAnalysisResult, AstrologyResult, SajuResult, TarotResult, CardDraw, JuyeokReading, JuyeokResult, Hexagram, YukhyoResult, DailyTarotResult, FaceStretchResult } from '../types';
 import { API_BASE_URL } from '../utils/apiConfig';
 
