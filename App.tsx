@@ -439,7 +439,6 @@ const FaceReaderPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) =>
     };
     const getFeatureIcon = (featureName: string) => Object.keys(featureIcons).find(key => featureName.includes(key)) ? featureIcons[Object.keys(featureIcons).find(key => featureName.includes(key))!] : null;
     
-    const containerVariants: Variants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
     const itemVariants: Variants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } } };
 
     return (
@@ -453,27 +452,24 @@ const FaceReaderPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) =>
             <main className="flex-grow flex flex-col items-center justify-center text-center py-10">
                 {isLoading ? ( <Loader type="face" /> )
                 : result ? (
-                    <motion.div 
-                        className="w-full max-w-3xl"
-                        variants={containerVariants}
-                        initial="hidden"
-                        animate="visible"
-                    >
-                        {/* Free Content */}
-                        <motion.div variants={itemVariants} className="bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8">
-                            <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display">관상 분석 총평 (무료)</h2>
-                            <TypingResult text={result.overall_impression} className="text-slate-300 leading-relaxed whitespace-pre-wrap" />
-                        </motion.div>
-
-                        {/* Upgrade CTA */}
-                        <motion.div variants={itemVariants}>
-                            <UpgradeCTA featureName="AI 관상가" />
-                        </motion.div>
-                        
-                        {/* Premium Content */}
-                        <PremiumRoute navigate={onNavigate} email={email} featureName="AI 관상가">
-                            <motion.div variants={itemVariants}>
-                                <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 my-6 font-display text-center">부위별 상세 분석 (프리미엄)</h2>
+                    <AnalysisResultLayout
+                        onBack={onBack}
+                        onReset={handleReset}
+                        onSave={handleSave}
+                        isSaved={isSaved}
+                        onNavigate={onNavigate}
+                        email={email}
+                        shareText={`AI 관상가로 분석한 저의 관상 결과:\n\n[총평]\n${result.overall_impression}`}
+                        featureName="AI 관상가"
+                        freeContent={
+                            <div className="bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8">
+                                <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display">관상 분석 총평 (무료)</h2>
+                                <TypingResult text={result.overall_impression} className="text-slate-300 leading-relaxed whitespace-pre-wrap" />
+                            </div>
+                        }
+                        premiumContent={
+                            <div className="mt-8">
+                                <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 text-center font-display">부위별 상세 분석 (프리미엄)</h2>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     {result.features.map((feature, index) => (
                                     <motion.div variants={itemVariants} key={index} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 flex flex-col gap-4 transition-transform duration-300 hover:scale-105 hover:border-cyan-500">
@@ -488,27 +484,9 @@ const FaceReaderPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) =>
                                     </motion.div>
                                     ))}
                                 </div>
-                            </motion.div>
-                        </PremiumRoute>
-
-                        <motion.div variants={itemVariants}><AnalysisInfo /></motion.div>
-                        <motion.div variants={itemVariants}><ShareButtons shareText={`AI 관상가로 분석한 저의 관상 결과:\n\n[총평]\n${result.overall_impression}`} /></motion.div>
-
-                        <motion.div variants={itemVariants} className="mt-10 text-center flex flex-wrap justify-center gap-4">
-                            <button onClick={onBack} className="py-3 px-6 bg-slate-600 text-white font-bold text-lg rounded-lg shadow-md transition-all duration-300 hover:bg-slate-500 flex items-center gap-2">
-                                <HomeIcon className="w-5 h-5" />
-                                홈으로
-                            </button>
-                            <button onClick={handleReset} className="py-3 px-6 bg-cyan-500 text-slate-900 font-bold text-lg rounded-lg shadow-md transition-all duration-300 hover:bg-cyan-400 hover:shadow-cyan-400/30 flex items-center gap-2">
-                                <RefreshIcon className="w-5 h-5" />
-                                다시 분석
-                            </button>
-                            <button onClick={handleSave} disabled={isSaved} className="py-3 px-6 bg-slate-700 text-white font-bold text-lg rounded-lg shadow-md transition-all duration-300 hover:bg-slate-600 disabled:bg-green-500 disabled:text-slate-900 disabled:cursor-not-allowed flex items-center gap-2">
-                                <SaveIcon className="w-5 h-5" />
-                                {isSaved ? '저장됨!' : '결과 저장'}
-                            </button>
-                        </motion.div>
-                    </motion.div>
+                            </div>
+                        }
+                    />
                 ) : (
                     <ImageUploader
                         onImageSelect={handleImageSelect}
