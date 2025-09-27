@@ -178,11 +178,11 @@ const juyeokAnalysisSchema = {
     type: Type.OBJECT,
     properties: {
         present_hexagram_name: { type: Type.STRING, description: "현재 상황을 나타내는 본괘의 이름 (예: 건위천(乾爲天))." },
-        changing_hexagram_name: { type: Type.STRING, description: "미래의 변화를 나타내는 변괘의 이름. 변효가 없으면 null." },
+        changing_hexagram_name: { type: Type.STRING, nullable: true, description: "미래의 변화를 나타내는 변괘의 이름. 변효가 없으면 null." },
         interpretation: { type: Type.STRING, description: "사용자의 질문에 대해 본괘와 변괘가 의미하는 바를 종합적으로 해석한 내용." },
-        changing_lines_interpretation: { type: Type.STRING, description: "변화가 일어나는 효(변효)가 구체적으로 어떤 의미를 가지는지에 대한 상세한 설명. 변효가 없으면 null." }
+        changing_lines_interpretation: { type: Type.STRING, nullable: true, description: "변화가 일어나는 효(변효)가 구체적으로 어떤 의미를 가지는지에 대한 상세한 설명. 변효가 없으면 null." }
     },
-    required: ["present_hexagram_name", "interpretation"]
+    required: ["present_hexagram_name", "changing_hexagram_name", "interpretation", "changing_lines_interpretation"]
 };
 
 const yukhyoAnalysisSchema = {
@@ -199,9 +199,9 @@ const yukhyoAnalysisSchema = {
                     line_number: { type: Type.INTEGER, description: "효의 위치 (1~6)." },
                     six_relatives: { type: Type.STRING, description: "효에 붙는 육친 (부모, 형제, 자손, 처재, 관귀)." },
                     earthly_branch: { type: Type.STRING, description: "효에 붙는 12지지 (자, 축, 인, 묘...)." },
-                    marker: { type: Type.STRING, description: "세(世) 또는 응(應) 표시, 해당 없으면 null." }
+                    marker: { type: Type.STRING, nullable: true, description: "세(世) 또는 응(應) 표시, 해당 없으면 null." }
                 },
-                required: ["line_number", "six_relatives", "earthly_branch"]
+                required: ["line_number", "six_relatives", "earthly_branch", "marker"]
             }
         },
         overall_interpretation: { type: Type.STRING, description: "용신을 중심으로 괘 전체를 해석하여, 사용자의 질문에 대한 구체적인 길흉과 조언을 제공합니다." }
@@ -212,205 +212,212 @@ const yukhyoAnalysisSchema = {
 
 // --- Serverless Function Handler ---
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-    // CORS Preflight handling
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-    if (req.method === "OPTIONS") {
-        return res.status(204).end();
+  // --- CORS 헤더 ---
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+
+  if (req.method === "OPTIONS") {
+    return res.status(204).end();
+  }
+
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method Not Allowed' });
+  }
+
+  console.log("📌 [API/analyze] Request received:", {
+    type: req.body?.type,
+    imageLength: req.body?.payload?.data?.length ?? 'N/A',
+  });
+
+  try {
+    const { type, payload } = req.body;
+
+    const apiKey = process.env.API_KEY;
+    if (!apiKey) {
+      console.error("API_KEY environment variable is not set.");
+      return res.status(500).json({ error: 'Server configuration error.' });
+    }
+    const ai = new GoogleGenAI({ apiKey });
+
+    // --- Clean Base64 if exists ---
+    if (payload?.data) {
+      payload.data = cleanBase64(payload.data);
+    }
+    if (payload?.cards) {
+      payload.cards = payload.cards.map((card: any) => {
+        if (card.imageData) {
+          card.imageData = cleanBase64(card.imageData);
+        }
+        return card;
+      });
     }
 
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method Not Allowed' });
+    // --- Face Stretch (special case) ---
+    if (type === 'face-stretch') {
+      if (!payload?.data) return res.status(400).json({ error: "Image data not sent." });
+      const prompt = `사진 속 인물의 얼굴을 세로로 길게, 위아래로 최대한 늘려서 과장되고 재미있는 이미지로 만들어줘. 그리고 이 변형된 얼굴에 대한 재미있는 한 줄 평을 함께 알려줘.`;
+
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash-image-preview',
+        contents: { parts: [{ text: prompt }, { inlineData: { mimeType: payload.mimeType, data: payload.data } }] },
+        // ❗️중요: config로 감싸지 말고 최상위에 둔다
+        responseModalities: [Modality.IMAGE, Modality.TEXT],
+      });
+
+      let stretchedImageBase64 = '', comment = '';
+      if (response.candidates?.[0]?.content?.parts) {
+        for (const part of response.candidates[0].content.parts) {
+          if ((part as any).text) comment = (part as any).text;
+          else if ((part as any).inlineData) stretchedImageBase64 = (part as any).inlineData.data;
+        }
+      }
+      if (!stretchedImageBase64 || !comment) throw new Error("AI failed to generate image or comment.");
+      return res.status(200).json({ stretchedImageBase64, comment });
     }
-    
-    console.log("📌 [API/analyze] Request received:", {
-      type: req.body?.type,
-      imageLength: req.body?.payload?.data?.length ?? 'N/A',
+
+    // --- Main Analysis Logic ---
+    let contents: any;
+    let schema: any;
+
+    switch (type) {
+      case 'face':
+        if (!payload?.data) return res.status(400).json({ error: "Image data not sent." });
+        schema = analysisSchema;
+        contents = {
+          parts: [
+            { text: `업로드된 사진 속 얼굴을 재미와 엔터테인먼트 목적으로 해석해 주세요. 절대 건강, 질병, 운명, 수명, 정치, 종교 등 민감한 주제는 언급하지 마세요. 긍정적인 특징만 설명하고, 반드시 JSON 형식으로만 답변하세요.`},
+            { inlineData: { mimeType: payload.mimeType, data: payload.data } },
+          ],
+        };
+        break;
+
+      case 'palm':
+        if (!payload?.data) return res.status(400).json({ error: "Image data not sent." });
+        schema = palmAnalysisSchema;
+        contents = {
+          parts: [
+            { text: `손금 사진을 분석해 주세요. 반드시 JSON 형식으로 답변하세요.` },
+            { inlineData: { mimeType: payload.mimeType, data: payload.data } },
+          ],
+        };
+        break;
+
+      case 'impression':
+        if (!payload?.data) return res.status(400).json({ error: "Image data not sent." });
+        schema = impressionAnalysisSchema;
+        contents = {
+          parts: [
+            { text: `인물의 첫인상을 분석해 주세요. 반드시 JSON 형식으로 답변하세요.` },
+            { inlineData: { mimeType: payload.mimeType, data: payload.data } },
+          ],
+        };
+        break;
+
+      case 'tarot': {
+        const introPrompt = `You are a wise Tarot Master. User's question: "${payload.question}". Interpret these cards. Output must be JSON.`;
+        const contentParts: any[] = [{ text: introPrompt }];
+        (payload.cards || []).forEach((card: any) => {
+          contentParts.push({ text: `Card: ${card.name} (${card.orientation})` });
+          if (card.imageData && card.mimeType) {
+            contentParts.push({ inlineData: { mimeType: card.mimeType, data: card.imageData } });
+          }
+        });
+        schema = tarotAnalysisSchema;
+        contents = { parts: contentParts };
+        break;
+      }
+
+      case 'astrology':
+        schema = astrologyAnalysisSchema;
+        contents = `사용자의 생년월일 ${payload.birthDate}를 기반으로 별자리 분석을 해주세요. 반드시 JSON으로 반환하세요.`;
+        break;
+
+      case 'saju':
+        schema = sajuAnalysisSchema;
+        contents = `사용자의 생년월일시 ${payload.birthDate} ${payload.birthTime} 기반으로 사주를 분석해 주세요. 반드시 JSON으로 반환하세요.`;
+        break;
+
+      case 'daily-tarot':
+        schema = dailyTarotAnalysisSchema;
+        contents = `오늘 뽑은 카드 '${payload.card.name}' (${payload.card.orientation})를 기반으로 긍정적인 하루 조언을 JSON으로 반환하세요.`;
+        break;
+
+      case 'juyeok':
+        schema = juyeokAnalysisSchema;
+        contents = `질문: "${payload.question}", 본괘: ${payload.reading.presentHexagram.name}, 변괘: ${payload.reading.changingHexagram?.name || '없음'}, 변효: ${(payload.reading.changingLines || []).join(', ') || '없음'}. 반드시 JSON으로 반환하세요.`;
+        break;
+
+      case 'yukhyo':
+        schema = yukhyoAnalysisSchema;
+        contents = `질문: "${payload.question}"을 기반으로 육효 해석을 해주세요. 반드시 JSON으로 반환하세요.`;
+        break;
+
+      default:
+        return res.status(400).json({ error: 'Invalid analysis type' });
+    }
+
+    // --- Model Selection & Schema usage ---
+    const isImageTarot =
+      type === 'tarot' &&
+      Array.isArray(payload?.cards) &&
+      payload.cards.some((c: any) => c?.imageData);
+
+    const isImageBased = ['face', 'palm', 'impression'].includes(type) || isImageTarot;
+
+    const model = isImageBased ? 'gemini-1.5-pro-latest' : 'gemini-2.5-flash';
+    const useSchema = !isImageBased;
+
+    console.log(`📌 [API/analyze] Type=${type} | Model=${model} | Schema=${useSchema} | isImageTarot=${Boolean(isImageTarot)}`);
+
+    // --- Gemini API Call (NO config nesting) ---
+    const response = await ai.models.generateContent({
+      model,
+      contents,
+      ...(useSchema ? {
+        responseMimeType: "application/json",
+        responseSchema: schema,
+      } : {}),
     });
 
-    try {
-        const { type, payload } = req.body;
-        
-        const apiKey = process.env.API_KEY;
-        if (!apiKey) {
-            console.error("API_KEY environment variable is not set.");
-            return res.status(500).json({ error: 'Server configuration error.' });
-        }
-        const ai = new GoogleGenAI({ apiKey });
+    // --- Parse response safely ---
+    const raw =
+      (typeof (response as any)?.text === 'function'
+        ? (response as any).text()
+        : (response as any)?.text) ?? '';
 
-        // --- Clean Base64 if exists ---
-        if (payload?.data) {
-          payload.data = cleanBase64(payload.data);
-        }
-        if (payload?.cards) {
-          payload.cards = payload.cards.map((card: any) => {
-            if (card.imageData) {
-              card.imageData = cleanBase64(card.imageData);
-            }
-            return card;
-          });
-        }
-        
-        if (type === 'face-stretch') {
-            if (!payload?.data) return res.status(400).json({ error: "Image data not sent." });
-            const prompt = `사진 속 인물의 얼굴을 세로로 길게, 위아래로 최대한 늘려서 과장되고 재미있는 이미지로 만들어줘. 그리고 이 변형된 얼굴에 대한 재미있는 한 줄 평을 함께 알려줘.`;
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash-image-preview',
-                contents: { parts: [{ text: prompt }, { inlineData: { mimeType: payload.mimeType, data: payload.data } }] },
-                config: { responseModalities: [Modality.IMAGE, Modality.TEXT] },
-            });
-            let stretchedImageBase64 = '', comment = '';
-            if (response.candidates?.[0]?.content?.parts) {
-                for (const part of response.candidates[0].content.parts) {
-                    if (part.text) comment = part.text;
-                    else if (part.inlineData) stretchedImageBase64 = part.inlineData.data;
-                }
-            }
-            if (!stretchedImageBase64 || !comment) throw new Error("AI failed to generate image or comment.");
-            return res.status(200).json({ stretchedImageBase64, comment });
-        }
+    let jsonText = String(raw).trim();
 
-        // --- Main Analysis Logic ---
-        let contents: any;
-        let schema: any;
-
-        switch (type) {
-            case 'face':
-                if (!payload?.data) return res.status(400).json({ error: "Image data not sent." });
-                schema = analysisSchema;
-                contents = {
-                    parts: [
-                        { text: `업로드된 사진 속 얼굴을 재미와 엔터테인먼트 목적으로 해석해 주세요. 절대 건강, 질병, 운명, 수명, 정치, 종교 등 민감한 주제는 언급하지 마세요. 긍정적인 특징만 설명하고, 반드시 JSON 형식으로만 답변하세요.`},
-                        { inlineData: { mimeType: payload.mimeType, data: payload.data } },
-                    ],
-                };
-                break;
-
-            case 'palm':
-                if (!payload?.data) return res.status(400).json({ error: "Image data not sent." });
-                schema = palmAnalysisSchema;
-                contents = {
-                    parts: [
-                        { text: `손금 사진을 분석해 주세요. 반드시 JSON 형식으로 답변하세요.` },
-                        { inlineData: { mimeType: payload.mimeType, data: payload.data } },
-                    ],
-                };
-                break;
-
-            case 'impression':
-                if (!payload?.data) return res.status(400).json({ error: "Image data not sent." });
-                schema = impressionAnalysisSchema;
-                contents = {
-                    parts: [
-                        { text: `인물의 첫인상을 분석해 주세요. 반드시 JSON 형식으로 답변하세요.` },
-                        { inlineData: { mimeType: payload.mimeType, data: payload.data } },
-                    ],
-                };
-                break;
-
-            case 'tarot': {
-                const introPrompt = `You are a wise Tarot Master. User's question: "${payload.question}". Interpret these cards. Output must be JSON.`;
-                const contentParts: any[] = [{ text: introPrompt }];
-                payload.cards.forEach((card: any) => {
-                    contentParts.push({ text: `Card: ${card.name} (${card.orientation})` });
-                    if (card.imageData && card.mimeType) {
-                        contentParts.push({ inlineData: { mimeType: card.mimeType, data: card.imageData } });
-                    }
-                });
-                schema = tarotAnalysisSchema;
-                contents = { parts: contentParts };
-                break;
-            }
-            
-            case 'astrology':
-                schema = astrologyAnalysisSchema;
-                contents = `사용자의 생년월일 ${payload.birthDate}를 기반으로 별자리 분석을 해주세요. 반드시 JSON으로 반환하세요.`;
-                break;
-
-            case 'saju':
-                schema = sajuAnalysisSchema;
-                contents = `사용자의 생년월일시 ${payload.birthDate} ${payload.birthTime} 기반으로 사주를 분석해 주세요. 반드시 JSON으로 반환하세요.`;
-                break;
-
-            case 'daily-tarot':
-                schema = dailyTarotAnalysisSchema;
-                contents = `오늘 뽑은 카드 '${payload.card.name}' (${payload.card.orientation})를 기반으로 긍정적인 하루 조언을 JSON으로 반환하세요.`;
-                break;
-            
-            case 'juyeok':
-                schema = juyeokAnalysisSchema;
-                contents = `질문: "${payload.question}", 본괘: ${payload.reading.presentHexagram.name}, 변괘: ${payload.reading.changingHexagram?.name || '없음'}, 변효: ${payload.reading.changingLines.join(', ') || '없음'}. 반드시 JSON으로 반환하세요.`;
-                break;
-
-            case 'yukhyo':
-                schema = yukhyoAnalysisSchema;
-                contents = `질문: "${payload.question}"을 기반으로 육효 해석을 해주세요. 반드시 JSON으로 반환하세요.`;
-                break;
-
-            default:
-                return res.status(400).json({ error: 'Invalid analysis type' });
-        }
-        
-        // --- Model Selection & Config Logic ---
-        let model = "gemini-2.5-flash";
-        let config: any = {};
-
-        const imageBasedTypes = ['face', 'palm', 'impression'];
-        const isImageTarot = type === 'tarot' && payload.cards?.some((c: any) => c.imageData);
-        const isImageBased = imageBasedTypes.includes(type) || isImageTarot;
-        
-        if (isImageBased) {
-            console.log(`📌 [API/analyze] Image-based request. Model: ${model}. Omitting config.`);
-        } else {
-            config = {
-                responseMimeType: "application/json",
-                responseSchema: schema,
-            };
-            console.log(`📌 [API/analyze] Text-based request. Model: ${model}. Using responseSchema.`);
-        }
-
-        // --- Gemini API Call ---
-        const response = await ai.models.generateContent({
-            model,
-            contents,
-            config: config,
-        });
-        
-        let jsonText = response.text.trim();
-        
-        // Clean up potential markdown code fences from the response
-        if (jsonText.startsWith("```json")) {
-            jsonText = jsonText.substring(7, jsonText.length - 3).trim();
-        } else if (jsonText.startsWith("```")) {
-             jsonText = jsonText.substring(3, jsonText.length - 3).trim();
-        }
-        
-        let result: any;
-        try {
-            result = JSON.parse(jsonText);
-        } catch (e) {
-            console.error("❌ JSON parse failed. Raw response:", jsonText);
-            throw new Error("AI response was not valid JSON.");
-        }
-        
-        console.log("✅ [API/analyze] Gemini response (parsed successfully)");
-
-        res.status(200).json(result);
-
-    } catch (error: any) {
-        const type = req.body?.type || 'unknown';
-        console.error("❌ [API/analyze] API error occurred");
-        console.error(`Analysis Type: ${type}`);
-        console.error(`Timestamp: ${new Date().toISOString()}`);
-        console.error("Error Name:", error.name);
-        console.error("Error Message:", error.message);
-        if (error.cause) console.error("Error Cause:", error.cause);
-        console.error("Full Error Object:", JSON.stringify(error, null, 2));
-
-        res.status(500).json({
-          error: 'Server internal error occurred.', 
-          details: error.message || "Unknown error" 
-        });
+    if (jsonText.startsWith("```json")) {
+      jsonText = jsonText.substring(7, jsonText.length - 3).trim();
+    } else if (jsonText.startsWith("```")) {
+      jsonText = jsonText.substring(3, jsonText.length - 3).trim();
     }
+
+    let result: any;
+    try {
+      result = JSON.parse(jsonText);
+    } catch (e) {
+      console.error("❌ JSON parse failed. Raw response:", jsonText);
+      throw new Error("AI response was not valid JSON.");
+    }
+
+    console.log("✅ [API/analyze] Gemini response (parsed successfully)");
+    res.status(200).json(result);
+
+  } catch (error: any) {
+    const type = (req as any).body?.type || 'unknown';
+    console.error("❌ [API/analyze] API error occurred");
+    console.error(`Analysis Type: ${type}`);
+    console.error(`Timestamp: ${new Date().toISOString()}`);
+    console.error("Error Name:", error?.name);
+    console.error("Error Message:", error?.message);
+    if (error?.cause) console.error("Error Cause:", error.cause);
+    try { console.error("Full Error Object:", JSON.stringify(error, null, 2)); } catch {}
+
+    res.status(500).json({
+      error: 'Server internal error occurred.',
+      details: error?.message || "Unknown error"
+    });
+  }
 }
