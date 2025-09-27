@@ -8,7 +8,7 @@ import { AnalysisResultLayout } from './components/shared/AnalysisResultLayout';
 import { TypingResult } from './components/TypingResult';
 
 import { DailyTarotPage } from './components/DailyTarotPage';
-import { SavedResultsPage } from './components/SavedResultsPage';
+import SavedResultsPage from './components/SavedResultsPage';
 import { AboutPage } from './components/AboutPage';
 import { PrivacyPolicyPage } from './components/PrivacyPolicyPage';
 import { TermsOfServicePage } from './components/TermsOfServicePage';

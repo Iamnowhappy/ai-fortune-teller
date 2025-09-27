@@ -1,207 +1,204 @@
-import React, { useState, useCallback } from 'react';
-import type { TarotResult, CardDraw, SavedResult } from '../types';
+import React, { useState, useEffect } from 'react';
+import type { SavedResult, PhysiognomyResult, PalmistryResult, ImpressionAnalysisResult, AstrologyResult, SajuResult, TarotResult, JuyeokResult, YukhyoResult, CardDraw, JuyeokReading, LineType } from '../types';
+import { getSavedResults, deleteResult } from '../utils/storage';
 import { Header } from './Header';
-import { Loader } from './Loader';
-import { TarotIcon, UploadIcon, TarotCardBackIcon } from './icons';
-import { TarotResultDisplay } from './TarotResultDisplay';
-import { analyzeTarotReading } from '../services/geminiService';
-import { drawCards } from '../utils/tarotUtils';
-import { saveResult } from '../utils/storage';
-import { compressImage, fileToBase64 } from '../utils/imageUtils';
-import { ErrorMessage } from './shared/ErrorMessage';
+import { AnalysisResultLayout } from './shared/AnalysisResultLayout';
+import { BoxIcon, TrashIcon, EyeIcon, NoseIcon, MouthIcon, ForeheadIcon, ChinIcon, EarIcon, LifeLineIcon, HeartLineIcon, HeadLineIcon, LineIcon, LightbulbIcon } from './icons';
+import { TypingResult } from './TypingResult';
+import { motion, Variants } from 'framer-motion';
+import { getCardVisualComponent } from '../utils/tarotUtils';
 
 
-// --- TarotReaderPage Component ---
-export const TarotReaderPage: React.FC<{ onBack: () => void; onNavigate: (page: string) => void; email: string | null; }> = ({ onBack, onNavigate, email }) => {
-    type Step = 'input' | 'upload' | 'result';
+const itemVariants: Variants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } } };
 
-    const [question, setQuestion] = useState<string>('');
-    const [numCards, setNumCards] = useState<1 | 3 | 5>(3);
-    const [analysisResult, setAnalysisResult] = useState<TarotResult | null>(null);
-    const [drawnCards, setDrawnCards] = useState<CardDraw[]>([]);
-    const [isLoading, setIsLoading] = useState<boolean>(false);
-    const [error, setError] = useState<string | null>(null);
-    const [isSaved, setIsSaved] = useState(false);
-    const [step, setStep] = useState<Step>('input');
-
-    const handleDrawAndProceed = () => {
-        if (!question.trim()) {
-            setError('질문을 입력해주세요.');
-            return;
-        }
-        setError(null);
-        const cards = drawCards(numCards);
-        setDrawnCards(cards);
-        setStep('upload');
-    }
-
-    const handleImageUpload = async (file: File, index: number) => {
-        try {
-            const compressedFile = await compressImage(file);
-            const imageData = await fileToBase64(compressedFile);
-            const mimeType = compressedFile.type;
-            const updatedCards = [...drawnCards];
-            updatedCards[index] = { ...updatedCards[index], imageData, mimeType };
-            setDrawnCards(updatedCards);
-        } catch (err) {
-            console.error("Image processing failed", err);
-            setError("이미지 처리 중 오류가 발생했습니다.");
-        }
-    };
-
-    const handleAnalyze = useCallback(async () => {
-        if (!question.trim()) {
-            setError('질문이 비어있습니다. 이전 단계로 돌아가세요.');
-            return;
-        }
-
-        setIsLoading(true);
-        setError(null);
-        setAnalysisResult(null);
-        setIsSaved(false);
-        setStep('result'); // Move to result view immediately to show loader
-
-        try {
-            const result = await analyzeTarotReading(question, drawnCards);
-            setAnalysisResult(result);
-        } catch (err: any) {
-            console.error(err);
-            setError(err.message || '분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
-        } finally {
-            setIsLoading(false);
-        }
-    }, [question, drawnCards]);
-    
-    const handleSave = useCallback(() => {
-        if (!analysisResult || !drawnCards) return;
-        const savedItem: SavedResult = {
-            id: new Date().toISOString(),
-            type: 'tarot-reader',
-            typeName: 'AI 타로 마스터',
-            date: new Date().toISOString(),
-            result: analysisResult,
-            context: { question, drawnCards }
-        };
-        saveResult(savedItem);
-        setIsSaved(true);
-        setTimeout(() => setIsSaved(false), 2000);
-    }, [analysisResult, drawnCards, question]);
-
-    const handleReset = () => {
-        setQuestion('');
-        setAnalysisResult(null);
-        setDrawnCards([]);
-        setError(null);
-        setIsSaved(false);
-        setNumCards(3);
-        setStep('input');
-    };
-
-    const renderInputStep = () => (
-         <div className="w-full max-w-md flex flex-col items-center gap-8 p-6 bg-slate-800/50 rounded-2xl shadow-lg border border-slate-700">
-            <div className="w-full">
-                <label className="block text-lg font-medium text-slate-300 mb-3">
-                    카드 수 선택
-                </label>
-                <div className="grid grid-cols-3 gap-3">
-                    {([1, 3, 5] as const).map(num => (
-                        <button 
-                            key={num} 
-                            onClick={() => setNumCards(num)}
-                            className={`py-2 px-1 text-sm sm:text-base rounded-lg font-bold transition-colors duration-300 ${numCards === num ? 'bg-cyan-500 text-slate-900' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}
-                        >
-                            {num === 1 ? '1장' : num === 3 ? '3장' : '5장'}
-                            <span className="hidden sm:inline">
-                                {num === 1 ? ' (핵심 조언)' : num === 3 ? ' (과거-현재-미래)' : ' (심층 분석)'}
-                            </span>
-                        </button>
-                    ))}
-                </div>
-            </div>
-            <div className="w-full flex flex-col gap-4">
-                <label htmlFor="tarot-question" className="block text-lg font-medium text-slate-300">
-                    어떤 점이 궁금하신가요?
-                </label>
-                <textarea
-                    id="tarot-question"
-                    value={question}
-                    onChange={(e) => setQuestion(e.target.value)}
-                    placeholder="예) 현재 저의 연애운은 어떤가요?"
-                    className="w-full p-3 h-32 bg-slate-700/50 border border-slate-600 rounded-lg text-white resize-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
-                    aria-label="타로 질문"
-                />
-            </div>
-            <button
-                onClick={handleDrawAndProceed}
-                disabled={!question.trim()}
-                className="w-full py-3 px-6 bg-cyan-500 text-slate-900 font-bold text-lg rounded-lg shadow-md transition-all duration-300 hover:bg-cyan-400 hover:shadow-cyan-400/30 disabled:bg-slate-600 disabled:text-slate-400 disabled:cursor-not-allowed disabled:shadow-none"
-            >
-                카드 뽑고 계속하기
-            </button>
-        </div>
-    );
-
-    const renderUploadStep = () => (
-        <div className="w-full max-w-4xl flex flex-col items-center gap-8 p-4 sm:p-6 bg-slate-800/50 rounded-2xl shadow-lg border border-slate-700">
-            <div className="text-center">
-                <h2 className="text-xl font-bold text-slate-200">카드의 상징이 될 이미지를 올려주세요 (선택)</h2>
-                <p className="text-slate-400">이미지를 올리면 AI가 더 깊이 있는 해석을 제공합니다.</p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 w-full">
-                 {drawnCards.map((card, index) => (
-                    <div key={index} className="flex flex-col items-center gap-2">
-                        <div className="w-32 h-52 bg-slate-700 rounded-lg border-2 border-dashed border-slate-600 flex items-center justify-center relative overflow-hidden">
-                            {card.imageData ? (
-                                <img src={`data:${card.mimeType};base64,${card.imageData}`} alt="Uploaded preview" className="w-full h-full object-cover" />
-                            ) : (
-                                <TarotCardBackIcon className="w-16 h-16 text-cyan-800" />
-                            )}
-                            <input
-                                type="file"
-                                onChange={(e) => e.target.files && handleImageUpload(e.target.files[0], index)}
-                                accept="image/png, image/jpeg, image/webp"
-                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                aria-label={`${card.name} 이미지 업로드`}
-                            />
-                        </div>
-                        <div className="text-center">
-                            <p className="font-bold text-white">{card.name}</p>
-                            <p className={`text-sm ${card.orientation === '역방향' ? 'text-yellow-400' : 'text-cyan-400'}`}>{card.orientation}</p>
-                        </div>
-                    </div>
-                ))}
-            </div>
-            <button
-                onClick={handleAnalyze}
-                className="w-full max-w-md py-3 px-6 bg-cyan-500 text-slate-900 font-bold text-lg rounded-lg shadow-md transition-all duration-300 hover:bg-cyan-400 hover:shadow-cyan-400/30"
-            >
-                분석하기
-            </button>
-        </div>
-    );
-
-
-    return (
-        <>
-            <Header
-                icon={<TarotIcon className="w-10 h-10 text-cyan-400" />}
-                title="AI 타로 마스터"
-                description="마음속 질문을 입력하면, AI가 타로 카드로 답을 드립니다."
-                onBack={onBack}
-            />
-            <main className="flex-grow flex flex-col items-center justify-center text-center py-10">
-                {/* FIX: Replaced 'messages' prop with 'type' prop to align with Loader's design and fix type error. */}
-                {step === 'result' && isLoading && <Loader type="tarot" />}
-                
-                {step === 'result' && !isLoading && analysisResult && (
-                    <TarotResultDisplay result={analysisResult} drawnCards={drawnCards} onReset={handleReset} onBack={onBack} onSave={handleSave} isSaved={isSaved} question={question} onNavigate={onNavigate} email={email} />
-                )}
-
-                {step === 'input' && renderInputStep()}
-                {step === 'upload' && renderUploadStep()}
-
-                <ErrorMessage message={error} />
-            </main>
-        </>
-    );
+const featureIcons: { [key: string]: React.ReactNode } = {
+    '눈': <EyeIcon className="w-8 h-8 text-cyan-400" />, '코': <NoseIcon className="w-8 h-8 text-cyan-400" />,
+    '입': <MouthIcon className="w-8 h-8 text-cyan-400" />, '이마': <ForeheadIcon className="w-8 h-8 text-cyan-400" />,
+    '턱': <ChinIcon className="w-8 h-8 text-cyan-400" />, '귀': <EarIcon className="w-8 h-8 text-cyan-400" />,
 };
+const getFeatureIcon = (featureName: string) => Object.keys(featureIcons).find(key => featureName.includes(key)) ? featureIcons[Object.keys(featureIcons).find(key => featureName.includes(key))!] : null;
+
+const lineIcons: { [key: string]: React.ReactNode } = {
+    '생명선': <LifeLineIcon className="w-8 h-8 text-cyan-400" />, '감정선': <HeartLineIcon className="w-8 h-8 text-cyan-400" />,
+    '두뇌선': <HeadLineIcon className="w-8 h-8 text-cyan-400" />,
+};
+const getLineIcon = (lineName: string) => Object.keys(lineIcons).find(key => lineName.includes(key)) ? lineIcons[Object.keys(lineIcons).find(key => lineName.includes(key))!] : <LineIcon className="w-8 h-8 text-cyan-400" />;
+
+const HexagramVisual: React.FC<{ lines: LineType[], changingLines?: number[] }> = ({ lines, changingLines = [] }) => (
+    <div className="flex flex-col-reverse gap-1.5 items-center">
+        {lines.map((line, index) => {
+            const isChanging = changingLines.includes(index + 1);
+            const lineClasses = "h-1.5 rounded-full transition-all duration-300";
+            const changingClasses = isChanging ? "bg-cyan-400 shadow-[0_0_8px] shadow-cyan-400" : "bg-slate-500";
+            if (line === 'yang') return <div key={index} className={`w-16 ${lineClasses} ${changingClasses}`} />;
+            return <div key={index} className="w-16 flex justify-between"><div className={`w-7 ${lineClasses} ${changingClasses}`} /><div className={`w-7 ${lineClasses} ${changingClasses}`} /></div>
+        })}
+    </div>
+);
+
+
+const SavedResultsPage: React.FC<{ onBack: () => void; onNavigate: (page: string) => void; email: string | null; }> = ({ onBack: navigateToHome, onNavigate, email }) => {
+  const [savedResults, setSavedResults] = useState<SavedResult[]>([]);
+  const [selectedResult, setSelectedResult] = useState<SavedResult | null>(null);
+
+  useEffect(() => {
+    setSavedResults(getSavedResults());
+  }, []);
+
+  const handleDelete = (id: string) => {
+    if (window.confirm('정말로 이 결과를 삭제하시겠습니까?')) {
+      deleteResult(id);
+      setSavedResults(getSavedResults());
+    }
+  };
+  
+  const renderDetailView = () => {
+    if (!selectedResult) return null;
+
+    const props = {
+      onBack: () => setSelectedResult(null),
+      onReset: () => {}, // No-op
+      isSavedView: true,
+      onNavigate: onNavigate,
+      email: email,
+    };
+    
+    let content;
+    switch (selectedResult.type) {
+        case 'face-reader':
+            const faceResult = selectedResult.result as PhysiognomyResult;
+            content = <AnalysisResultLayout {...props}
+                featureName='AI 관상가' shareText=''
+                freeContent={<div className="bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8"><h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display">관상 분석 총평</h2><TypingResult text={faceResult.overall_impression} className="text-slate-300 leading-relaxed whitespace-pre-wrap" /></div>}
+                premiumContent={<div><h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 my-6 font-display text-center">부위별 상세 분석</h2><div className="grid grid-cols-1 md:grid-cols-2 gap-6">{faceResult.features.map((feature, index) => (<motion.div variants={itemVariants} key={index} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 flex flex-col gap-4"><div className="flex items-center gap-4">{getFeatureIcon(feature.feature)}<div><h3 className="text-xl font-bold text-white">{feature.feature}</h3><p className="text-sm text-cyan-400 font-semibold">{feature.shape}</p></div></div><p className="text-slate-400 leading-relaxed text-left text-base">{feature.analysis}</p></motion.div>))}</div></div>}
+            />;
+            break;
+        case 'palm-reader':
+             const palmResult = selectedResult.result as PalmistryResult;
+             content = <AnalysisResultLayout {...props}
+                featureName='AI 손금 분석' shareText=''
+                freeContent={<div className="bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8"><h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display">손금 분석 총평</h2><TypingResult text={palmResult.overall_analysis} className="text-slate-300 leading-relaxed whitespace-pre-wrap" /></div>}
+                extraContent={<div className="mt-8 bg-slate-800/50 border border-slate-700 rounded-2xl p-6"><h3 className="text-xl font-bold text-cyan-300 mb-3 font-display">분석 신뢰도</h3><div className="flex items-center gap-4 sm:gap-6"><div className="text-4xl font-bold text-white">{palmResult.credibility_score}%</div><p className="text-slate-400 leading-relaxed text-left text-sm flex-1">{palmResult.credibility_comment}</p></div></div>}
+                premiumContent={<div className="space-y-6 mt-8"><h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 font-display text-center">주요 손금 상세 분석</h2>{palmResult.lines.map((line, index) => (<motion.div variants={itemVariants} key={index} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 flex items-start gap-4"><div className="flex-shrink-0 pt-1">{getLineIcon(line.line_name)}</div><div><h3 className="text-xl font-bold text-white">{line.line_name}</h3><p className="text-slate-400 leading-relaxed mt-2">{line.analysis}</p></div></motion.div>))}</div>}
+            />;
+            break;
+        case 'impression-analyzer':
+             const impressionResult = selectedResult.result as ImpressionAnalysisResult;
+             content = <AnalysisResultLayout {...props}
+                featureName='AI 첫인상 분석' shareText=''
+                freeContent={<div className="bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8"><h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display">첫인상 분석 결과</h2><div className="flex flex-wrap gap-3 mb-6">{impressionResult.keywords.map((keyword, index) => (<span key={index} className="bg-cyan-500/20 text-cyan-300 text-sm font-semibold px-3 py-1 rounded-full"># {keyword}</span>))}</div><TypingResult text={impressionResult.detailed_analysis} className="text-slate-300 leading-relaxed whitespace-pre-wrap" /></div>}
+                premiumContent={<div className="mt-8 bg-slate-800/50 border border-slate-700 rounded-2xl p-6 flex items-start gap-4"><div className="flex-shrink-0 pt-1"><LightbulbIcon className="w-8 h-8 text-yellow-400" /></div><div><h3 className="text-xl font-bold text-yellow-300 mb-2 font-display">첫인상 개선을 위한 TIP</h3><p className="text-slate-400 leading-relaxed">{impressionResult.improvement_tip}</p></div></div>}
+            />;
+            break;
+         case 'astrology-reader':
+            const astrologyResult = selectedResult.result as AstrologyResult;
+            content = <AnalysisResultLayout {...props}
+                featureName='AI 별자리 운세' shareText=''
+                freeContent={<><div className="bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8 text-center"><h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-2 font-display">당신의 별자리</h2><p className="text-4xl sm:text-5xl font-bold text-white mb-4">{astrologyResult.zodiac_sign}</p><div className="flex justify-center gap-6 text-slate-300"><span>수호성: {astrologyResult.ruling_planet}</span><span>속성: {astrologyResult.element}</span></div></div><div className="space-y-6 mt-8"><div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6"><h3 className="text-xl font-bold text-white mb-3 font-display">성격 분석</h3><TypingResult text={astrologyResult.analysis.personality} className="text-slate-400 leading-relaxed" /></div></div></>}
+                premiumContent={<div className="space-y-6 mt-8"><h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display text-center">상세 운세 분석</h2><div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6"><h3 className="text-xl font-bold text-white mb-3 font-display">연애 및 관계</h3><p className="text-slate-400 leading-relaxed">{astrologyResult.analysis.love_life}</p></div><div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6"><h3 className="text-xl font-bold text-white mb-3 font-display">직업 및 경력</h3><p className="text-slate-400 leading-relaxed">{astrologyResult.analysis.work_career}</p></div></div>}
+            />;
+            break;
+         case 'saju-analyzer':
+            const sajuResult = selectedResult.result as SajuResult;
+            content = <AnalysisResultLayout {...props}
+                featureName='AI 사주 분석' shareText=''
+                freeContent={<><div className="bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8"><h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display">사주 명식</h2><div className="grid grid-cols-4 gap-2 text-center text-white rounded-lg overflow-hidden border border-slate-700"><div className="bg-slate-700/50 p-2 font-bold">시주</div><div className="bg-slate-700/50 p-2 font-bold">일주</div><div className="bg-slate-700/50 p-2 font-bold">월주</div><div className="bg-slate-700/50 p-2 font-bold">연주</div><div className="bg-slate-800 p-4 text-lg">{sajuResult.four_pillars.hour_pillar}</div><div className="bg-cyan-500/10 border-2 border-cyan-500 p-4 text-lg font-bold text-cyan-300">{sajuResult.four_pillars.day_pillar}</div><div className="bg-slate-800 p-4 text-lg">{sajuResult.four_pillars.month_pillar}</div><div className="bg-slate-800 p-4 text-lg">{sajuResult.four_pillars.year_pillar}</div></div><p className="text-center text-sm text-slate-400 mt-3">일간(日干)은 <strong className="text-cyan-400">{sajuResult.day_master}</strong> 입니다.</p></div><div className="space-y-6 mt-8"><div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6"><h3 className="text-xl font-bold text-white mb-3 font-display">종합 분석</h3><TypingResult text={sajuResult.overall_analysis} className="text-slate-400 leading-relaxed whitespace-pre-wrap" /></div></div></>}
+                premiumContent={<div className="space-y-6 mt-8"><h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display text-center">사주 심층 분석</h2><div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6"><h3 className="text-xl font-bold text-white mb-3 font-display">오행의 균형</h3><p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{sajuResult.elemental_analysis}</p></div><div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6"><h3 className="text-xl font-bold text-white mb-3 font-display">삶의 조언</h3><p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{sajuResult.life_advice}</p></div></div>}
+            />;
+            break;
+        case 'tarot-reader':
+            const tarotResult = selectedResult.result as TarotResult;
+            const drawnCards = selectedResult.context?.drawnCards as CardDraw[] || [];
+            content = <>
+                <div className="flex flex-row flex-wrap justify-center items-start gap-x-6 sm:gap-x-8 gap-y-4 mb-8">
+                    {drawnCards.map((card, index) => {
+                        const VisualComponent = getCardVisualComponent(card.name);
+                        return (<div key={index} className="flex flex-col items-center gap-3"><div className="w-24 h-40 sm:w-32 sm:h-52 bg-slate-800 border-2 border-slate-500 rounded-lg flex flex-col justify-between p-2 overflow-hidden"><div className="text-left text-xs sm:text-sm font-bold text-white">{card.name}</div><div className={`flex-grow flex justify-center items-center ${card.orientation === '역방향' ? 'transform rotate-180' : ''}`}><VisualComponent className="w-12 h-12 sm:w-16 sm:h-16 text-cyan-400/70" /></div><div className={`text-right text-xs sm:text-sm font-semibold ${card.orientation === '역방향' ? 'transform rotate-180' : ''}`}>{card.name}</div></div><div className="text-center"><p className="font-bold text-white text-sm sm:text-base">{card.name}</p><p className={`text-xs sm:text-sm ${card.orientation === '역방향' ? 'text-yellow-400' : 'text-cyan-400'}`}>{card.orientation}</p></div></div>)
+                    })}
+                </div>
+                <AnalysisResultLayout {...props}
+                    featureName='AI 타로 마스터' shareText=''
+                    freeContent={<div className="bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8"><h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display">종합 리딩</h2><TypingResult text={tarotResult.overall_reading} className="text-slate-300 leading-relaxed whitespace-pre-wrap" /></div>}
+                    premiumContent={<div className="space-y-6 mt-8"><h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display text-center">카드별 상세 해석</h2>{tarotResult.cards.map((interp, index) => (<div key={index} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 sm:p-8 flex flex-col gap-4"><div className="text-center"><h3 className="text-2xl font-bold text-white font-display">{interp.card_name}</h3><p className={`text-lg font-medium ${interp.orientation === '역방향' ? 'text-yellow-400' : 'text-cyan-400'}`}>({interp.orientation})</p></div><p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{interp.meaning}</p></div>))}</div>}
+                />
+            </>;
+            break;
+         case 'juyeok-reader':
+            const juyeokResult = selectedResult.result as JuyeokResult;
+            const reading = selectedResult.context?.reading as JuyeokReading;
+            if (!reading) return <div className="text-center p-8"><p>주역 괘 정보가 없어 결과를 표시할 수 없습니다.</p><button onClick={() => setSelectedResult(null)} className="mt-4 px-4 py-2 bg-slate-600 rounded-lg">목록으로</button></div>;
+            content = <>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8 mb-8 w-full max-w-4xl"><div className="flex flex-col items-center gap-2"><h3 className="text-lg font-bold text-slate-300">현재 (本卦)</h3><HexagramVisual lines={reading.presentHexagram.lines} changingLines={reading.changingLines} /><p className="text-xl font-semibold text-white mt-2">{juyeokResult.present_hexagram_name}</p></div><div className="flex justify-center items-center"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-cyan-400 transform md:rotate-0 rotate-90"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></div><div className="flex flex-col items-center gap-2"><h3 className="text-lg font-bold text-slate-300">미래 (之卦)</h3>{reading.changingHexagram ? (<><HexagramVisual lines={reading.changingHexagram.lines} /><p className="text-xl font-semibold text-white mt-2">{juyeokResult.changing_hexagram_name}</p></>) : (<div className="h-full flex items-center"><p className="text-slate-400">변화 없음</p></div>)}</div></div>
+                <AnalysisResultLayout {...props}
+                    featureName='AI 주역 전문가' shareText=''
+                    freeContent={<div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 sm:p-8"><h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display">종합 해설</h2><TypingResult text={juyeokResult.interpretation} className="text-slate-300 leading-relaxed whitespace-pre-wrap" /></div>}
+                    premiumContent={juyeokResult.changing_lines_interpretation && (<div className="mt-8 bg-slate-800/50 border border-slate-700 rounded-2xl p-6"><h3 className="text-xl font-bold text-white mb-3 font-display">변화의 핵심 (變爻)</h3><p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{juyeokResult.changing_lines_interpretation}</p></div>)}
+                />
+            </>;
+            break;
+        case 'yukhyo-analyzer':
+            const yukhyoResult = selectedResult.result as YukhyoResult;
+            content = <AnalysisResultLayout {...props}
+                featureName='AI 육효 분석가' shareText=''
+                freeContent={<><div className="bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8"><h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-1 font-display">육효 분석</h2><p className="text-slate-400 mb-4">{yukhyoResult.ganji_date} 기준</p><div className="overflow-x-auto"><table className="w-full text-center text-white border-collapse"><thead className="bg-slate-700/50"><tr><th className="p-3 border border-slate-600">괘</th><th className="p-3 border border-slate-600">효</th><th className="p-3 border border-slate-600">세/응</th><th className="p-3 border border-slate-600">육친</th><th className="p-3 border border-slate-600">지지</th></tr></thead><tbody className="bg-slate-800">{yukhyoResult.lines.sort((a,b)=>b.line_number-a.line_number).map(l=><tr key={l.line_number}>{l.line_number===6 && <td rowSpan={6} className="p-3 border border-slate-600 font-bold text-xl">{yukhyoResult.hexagram_name}</td>}<td className="p-3 border border-slate-600">{l.line_number}효</td><td className={`p-3 border border-slate-600 font-bold ${l.marker==='세(世)'?'text-cyan-400':l.marker==='응(應)'?'text-yellow-400':''}`}>{l.marker||'-'}</td><td className="p-3 border border-slate-600">{l.six_relatives}</td><td className="p-3 border border-slate-600">{l.earthly_branch}</td></tr>)}</tbody></table></div></div><div className="space-y-6 mt-8"><div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6"><h3 className="text-xl font-bold text-white mb-3 font-display">핵심 분석 (용신)</h3><TypingResult text={yukhyoResult.yongsin} className="text-slate-400 leading-relaxed whitespace-pre-wrap" /></div></div></>}
+                premiumContent={<div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 mt-8"><h3 className="text-xl font-bold text-white mb-3 font-display">종합 해설 및 조언</h3><p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{yukhyoResult.overall_interpretation}</p></div>}
+            />;
+            break;
+        default:
+            return <div className="text-center p-8"><p>알 수 없는 결과 타입입니다.</p><button onClick={() => setSelectedResult(null)} className="mt-4 px-4 py-2 bg-slate-600 rounded-lg">목록으로</button></div>;
+    }
+    return content;
+  };
+
+  if (selectedResult) {
+    return <main className="flex-grow flex flex-col items-center text-center py-10">{renderDetailView()}</main>;
+  }
+
+  return (
+    <>
+      <Header
+        icon={<BoxIcon className="w-10 h-10 text-cyan-400" />}
+        title="나의 운세함"
+        description="저장된 분석 결과를 다시 확인하고 관리할 수 있습니다."
+        onBack={navigateToHome}
+      />
+      <main className="flex-grow flex flex-col items-center text-center py-10 w-full max-w-4xl mx-auto">
+        {savedResults.length > 0 ? (
+          <div className="space-y-4 w-full">
+            {savedResults.map((item) => (
+              <div key={item.id} className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 flex items-center justify-between gap-4">
+                <div className="text-left">
+                  <p className="font-bold text-white text-lg">{item.typeName}</p>
+                  <p className="text-sm text-slate-400">{new Date(item.date).toLocaleString('ko-KR')}</p>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setSelectedResult(item)}
+                    className="py-2 px-4 bg-cyan-500 text-slate-900 font-bold rounded-lg shadow-md transition-colors duration-300 hover:bg-cyan-400"
+                    aria-label={`${item.typeName} 결과 보기`}
+                  >
+                    보기
+                  </button>
+                  <button
+                    onClick={() => handleDelete(item.id)}
+                    className="p-2 bg-red-500/20 text-red-400 rounded-lg transition-colors duration-300 hover:bg-red-500/40 hover:text-red-300"
+                    aria-label={`${item.typeName} 결과 삭제`}
+                  >
+                    <TrashIcon className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-20">
+            <p className="text-slate-400 text-lg">저장된 결과가 없습니다.</p>
+            <p className="text-slate-500 mt-2">분석 결과를 저장하고 나중에 다시 확인해보세요.</p>
+          </div>
+        )}
+      </main>
+    </>
+  );
+};
+
+export default SavedResultsPage;
