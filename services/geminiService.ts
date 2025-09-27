@@ -1,5 +1,6 @@
 import { fileToBase64 } from '../utils/fileUtils';
-import type { PhysiognomyResult, PalmistryResult, ImpressionAnalysisResult, AstrologyResult, SajuResult, TarotResult, CardDraw, JuyeokReading, JuyeokResult, Hexagram, YukhyoResult, DailyTarotResult, FortuneImageResult, FaceStretchResult } from '../types';
+import type { PhysiognomyResult, PalmistryResult, ImpressionAnalysisResult, AstrologyResult, SajuResult, TarotResult, CardDraw, JuyeokReading, JuyeokResult, Hexagram, YukhyoResult, DailyTarotResult, FaceStretchResult } from '../types';
+import { API_BASE_URL } from '../utils/apiConfig';
 
 /**
  * 범용 분석 함수. 프론트엔드의 모든 요청을 백엔드 API 라우트로 보냅니다.
@@ -13,7 +14,7 @@ async function analyze<T>(type: string, payload: any): Promise<T> {
             console.log(`📤 [geminiService] Sending '${type}' request. Image base64 length: ${payload.data.length}`);
         }
 
-        const response = await fetch('/api/analyze', {
+        const response = await fetch(`${API_BASE_URL}/api/analyze`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -32,7 +33,7 @@ async function analyze<T>(type: string, payload: any): Promise<T> {
             if (details.includes('SAFETY')) {
                 userMessage = '이미지 또는 요청 내용이 안전 정책에 위배되어 분석할 수 없습니다. 다른 콘텐츠를 이용해주세요.';
             } else if (details.toLowerCase().includes('invalid')) {
-                userMessage = '요청 데이터가 올바르지 않습니다. 페이지를 새로고침하고 다시 시도해주세요.';
+                userMessage = '요청 데이터가 올르지 않습니다. 페이지를 새로고침하고 다시 시도해주세요.';
             } else if (response.status === 500) {
                  userMessage = '서버 내부 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
             } else {
@@ -98,8 +99,4 @@ export const analyzeYukhyo = async (question: string): Promise<YukhyoResult> => 
 
 export const analyzeDailyTarot = async (card: CardDraw): Promise<DailyTarotResult> => {
     return analyze<DailyTarotResult>('daily-tarot', { card });
-};
-
-export const generateFortuneImage = async (fortuneText: string): Promise<FortuneImageResult> => {
-    return analyze<FortuneImageResult>('daily-fortune-image', { fortuneText });
 };
