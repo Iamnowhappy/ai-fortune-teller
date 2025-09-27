@@ -19,7 +19,7 @@ import { PrivacyPolicyPage } from './components/PrivacyPolicyPage';
 import { TermsOfServicePage } from './components/TermsOfServicePage';
 import { GuidePage } from './components/GuidePage';
 import { Loader } from './components/Loader';
-import { analyzeFace, analyzePalm, analyzeImpression, analyzeAstrology, analyzeSaju, analyzeTarotReading, analyzeJuyeok, analyzeYukhyo, generateFortuneImage } from './services/geminiService';
+import { analyzeFace, analyzePalm, analyzeImpression, analyzeAstrology, analyzeSaju, analyzeTarotReading, analyzeJuyeok, analyzeYukhyo } from './services/geminiService';
 import type { PhysiognomyResult, PalmistryResult, ImpressionAnalysisResult, AstrologyResult, SajuResult, TarotResult, JuyeokResult, YukhyoResult, CardDraw, JuyeokReading, SavedResult } from './types';
 import { Footer } from './components/Footer';
 import { FaceIcon, PalmIcon, ImpressionIcon, AstrologyIcon, SajuIcon, TarotIcon, JuyeokIcon, YukhyoIcon, BoxIcon, TheSunIcon, StarIcon, LockIcon, HappyFaceIcon } from './components/icons';
@@ -30,13 +30,15 @@ import { ChangelogPage } from './components/Changelog';
 import { ImageAndQuestionUploader } from './components/ImageAndQuestionUploader';
 import { PremiumRoute } from './components/shared/PremiumRoute';
 import { FaceStretcherPage } from './components/FaceStretcherPage';
+import { API_BASE_URL } from './utils/apiConfig';
 
 type Page = 'home' | 'face-reader' | 'palm-reader' | 'impression-analyzer' | 'astrology-reader' | 'saju-analyzer' | 'tarot-reader' | 'juyeok-reader' | 'yukhyo-analyzer' | 'daily-tarot' | 'saved-results' | 'about' | 'privacy' | 'terms' | 'guide' | 'changelog' | 'checkout' | 'face-stretcher';
 
 // --- HomePage Component ---
 const HomePage: React.FC<{ onNavigate: (page: Page) => void; }> = ({ onNavigate }) => {
-  const dailyFortune = getDailyFortune();
-  const [fortuneImage, setFortuneImage] = useState<{ loading: boolean; url: string | null; error: boolean; }>({ loading: true, url: null, error: false });
+  const dailyFortuneData = getDailyFortune();
+  const dailyFortune = dailyFortuneData.text;
+  const fortuneImageUrl = dailyFortuneData.imageUrl;
 
   const stars = useMemo(() => {
     return Array.from({ length: 20 }).map((_, i) => ({
@@ -59,45 +61,6 @@ const HomePage: React.FC<{ onNavigate: (page: Page) => void; }> = ({ onNavigate 
         window.history.replaceState({}, document.title, newUrl);
     }
   }, []);
-
-  useEffect(() => {
-    const fetchFortuneImage = async () => {
-      const todayStr = new Date().toISOString().split('T')[0];
-      try {
-        const cachedData = localStorage.getItem('dailyFortuneImage');
-        if (cachedData) {
-          const { date, url } = JSON.parse(cachedData);
-          if (date === todayStr && url) {
-            setFortuneImage({ loading: false, url, error: false });
-            return;
-          }
-        }
-      } catch (e) {
-        console.error("Failed to read cached image", e);
-      }
-
-      // If no valid cache, fetch new image
-      try {
-        const result = await generateFortuneImage(dailyFortune);
-        if (result.imageBase64) {
-          const imageUrl = `data:image/jpeg;base64,${result.imageBase64}`;
-          setFortuneImage({ loading: false, url: imageUrl, error: false });
-          try {
-            localStorage.setItem('dailyFortuneImage', JSON.stringify({ date: todayStr, url: imageUrl }));
-          } catch (e) {
-            console.error("Failed to cache image", e);
-          }
-        } else {
-            throw new Error("No image data received");
-        }
-      } catch (err: any) {
-        console.error("Failed to generate fortune image", err);
-        setFortuneImage({ loading: false, url: null, error: true });
-      }
-    };
-
-    fetchFortuneImage();
-  }, [dailyFortune]);
 
   useEffect(() => {
     const originalTitle = document.title;
@@ -136,22 +99,11 @@ const HomePage: React.FC<{ onNavigate: (page: Page) => void; }> = ({ onNavigate 
         <div 
           className="relative border border-cyan-700/50 rounded-2xl p-6 flex flex-col items-center gap-4 shadow-lg overflow-hidden min-h-[160px] justify-center bg-slate-800 transition-all duration-500"
         >
-          {fortuneImage.loading && (
-            <div className="absolute inset-0 bg-slate-800 animate-pulse" aria-label="운세 이미지 로딩 중"></div>
-          )}
-          {fortuneImage.url && !fortuneImage.error && (
-            <>
-              <div 
-                className="absolute inset-0 bg-cover bg-center transition-opacity duration-1000 animate-fade-in-slow"
-                style={{ backgroundImage: `url(${fortuneImage.url})` }}
-              ></div>
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent"></div>
-            </>
-          )}
-          {(fortuneImage.error || (!fortuneImage.loading && !fortuneImage.url)) && (
-            // Fallback background
-            <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-slate-800/50"></div>
-          )}
+          <div 
+            className="absolute inset-0 bg-cover bg-center transition-opacity duration-1000 animate-fade-in-slow"
+            style={{ backgroundImage: `url(${fortuneImageUrl})` }}
+          ></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent"></div>
           
           {/* Twinkling Stars Background */}
           <div className="absolute inset-0 pointer-events-none z-0">
@@ -389,7 +341,7 @@ const CheckoutPage: React.FC<{ onBack: () => void; email: string | null; }> = ({
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch('/api/create-checkout-session', {
+      const response = await fetch(`${API_BASE_URL}/api/create-checkout-session`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),

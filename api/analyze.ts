@@ -212,6 +212,14 @@ const yukhyoAnalysisSchema = {
 
 // --- Serverless Function Handler ---
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+    // CORS Preflight handling
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    if (req.method === "OPTIONS") {
+        return res.status(204).end();
+    }
+
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method Not Allowed' });
     }
@@ -242,20 +250,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             }
             return card;
           });
-        }
-
-        // --- Special Handlers for Image Generation/Editing ---
-        if (type === 'daily-fortune-image') {
-            const prompt = `A beautiful, symbolic, artistic illustration representing the fortune: '${payload.fortuneText}'. The style should be vibrant, hopeful, and slightly abstract. Avoid text in the image. Aspect ratio 16:9.`;
-            const imageResponse = await ai.models.generateImages({
-                model: 'imagen-4.0-generate-001',
-                prompt: prompt,
-                config: { numberOfImages: 1, outputMimeType: 'image/jpeg', aspectRatio: '16:9' },
-            });
-            if (imageResponse.generatedImages && imageResponse.generatedImages.length > 0) {
-                return res.status(200).json({ imageBase64: imageResponse.generatedImages[0].image.imageBytes });
-            }
-            throw new Error("Image generation failed, no images returned.");
         }
         
         if (type === 'face-stretch') {
@@ -367,7 +361,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const isImageBased = imageBasedTypes.includes(type) || isImageTarot;
         
         if (isImageBased) {
-            model = "gemini-1.5-pro-latest";
             console.log(`📌 [API/analyze] Image-based request. Model: ${model}. Omitting config.`);
         } else {
             config = {
@@ -381,7 +374,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const response = await ai.models.generateContent({
             model,
             contents,
-            ...config, // Correctly spread the config object
+            config: config,
         });
         
         let jsonText = response.text.trim();

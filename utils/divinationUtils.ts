@@ -154,18 +154,23 @@ export const getGanjiDate = (): string => {
 };
 
 
-export const getDailyFortune = (): string => {
-    const fortunes = [
-        "뜻밖의 행운이 찾아옵니다 ✨",
-        "작은 실수에 주의하세요 ⚠️",
-        "소중한 인연이 다가옵니다 💕",
-        "재물운이 강하게 들어옵니다 💰",
-        "새로운 기회를 잡게 될 거예요 🚀",
-        "오늘은 잠시 쉬어가는 것이 좋겠어요 😌",
-        "오래된 친구에게서 좋은 소식이 들려옵니다 💌",
-        "당신의 노력이 드디어 빛을 발하는 날입니다 🌟",
-        "작은 지출이 큰 기쁨으로 돌아옵니다 🎁",
-        "긍정적인 생각이 좋은 결과를 가져옵니다 😊",
+export interface DailyFortune {
+    text: string;
+    imageUrl: string;
+}
+
+export const getDailyFortune = (): DailyFortune => {
+    const fortunes: DailyFortune[] = [
+        { text: "뜻밖의 행운이 찾아옵니다 ✨", imageUrl: "https://images.pexels.com/photos/326055/pexels-photo-326055.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2" },
+        { text: "작은 실수에 주의하세요 ⚠️", imageUrl: "https://images.pexels.com/photos/459225/pexels-photo-459225.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2" },
+        { text: "소중한 인연이 다가옵니다 💕", imageUrl: "https://images.pexels.com/photos/1024989/pexels-photo-1024989.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2" },
+        { text: "재물운이 강하게 들어옵니다 💰", imageUrl: "https://images.pexels.com/photos/210574/pexels-photo-210574.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2" },
+        { text: "새로운 기회를 잡게 될 거예요 🚀", imageUrl: "https://images.pexels.com/photos/1583580/pexels-photo-1583580.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2" },
+        { text: "오늘은 잠시 쉬어가는 것이 좋겠어요 😌", imageUrl: "https://images.pexels.com/photos/2832034/pexels-photo-2832034.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2" },
+        { text: "오래된 친구에게서 좋은 소식이 들려옵니다 💌", imageUrl: "https://images.pexels.com/photos/1314410/pexels-photo-1314410.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2" },
+        { text: "당신의 노력이 드디어 빛을 발하는 날입니다 🌟", imageUrl: "https://images.pexels.com/photos/1619801/pexels-photo-1619801.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2" },
+        { text: "작은 지출이 큰 기쁨으로 돌아옵니다 🎁", imageUrl: "https://images.pexels.com/photos/4109943/pexels-photo-4109943.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2" },
+        { text: "긍정적인 생각이 좋은 결과를 가져옵니다 😊", imageUrl: "https://images.pexels.com/photos/371589/pexels-photo-371589.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2" },
     ];
 
     const today = new Date();

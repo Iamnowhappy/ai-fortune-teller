@@ -2,10 +2,19 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import Stripe from 'stripe';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-06-20',
+  // FIX: Updated Stripe API version to match the required type.
+  apiVersion: '2025-08-27.basil',
 });
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+    // CORS Preflight handling
+    res.setHeader("Access-Control-Allow-Origin", process.env.CORS_ORIGIN || "*");
+    res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    if (req.method === "OPTIONS") {
+        return res.status(204).end();
+    }
+
     if (req.method !== 'POST') {
         res.setHeader('Allow', 'POST');
         return res.status(405).end('Method Not Allowed');
