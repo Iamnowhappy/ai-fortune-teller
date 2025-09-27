@@ -353,19 +353,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 return res.status(400).json({ error: 'Invalid analysis type' });
         }
         
-        // --- Model Selection & Config Logic ---
         const model = "gemini-2.5-flash";
-        const config = {
+        const useSchema = !["face", "palm", "impression", "tarot"].includes(type);
+        
+        console.log(`📌 [API/analyze] Request type: ${type}. Model: ${model}. Using responseSchema: ${useSchema}`);
+
+        const generationConfig = useSchema ? {
             responseMimeType: "application/json",
             responseSchema: schema,
-        };
-        console.log(`📌 [API/analyze] Request type: ${type}. Model: ${model}. Using responseSchema to ensure stable JSON output.`);
-        
-        // --- Gemini API Call ---
+        } : {};
+
+        // --- Gemini API Call (REVISED) ---
         const response = await ai.models.generateContent({
             model,
             contents,
-            config,
+            // Pass schema-related properties inside the `config` object.
+            ...(useSchema ? { config: generationConfig } : {}),
         });
         
         let jsonText = response.text.trim();
