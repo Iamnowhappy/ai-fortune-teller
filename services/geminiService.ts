@@ -65,7 +65,7 @@ async function analyze<T>(type: string, payload: any): Promise<T> {
     } catch (error) {
         console.error(`❌ [geminiService] Network or parsing error during '${type}' analysis:`, error);
         if (error instanceof TypeError && error.message.toLowerCase().includes('failed to fetch')) {
-             throw new Error('서버와 통신할 수 없습니다. 네트워크 연결을 확인해주세요.');
+             throw new Error('서버와 통신할 수 없습니다. 네트워크 연결을 확인하시거나, 광고 차단 프로그램(Ad Blocker)을 비활성화한 후 다시 시도해주세요.');
         }
         // Re-throw custom errors from the !response.ok block, or JSON parsing errors
         throw error;
