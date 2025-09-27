@@ -7,7 +7,7 @@ import { TarotResultDisplay } from './TarotResultDisplay';
 import { analyzeTarotReading } from '../services/geminiService';
 import { drawCards } from '../utils/tarotUtils';
 import { saveResult } from '../utils/storage';
-import { fileToBase64 } from '../utils/fileUtils';
+import { compressImage, fileToBase64 } from '../utils/fileUtils';
 import { ErrorMessage } from './shared/ErrorMessage';
 
 
@@ -37,13 +37,14 @@ export const TarotReaderPage: React.FC<{ onBack: () => void; onNavigate: (page: 
 
     const handleImageUpload = async (file: File, index: number) => {
         try {
-            const imageData = await fileToBase64(file);
-            const mimeType = file.type;
+            const compressedFile = await compressImage(file);
+            const imageData = await fileToBase64(compressedFile);
+            const mimeType = compressedFile.type;
             const updatedCards = [...drawnCards];
             updatedCards[index] = { ...updatedCards[index], imageData, mimeType };
             setDrawnCards(updatedCards);
         } catch (err) {
-            console.error("Image to base64 conversion failed", err);
+            console.error("Image processing failed", err);
             setError("이미지 처리 중 오류가 발생했습니다.");
         }
     };
@@ -63,9 +64,9 @@ export const TarotReaderPage: React.FC<{ onBack: () => void; onNavigate: (page: 
         try {
             const result = await analyzeTarotReading(question, drawnCards);
             setAnalysisResult(result);
-        } catch (err) {
+        } catch (err: any) {
             console.error(err);
-            setError('분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+            setError(err.message || '분석 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
         } finally {
             setIsLoading(false);
         }

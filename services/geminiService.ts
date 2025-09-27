@@ -1,4 +1,4 @@
-import { fileToBase64 } from '../utils/fileUtils';
+import { compressImage, fileToBase64 } from '../utils/fileUtils';
 import type { PhysiognomyResult, PalmistryResult, ImpressionAnalysisResult, AstrologyResult, SajuResult, TarotResult, CardDraw, JuyeokReading, JuyeokResult, Hexagram, YukhyoResult, DailyTarotResult, FaceStretchResult } from '../types';
 import { API_BASE_URL } from '../utils/apiConfig';
 
@@ -42,6 +42,8 @@ async function analyze<T>(type: string, payload: any): Promise<T> {
                 userMessage = '이미지 또는 요청 내용이 안전 정책에 위배되어 분석할 수 없습니다. 다른 콘텐츠를 이용해주세요.';
             } else if (response.status === 400 || details.toLowerCase().includes('invalid')) {
                 userMessage = '요청 데이터가 올바르지 않습니다. 페이지를 새로고침하고 다시 시도해주세요.';
+            } else if (response.status === 413) {
+                userMessage = '업로드한 파일의 용량이 너무 큽니다. 10MB 이하의 이미지를 사용해주세요.';
             } else if (response.status === 429) {
                 userMessage = '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.';
             } else if (response.status >= 500) {
@@ -74,26 +76,30 @@ async function analyze<T>(type: string, payload: any): Promise<T> {
 
 
 export const analyzeFace = async (imageFile: File): Promise<PhysiognomyResult> => {
-  const data = await fileToBase64(imageFile);
-  const mimeType = imageFile.type;
+  const compressedFile = await compressImage(imageFile);
+  const data = await fileToBase64(compressedFile);
+  const mimeType = compressedFile.type;
   return analyze<PhysiognomyResult>('face', { data, mimeType });
 };
 
 export const analyzePalm = async (imageFile: File): Promise<PalmistryResult> => {
-  const data = await fileToBase64(imageFile);
-  const mimeType = imageFile.type;
+  const compressedFile = await compressImage(imageFile);
+  const data = await fileToBase64(compressedFile);
+  const mimeType = compressedFile.type;
   return analyze<PalmistryResult>('palm', { data, mimeType });
 };
 
 export const analyzeImpression = async (imageFile: File): Promise<ImpressionAnalysisResult> => {
-  const data = await fileToBase64(imageFile);
-  const mimeType = imageFile.type;
+  const compressedFile = await compressImage(imageFile);
+  const data = await fileToBase64(compressedFile);
+  const mimeType = compressedFile.type;
   return analyze<ImpressionAnalysisResult>('impression', { data, mimeType });
 };
 
 export const stretchFace = async (imageFile: File): Promise<FaceStretchResult> => {
-  const data = await fileToBase64(imageFile);
-  const mimeType = imageFile.type;
+  const compressedFile = await compressImage(imageFile);
+  const data = await fileToBase64(compressedFile);
+  const mimeType = compressedFile.type;
   return analyze<FaceStretchResult>('face-stretch', { data, mimeType });
 };
 
