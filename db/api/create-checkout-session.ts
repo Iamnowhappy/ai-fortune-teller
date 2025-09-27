@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import Stripe from 'stripe';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  // FIX: Updated Stripe API version to match the required type.
+  // FIX: Updated Stripe API version to match the installed SDK's expected version.
   apiVersion: '2025-08-27.basil',
 });
 
