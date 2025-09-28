@@ -5,7 +5,6 @@ import { TypingResult } from './TypingResult';
 import { motion, Variants } from 'framer-motion';
 import { AnalysisResultLayout } from './shared/AnalysisResultLayout';
 
-// FIX: Added missing props to pass to AnalysisResultLayout.
 interface SajuResultDisplayProps {
   result: SajuResult;
   onReset: () => void;
@@ -19,7 +18,6 @@ interface SajuResultDisplayProps {
 
 const itemVariants: Variants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } } };
 
-// FIX: Destructured and passed new props to AnalysisResultLayout.
 export const SajuResultDisplay: React.FC<SajuResultDisplayProps> = ({ result, onReset, onBack, onSave, isSaved, isSavedView, onNavigate, email }) => {
   const shareText = `AI 사주 분석 결과, 저의 일간은 ${result.day_master} 입니다.\n\n[오늘의 운세 요약]\n${result.daily_fortune_summary}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
   
@@ -55,7 +53,6 @@ export const SajuResultDisplay: React.FC<SajuResultDisplayProps> = ({ result, on
       onSave={onSave}
       isSaved={isSaved}
       isSavedView={isSavedView}
-      // FIX: Passed missing props.
       onNavigate={onNavigate}
       email={email}
       featureName="AI 사주 분석"

@@ -6,7 +6,6 @@ import { TypingResult } from './TypingResult';
 import { motion, Variants } from 'framer-motion';
 import { AnalysisResultLayout } from './shared/AnalysisResultLayout';
 
-// FIX: Added onNavigate and email to props interface to satisfy AnalysisResultLayout and fix usage in TarotReaderPage.
 interface TarotResultDisplayProps {
   result: TarotResult;
   drawnCards: CardDraw[];
@@ -85,7 +84,6 @@ const getSpreadLabels = (count: number): string[] => {
 
 const itemVariants: Variants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } } };
 
-// FIX: Destructured and passed new props to AnalysisResultLayout.
 export const TarotResultDisplay: React.FC<TarotResultDisplayProps> = ({ result, drawnCards, onReset, onBack, onSave, isSaved, isSavedView, question, onNavigate, email }) => {
   const shareText = `질문: "${question || '나의 운세'}"\n타로 리딩 요약: ${result.overall_summary}`;
   const spreadLabels = getSpreadLabels(drawnCards.length);
@@ -150,7 +148,6 @@ export const TarotResultDisplay: React.FC<TarotResultDisplayProps> = ({ result, 
       onSave={onSave}
       isSaved={isSaved}
       isSavedView={isSavedView}
-      // FIX: Passed missing props.
       onNavigate={onNavigate}
       email={email}
       featureName="AI 타로 마스터"

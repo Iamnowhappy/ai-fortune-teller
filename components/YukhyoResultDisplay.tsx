@@ -5,7 +5,6 @@ import { TypingResult } from './TypingResult';
 import { motion, Variants } from 'framer-motion';
 import { AnalysisResultLayout } from './shared/AnalysisResultLayout';
 
-// FIX: Added onNavigate and email to props interface to pass to AnalysisResultLayout.
 interface YukhyoResultDisplayProps {
   result: YukhyoResult;
   onReset: () => void;
@@ -20,7 +19,6 @@ interface YukhyoResultDisplayProps {
 
 const itemVariants: Variants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } } };
 
-// FIX: Destructured and passed new props to AnalysisResultLayout.
 export const YukhyoResultDisplay: React.FC<YukhyoResultDisplayProps> = ({ result, onReset, onBack, onSave, isSaved, isSavedView, question, onNavigate, email }) => {
   const shareText = `질문: "${question || '나의 운세'}"\n괘: ${result.hexagram_name}\n\n[종합 해설]\n${result.overall_interpretation}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
   
@@ -38,7 +36,6 @@ export const YukhyoResultDisplay: React.FC<YukhyoResultDisplayProps> = ({ result
       onSave={onSave}
       isSaved={isSaved}
       isSavedView={isSavedView}
-      // FIX: Passed missing props.
       onNavigate={onNavigate}
       email={email}
       featureName="AI 육효 분석가"

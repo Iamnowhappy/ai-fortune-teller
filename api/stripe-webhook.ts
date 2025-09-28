@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import Stripe from 'stripe';
-import { upsertUser } from '../../db/index.js';
+import { upsertUser } from '../db/index';
 import { Readable } from 'stream';
 
 // FIX: Replaced 'declare var Buffer: any' with an explicit import to provide both the type and value for Buffer, resolving a TypeScript error where Buffer was used as a type.
