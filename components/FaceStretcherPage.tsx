@@ -105,7 +105,6 @@ export const FaceStretcherPage: React.FC<{ onBack: () => void; }> = ({ onBack })
             />
             <main className="flex-grow flex flex-col items-center justify-center text-center py-10">
                 {isLoading ? (
-                    // FIX: Replaced 'messages' prop with 'type' prop to align with Loader's design and fix type error.
                     <Loader type="face-stretch" />
                 ) : analysisResult ? (
                     <ResultView />
