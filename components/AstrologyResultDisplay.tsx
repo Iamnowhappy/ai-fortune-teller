@@ -5,7 +5,6 @@ import { TypingResult } from './TypingResult';
 import { motion, Variants } from 'framer-motion';
 import { AnalysisResultLayout } from './shared/AnalysisResultLayout';
 
-// FIX: Added missing props to pass to AnalysisResultLayout.
 interface AstrologyResultDisplayProps {
   result: AstrologyResult;
   onReset: () => void;
@@ -19,7 +18,6 @@ interface AstrologyResultDisplayProps {
 
 const itemVariants: Variants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } } };
 
-// FIX: Destructured and passed new props to AnalysisResultLayout.
 export const AstrologyResultDisplay: React.FC<AstrologyResultDisplayProps> = ({ result, onReset, onBack, onSave, isSaved, isSavedView, onNavigate, email }) => {
   const shareText = `AI가 분석한 저의 별자리는 ${result.zodiac_sign}입니다.\n\n[성격 요약]\n${result.summary}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
   
@@ -52,7 +50,6 @@ export const AstrologyResultDisplay: React.FC<AstrologyResultDisplayProps> = ({ 
         onSave={onSave}
         isSaved={isSaved}
         isSavedView={isSavedView}
-        // FIX: Passed missing props.
         onNavigate={onNavigate}
         email={email}
         featureName="AI 별자리 운세"

@@ -8,7 +8,6 @@ import { motion, Variants } from 'framer-motion';
 import { AnalysisResultLayout } from './shared/AnalysisResultLayout';
 
 
-// FIX: Added onNavigate and email to props interface to pass to AnalysisResultLayout.
 interface PalmResultDisplayProps {
   result: PalmistryResult;
   onReset: () => void;
@@ -37,7 +36,6 @@ const getLineIcon = (lineName: string) => {
 
 const itemVariants: Variants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } } };
 
-// FIX: Destructure and pass new props to AnalysisResultLayout.
 export const PalmResultDisplay: React.FC<PalmResultDisplayProps> = ({ result, onReset, onBack, onSave, isSaved, isSavedView, onNavigate, email }) => {
   const shareText = `AI 손금 분석 결과입니다:\n\n[요약]\n${result.summary}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
   
@@ -70,7 +68,6 @@ export const PalmResultDisplay: React.FC<PalmResultDisplayProps> = ({ result, on
       onSave={onSave}
       isSaved={isSaved}
       isSavedView={isSavedView}
-      // FIX: Passed missing props to AnalysisResultLayout.
       onNavigate={onNavigate}
       email={email}
       featureName="AI 손금 분석"
