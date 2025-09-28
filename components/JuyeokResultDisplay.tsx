@@ -13,8 +13,6 @@ interface JuyeokResultDisplayProps {
   isSaved?: boolean;
   isSavedView?: boolean;
   question?: string;
-  onNavigate: (page: string) => void;
-  email: string | null;
 }
 
 const HexagramVisual: React.FC<{ lines: LineType[], changingLines?: number[] }> = ({ lines, changingLines = [] }) => (
@@ -42,7 +40,7 @@ const HexagramVisual: React.FC<{ lines: LineType[], changingLines?: number[] }> 
 
 const itemVariants: Variants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } } };
 
-export const JuyeokResultDisplay: React.FC<JuyeokResultDisplayProps> = ({ result, reading, onReset, onBack, onSave, isSaved, isSavedView, question, onNavigate, email }) => {
+export const JuyeokResultDisplay: React.FC<JuyeokResultDisplayProps> = ({ result, reading, onReset, onBack, onSave, isSaved, isSavedView, question }) => {
   const shareText = `질문: "${question || '나의 운세'}"\n본괘: ${result.present_hexagram_name}\n\n[요약]\n${result.summary}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
   
   return (
@@ -53,9 +51,6 @@ export const JuyeokResultDisplay: React.FC<JuyeokResultDisplayProps> = ({ result
       isSaved={isSaved}
       isSavedView={isSavedView}
       shareText={shareText}
-      onNavigate={onNavigate}
-      email={email}
-      featureName="AI 주역 전문가"
       freeContent={
         <>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8 mb-8">
@@ -86,7 +81,7 @@ export const JuyeokResultDisplay: React.FC<JuyeokResultDisplayProps> = ({ result
                 </div>
             </div>
             <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 sm:p-8">
-                <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display">핵심 요약 (무료)</h2>
+                <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display">핵심 요약</h2>
                 <TypingResult text={result.summary} className="text-slate-300 leading-relaxed whitespace-pre-wrap" />
             </div>
         </>

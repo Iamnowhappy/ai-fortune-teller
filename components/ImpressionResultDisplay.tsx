@@ -12,13 +12,11 @@ interface ImpressionResultDisplayProps {
   onSave?: () => void;
   isSaved?: boolean;
   isSavedView?: boolean;
-  onNavigate: (page: string) => void;
-  email: string | null;
 }
 
 const itemVariants: Variants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } } };
 
-export const ImpressionResultDisplay: React.FC<ImpressionResultDisplayProps> = ({ result, onReset, onBack, onSave, isSaved, isSavedView, onNavigate, email }) => {
+export const ImpressionResultDisplay: React.FC<ImpressionResultDisplayProps> = ({ result, onReset, onBack, onSave, isSaved, isSavedView }) => {
   const shareText = `AI가 분석한 저의 첫인상 요약은 '${result.summary}' 입니다.\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
   
   return (
@@ -29,12 +27,9 @@ export const ImpressionResultDisplay: React.FC<ImpressionResultDisplayProps> = (
       isSaved={isSaved}
       isSavedView={isSavedView}
       shareText={shareText}
-      onNavigate={onNavigate}
-      email={email}
-      featureName="AI 첫인상 분석"
       freeContent={
           <div className="bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8">
-            <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display">첫인상 요약 (무료)</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display">첫인상 요약</h2>
             <TypingResult text={result.summary} className="text-slate-300 leading-relaxed whitespace-pre-wrap" />
           </div>
       }

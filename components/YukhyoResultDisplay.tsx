@@ -12,13 +12,11 @@ interface YukhyoResultDisplayProps {
   isSaved?: boolean;
   isSavedView?: boolean;
   question?: string;
-  onNavigate: (page: string) => void;
-  email: string | null;
 }
 
 const itemVariants: Variants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } } };
 
-export const YukhyoResultDisplay: React.FC<YukhyoResultDisplayProps> = ({ result, onReset, onBack, onSave, isSaved, isSavedView, question, onNavigate, email }) => {
+export const YukhyoResultDisplay: React.FC<YukhyoResultDisplayProps> = ({ result, onReset, onBack, onSave, isSaved, isSavedView, question }) => {
   const shareText = `질문: "${question || '나의 운세'}"\n괘: ${result.hexagram_name}\n\n[종합 해설]\n${result.overall_interpretation}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
   
   return (
@@ -29,13 +27,10 @@ export const YukhyoResultDisplay: React.FC<YukhyoResultDisplayProps> = ({ result
       isSaved={isSaved}
       isSavedView={isSavedView}
       shareText={shareText}
-      onNavigate={onNavigate}
-      email={email}
-      featureName="AI 육효 분석가"
       freeContent={
         <>
             <div className="bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8">
-                <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-1 font-display">육효 분석 (무료)</h2>
+                <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-1 font-display">육효 분석</h2>
                 <p className="text-slate-400 mb-4">{result.ganji_date} 기준</p>
                 
                 <div className="overflow-x-auto">
@@ -68,7 +63,7 @@ export const YukhyoResultDisplay: React.FC<YukhyoResultDisplayProps> = ({ result
 
             <div className="space-y-6 mt-8">
                 <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
-                    <h3 className="text-xl font-bold text-white mb-3 font-display">핵심 분석 (용신) - 무료</h3>
+                    <h3 className="text-xl font-bold text-white mb-3 font-display">핵심 분석 (용신)</h3>
                     <TypingResult text={result.yongsin} className="text-slate-400 leading-relaxed whitespace-pre-wrap" />
                 </div>
             </div>

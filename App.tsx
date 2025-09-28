@@ -4,7 +4,6 @@ import { motion, Variants } from 'framer-motion';
 import { Header } from './components/Header';
 import { ImageUploader } from './components/ImageUploader';
 import { BirthDateInput } from './components/BirthDateInput';
-import { AnalysisResultLayout } from './components/shared/AnalysisResultLayout';
 import { TypingResult } from './components/TypingResult';
 
 import { DailyTarotPage } from './components/DailyTarotPage';
@@ -22,15 +21,9 @@ import { generateIChingReading, getDailyFortune } from './utils/divinationUtils'
 import { saveResult } from './utils/storage';
 import { TarotReaderPage } from './components/TarotReaderPage';
 import { ChangelogPage } from './components/Changelog';
-import { ImageAndQuestionUploader } from './components/ImageAndQuestionUploader';
-import { PremiumRoute } from './components/shared/PremiumRoute';
 import { FaceStretcherPage } from './components/FaceStretcherPage';
-import { API_BASE_URL } from './utils/apiConfig';
 import { useAnalysis } from './hooks/useAnalysis';
 import { ErrorMessage } from './components/shared/ErrorMessage';
-import { AnalysisInfo } from './components/AnalysisInfo';
-import { ShareButtons } from './components/ShareButtons';
-import { UpgradeCTA } from './components/PremiumPlaceholder';
 import { ResultDisplay } from './components/ResultDisplay';
 import { PalmResultDisplay } from './components/PalmResultDisplay';
 import { ImpressionResultDisplay } from './components/ImpressionResultDisplay';
@@ -40,7 +33,7 @@ import { JuyeokResultDisplay } from './components/JuyeokResultDisplay';
 import { YukhyoResultDisplay } from './components/YukhyoResultDisplay';
 
 
-type Page = 'home' | 'face-reader' | 'palm-reader' | 'impression-analyzer' | 'astrology-reader' | 'saju-analyzer' | 'tarot-reader' | 'juyeok-reader' | 'yukhyo-analyzer' | 'daily-tarot' | 'saved-results' | 'about' | 'privacy' | 'terms' | 'guide' | 'changelog' | 'checkout' | 'face-stretcher';
+type Page = 'home' | 'face-reader' | 'palm-reader' | 'impression-analyzer' | 'astrology-reader' | 'saju-analyzer' | 'tarot-reader' | 'juyeok-reader' | 'yukhyo-analyzer' | 'daily-tarot' | 'saved-results' | 'about' | 'privacy' | 'terms' | 'guide' | 'changelog' | 'face-stretcher';
 
 // --- HomePage Component ---
 const HomePage: React.FC<{ onNavigate: (page: Page) => void; }> = ({ onNavigate }) => {
@@ -57,17 +50,6 @@ const HomePage: React.FC<{ onNavigate: (page: Page) => void; }> = ({ onNavigate 
       duration: Math.random() * 2 + 2,
       scale: Math.random() * 0.8 + 0.5,
     }));
-  }, []);
-
-  useEffect(() => {
-    // Check for payment success message in URL hash
-    const hashParams = new URLSearchParams(window.location.hash.split('?')[1]);
-    if (hashParams.get("payment") === "success") {
-        alert("결제가 성공적으로 완료되었습니다! 30일간 프리미엄 기능을 이용하실 수 있습니다.");
-        // Clean up the URL
-        const newUrl = window.location.pathname + window.location.hash.split('?')[0];
-        window.history.replaceState({}, document.title, newUrl);
-    }
   }, []);
 
   useEffect(() => {
@@ -289,26 +271,18 @@ const HomePage: React.FC<{ onNavigate: (page: Page) => void; }> = ({ onNavigate 
           <p className="text-slate-200">AI가 당신의 얼굴을 재미있게 변형시켜 드립니다.</p>
         </div>
         
-        {/* Saved Results Card (Premium) */}
+        {/* Saved Results Card */}
         <div
           onClick={() => onNavigate('saved-results')}
-          className="relative bg-slate-800/80 border border-[#475569] rounded-2xl p-6 flex flex-col items-center gap-4 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:border-[#94A3B8] hover:bg-slate-700/60 cursor-pointer group shadow-lg"
+          className="bg-slate-600/80 border border-slate-500 rounded-2xl p-6 flex flex-col items-center gap-4 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:border-slate-400 cursor-pointer group shadow-lg"
           role="button"
           tabIndex={0}
-          aria-label="나의 운세함 보기 (프리미엄 기능)"
+          aria-label="나의 운세함 보기"
           onKeyDown={(e) => e.key === 'Enter' && onNavigate('saved-results')}
         >
-          <div className="absolute top-3 right-3 bg-cyan-500 text-slate-900 text-xs font-bold px-2 py-1 rounded-full shadow-md z-10">
-            PREMIUM
-          </div>
-          <div className="opacity-70 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center gap-4 text-center">
-            <BoxIcon className="w-16 h-16 text-white transition-transform duration-500 group-hover:rotate-12 group-hover:scale-110" />
-            <div className="flex items-center gap-2">
-              <LockIcon className="w-6 h-6 text-cyan-400" />
-              <h2 className="text-2xl font-bold text-white">나의 운세함</h2>
-            </div>
-            <p className="text-slate-200">저장된 분석 결과를 다시 확인합니다.</p>
-          </div>
+          <BoxIcon className="w-16 h-16 text-white transition-transform duration-500 group-hover:rotate-12 group-hover:scale-110" />
+          <h2 className="text-2xl font-bold text-white">나의 운세함</h2>
+          <p className="text-slate-200">저장된 분석 결과를 다시 확인합니다.</p>
         </div>
       </div>
        <style>{`
@@ -327,79 +301,8 @@ const HomePage: React.FC<{ onNavigate: (page: Page) => void; }> = ({ onNavigate 
   );
 };
 
-// --- CheckoutPage Component ---
-const CheckoutPage: React.FC<{ onBack: () => void; email: string | null; }> = ({ onBack, email }) => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [featureName, setFeatureName] = useState<string | null>(null);
-
-  useEffect(() => {
-    const hashParams = new URLSearchParams(window.location.hash.split('?')[1]);
-    const feature = hashParams.get('feature');
-    if (feature) {
-        setFeatureName(decodeURIComponent(feature));
-    }
-  }, []);
-
-  const handleCheckout = async () => {
-    if (!email) {
-      setError("프리미엄 결제를 위해 이메일을 먼저 입력해주세요.");
-      return;
-    }
-    setIsLoading(true);
-    setError(null);
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/create-checkout-session`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || '결제 세션 생성에 실패했습니다.');
-      }
-      window.location.href = data.url;
-    } catch (err: any) {
-      if (err.message && err.message.includes('Stripe Price ID is not configured')) {
-        setError('결제 설정이 완료되지 않았습니다. 관리자에게 문의하세요.');
-      } else {
-        setError(err.message);
-      }
-      setIsLoading(false);
-    }
-  };
-
-  return (
-    <>
-      <Header
-        icon={<LockIcon className="w-10 h-10 text-cyan-400" />}
-        title={featureName ? `프리미엄 - ${featureName}` : "프리미엄 전용 기능"}
-        description={featureName ? `'${featureName}'의 모든 상세 분석을 이용하려면 플랜을 업그레이드하세요.` : "더욱 상세한 분석을 원하시면 프리미엄 플랜을 이용해보세요."}
-        onBack={onBack}
-      />
-      <main className="flex-grow flex flex-col items-center justify-center text-center py-10">
-        <div className="w-full max-w-md flex flex-col items-center gap-6 p-8 bg-slate-800/50 rounded-2xl shadow-lg border border-slate-700">
-          <h2 className="text-2xl font-bold text-white">프리미엄 플랜으로 업그레이드</h2>
-          <p className="text-slate-400">
-            모든 상세 분석 리포트, 광고 제거, 분석 결과 무제한 저장 등 특별한 혜택을 누려보세요.
-          </p>
-          <button
-            onClick={handleCheckout}
-            disabled={isLoading}
-            className="w-full py-3 px-6 bg-cyan-500 text-slate-900 font-bold text-lg rounded-lg shadow-md transition-all duration-300 hover:bg-cyan-400 hover:shadow-cyan-400/30 disabled:opacity-50 disabled:cursor-wait"
-          >
-            {isLoading ? '세션 생성 중...' : '₩990원으로 시작하기'}
-          </button>
-           <ErrorMessage message={error} />
-        </div>
-      </main>
-    </>
-  );
-};
-
-
 // --- FaceReaderPage Component ---
-const FaceReaderPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) => void; email: string | null; }> = ({ onBack, onNavigate, email }) => {
+const FaceReaderPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imageUrl, setImageUrl] = useState<string | null>(null);
     const [isSaved, setIsSaved] = useState(false);
@@ -456,8 +359,6 @@ const FaceReaderPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) =>
                         onSave={handleSave}
                         isSaved={isSaved}
                         isSavedView={false}
-                        onNavigate={onNavigate}
-                        email={email}
                     />
                 ) : (
                     <ImageUploader
@@ -474,7 +375,7 @@ const FaceReaderPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) =>
 };
 
 // --- PalmReaderPage Component ---
-const PalmReaderPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) => void; email: string | null; }> = ({ onBack, onNavigate, email }) => {
+const PalmReaderPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imageUrl, setImageUrl] = useState<string | null>(null);
     const [isSaved, setIsSaved] = useState(false);
@@ -525,8 +426,6 @@ const PalmReaderPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) =>
                         onSave={handleSave}
                         isSaved={isSaved}
                         isSavedView={false}
-                        onNavigate={onNavigate}
-                        email={email}
                     />
                 ) : (
                     <ImageUploader
@@ -540,7 +439,7 @@ const PalmReaderPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) =>
 };
 
 // --- ImpressionAnalyzerPage Component ---
-const ImpressionAnalyzerPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) => void; email: string | null; }> = ({ onBack, onNavigate, email }) => {
+const ImpressionAnalyzerPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imageUrl, setImageUrl] = useState<string | null>(null);
     const [isSaved, setIsSaved] = useState(false);
@@ -586,8 +485,6 @@ const ImpressionAnalyzerPage: React.FC<{ onBack: () => void; onNavigate: (page: 
                         onSave={handleSave}
                         isSaved={isSaved}
                         isSavedView={false}
-                        onNavigate={onNavigate}
-                        email={email}
                     />
                 ) : (
                     <ImageUploader
@@ -601,7 +498,7 @@ const ImpressionAnalyzerPage: React.FC<{ onBack: () => void; onNavigate: (page: 
 };
 
 // --- AstrologyReaderPage Component ---
-const AstrologyReaderPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) => void; email: string | null; }> = ({ onBack, onNavigate, email }) => {
+const AstrologyReaderPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
     const [isSaved, setIsSaved] = useState(false);
     const { result, isLoading, error, runAnalysis, reset } = useAnalysis(analyzeAstrology);
 
@@ -642,8 +539,6 @@ const AstrologyReaderPage: React.FC<{ onBack: () => void; onNavigate: (page: Pag
                         onSave={handleSave}
                         isSaved={isSaved}
                         isSavedView={false}
-                        onNavigate={onNavigate}
-                        email={email}
                     />
                 ) : (
                     <BirthDateInput onAnalyze={(birthDate) => handleAnalyze(birthDate)} buttonText="별자리 운세 보기" />
@@ -655,7 +550,7 @@ const AstrologyReaderPage: React.FC<{ onBack: () => void; onNavigate: (page: Pag
 };
 
 // --- SajuAnalyzerPage Component ---
-const SajuAnalyzerPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) => void; email: string | null; }> = ({ onBack, onNavigate, email }) => {
+const SajuAnalyzerPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
     const [isSaved, setIsSaved] = useState(false);
     const { result, isLoading, error, runAnalysis, reset } = useAnalysis(analyzeSaju);
 
@@ -696,8 +591,6 @@ const SajuAnalyzerPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) 
                         onSave={handleSave}
                         isSaved={isSaved}
                         isSavedView={false}
-                        onNavigate={onNavigate}
-                        email={email}
                     />
                 ) : (
                     <BirthDateInput onAnalyze={handleAnalyze} buttonText="사주 분석하기" showTimeInput={true} />
@@ -709,7 +602,7 @@ const SajuAnalyzerPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) 
 };
 
 // --- JuyeokReaderPage Component ---
-const JuyeokReaderPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) => void; email: string | null; }> = ({ onBack, onNavigate, email }) => {
+const JuyeokReaderPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
     const [question, setQuestion] = useState<string>('');
     const [juyeokReading, setJuyeokReading] = useState<JuyeokReading | null>(null);
     const [isSaved, setIsSaved] = useState(false);
@@ -756,8 +649,6 @@ const JuyeokReaderPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) 
                         onSave={handleSave}
                         isSaved={isSaved}
                         isSavedView={false}
-                        onNavigate={onNavigate}
-                        email={email}
                     />
                 ) : (
                     <div className="w-full max-w-md flex flex-col items-center gap-8 p-6 bg-slate-800/50 rounded-2xl shadow-lg border border-slate-700">
@@ -772,7 +663,7 @@ const JuyeokReaderPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) 
 };
 
 // --- YukhyoAnalyzerPage Component ---
-const YukhyoAnalyzerPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) => void; email: string | null; }> = ({ onBack, onNavigate, email }) => {
+const YukhyoAnalyzerPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
     const [question, setQuestion] = useState<string>('');
     const [isSaved, setIsSaved] = useState(false);
     const { result, isLoading, error, runAnalysis, reset } = useAnalysis(analyzeYukhyo);
@@ -816,8 +707,6 @@ const YukhyoAnalyzerPage: React.FC<{ onBack: () => void; onNavigate: (page: Page
                         onSave={handleSave}
                         isSaved={isSaved}
                         isSavedView={false}
-                        onNavigate={onNavigate}
-                        email={email}
                     />
                 ) : (
                     <div className="w-full max-w-md flex flex-col items-center gap-8 p-6 bg-slate-800/50 rounded-2xl shadow-lg border border-slate-700">
@@ -832,37 +721,9 @@ const YukhyoAnalyzerPage: React.FC<{ onBack: () => void; onNavigate: (page: Page
 };
 
 
-// --- UserAuth Component for testing ---
-const UserAuth: React.FC<{ email: string | null; onLogin: (email: string) => void; onLogout: () => void; }> = ({ email, onLogin, onLogout }) => {
-    const [inputEmail, setInputEmail] = useState('');
-    if (email) {
-        return (
-            <div className="absolute top-4 right-4 text-sm text-slate-300 flex items-center gap-2">
-                <span>{email}</span>
-                <button onClick={onLogout} className="bg-slate-600 text-xs p-1 rounded hover:bg-slate-500">Logout</button>
-            </div>
-        );
-    }
-    return (
-        <form onSubmit={(e) => { e.preventDefault(); onLogin(inputEmail); }} className="absolute top-4 right-4 flex gap-2 items-center z-20">
-            <input 
-                type="email" 
-                value={inputEmail} 
-                onChange={e => setInputEmail(e.target.value)} 
-                placeholder="테스트 이메일 입력" 
-                className="bg-slate-700/80 border border-slate-600 text-sm p-2 rounded-md text-white w-48"
-                required
-            />
-            <button type="submit" className="bg-cyan-600 text-white text-sm py-2 px-3 rounded-md hover:bg-cyan-500 transition-colors">로그인</button>
-        </form>
-    );
-};
-
-
 // --- Main App Component (Router) ---
 const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<Page>('home');
-  const [userEmail, setUserEmail] = useState<string | null>(null);
 
   const navigateTo = (page: Page | string) => {
     window.location.hash = page === 'home' ? '' : page;
@@ -884,31 +745,27 @@ const App: React.FC = () => {
   const renderPage = () => {
     switch (currentPage) {
       case 'face-reader':
-        return <FaceReaderPage onBack={() => navigateTo('home')} onNavigate={navigateTo} email={userEmail} />;
+        return <FaceReaderPage onBack={() => navigateTo('home')} />;
       case 'palm-reader':
-        return <PalmReaderPage onBack={() => navigateTo('home')} onNavigate={navigateTo} email={userEmail} />;
+        return <PalmReaderPage onBack={() => navigateTo('home')} />;
       case 'impression-analyzer':
-        return <ImpressionAnalyzerPage onBack={() => navigateTo('home')} onNavigate={navigateTo} email={userEmail} />;
+        return <ImpressionAnalyzerPage onBack={() => navigateTo('home')} />;
       case 'astrology-reader':
-        return <AstrologyReaderPage onBack={() => navigateTo('home')} onNavigate={navigateTo} email={userEmail} />;
+        return <AstrologyReaderPage onBack={() => navigateTo('home')} />;
       case 'saju-analyzer':
-        return <SajuAnalyzerPage onBack={() => navigateTo('home')} onNavigate={navigateTo} email={userEmail} />;
+        return <SajuAnalyzerPage onBack={() => navigateTo('home')} />;
       case 'tarot-reader':
-        return <TarotReaderPage onBack={() => navigateTo('home')} onNavigate={navigateTo} email={userEmail} />;
+        return <TarotReaderPage onBack={() => navigateTo('home')} />;
       case 'juyeok-reader':
-        return <JuyeokReaderPage onBack={() => navigateTo('home')} onNavigate={navigateTo} email={userEmail} />;
+        return <JuyeokReaderPage onBack={() => navigateTo('home')} />;
       case 'yukhyo-analyzer':
-        return <YukhyoAnalyzerPage onBack={() => navigateTo('home')} onNavigate={navigateTo} email={userEmail} />;
+        return <YukhyoAnalyzerPage onBack={() => navigateTo('home')} />;
       case 'daily-tarot':
         return <DailyTarotPage onBack={() => navigateTo('home')} />;
       case 'face-stretcher':
         return <FaceStretcherPage onBack={() => navigateTo('home')} />;
       case 'saved-results':
-        return (
-          <PremiumRoute navigate={navigateTo} email={userEmail} redirectOnFail={true} featureName="나의 운세함">
-            <SavedResultsPage onBack={() => navigateTo('home')} onNavigate={navigateTo} email={userEmail} />
-          </PremiumRoute>
-        );
+        return <SavedResultsPage onBack={() => navigateTo('home')} />;
       case 'about':
         return <AboutPage onBack={() => navigateTo('home')} />;
       case 'privacy':
@@ -919,8 +776,6 @@ const App: React.FC = () => {
         return <GuidePage onBack={() => navigateTo('home')} />;
       case 'changelog':
         return <ChangelogPage onBack={() => navigateTo('home')} />;
-      case 'checkout':
-        return <CheckoutPage onBack={() => navigateTo('home')} email={userEmail} />;
       case 'home':
       default:
         return <HomePage onNavigate={navigateTo} />;
@@ -929,7 +784,6 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-900 text-white flex flex-col items-center p-4 sm:p-6 lg:p-8 relative">
-       <UserAuth email={userEmail} onLogin={setUserEmail} onLogout={() => setUserEmail(null)} />
       <div className="w-full max-w-7xl mx-auto flex flex-col flex-grow">
         {renderPage()}
         <Footer onNavigate={navigateTo} />

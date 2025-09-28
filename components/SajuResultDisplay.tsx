@@ -11,13 +11,11 @@ interface SajuResultDisplayProps {
   onSave?: () => void;
   isSaved?: boolean;
   isSavedView?: boolean;
-  onNavigate: (page: string) => void;
-  email: string | null;
 }
 
 const itemVariants: Variants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } } };
 
-export const SajuResultDisplay: React.FC<SajuResultDisplayProps> = ({ result, onReset, onBack, onSave, isSaved, isSavedView, onNavigate, email }) => {
+export const SajuResultDisplay: React.FC<SajuResultDisplayProps> = ({ result, onReset, onBack, onSave, isSaved, isSavedView }) => {
   const shareText = `AI 사주 분석 결과, 저의 일간은 ${result.day_master} 입니다.\n\n[오늘의 운세 요약]\n${result.daily_fortune_summary}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
   
   return (
@@ -28,13 +26,10 @@ export const SajuResultDisplay: React.FC<SajuResultDisplayProps> = ({ result, on
       isSaved={isSaved}
       isSavedView={isSavedView}
       shareText={shareText}
-      onNavigate={onNavigate}
-      email={email}
-      featureName="AI 사주 분석"
       freeContent={
         <>
             <div className="bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8">
-                <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display">사주 명식 (무료)</h2>
+                <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display">사주 명식</h2>
                 <div className="grid grid-cols-4 gap-2 text-center text-white rounded-lg overflow-hidden border border-slate-700">
                     <div className="bg-slate-700/50 p-2 font-bold">시주(時柱)</div>
                     <div className="bg-slate-700/50 p-2 font-bold">일주(日柱)</div>
@@ -52,7 +47,7 @@ export const SajuResultDisplay: React.FC<SajuResultDisplayProps> = ({ result, on
 
             <div className="space-y-6 mt-8">
                 <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
-                    <h3 className="text-xl font-bold text-white mb-3 font-display">오늘의 운세 요약 (무료)</h3>
+                    <h3 className="text-xl font-bold text-white mb-3 font-display">오늘의 운세 요약</h3>
                     <TypingResult text={result.daily_fortune_summary} className="text-slate-400 leading-relaxed whitespace-pre-wrap" />
                 </div>
             </div>
