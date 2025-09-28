@@ -41,13 +41,9 @@ export const AnalysisResultLayout: React.FC<AnalysisResultLayoutProps> = ({
       {extraContent && <motion.div variants={itemVariants}>{extraContent}</motion.div>}
       
       <motion.div variants={itemVariants}>
-        {isSavedView ? (
-          premiumContent
-        ) : (
-          <PremiumRoute navigate={onNavigate} email={email} featureName={featureName}>
-            {premiumContent}
-          </PremiumRoute>
-        )}
+        <PremiumRoute navigate={onNavigate} email={email} featureName={featureName}>
+          {premiumContent}
+        </PremiumRoute>
       </motion.div>
 
       <motion.div variants={itemVariants}><AnalysisInfo /></motion.div>
