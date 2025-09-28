@@ -264,7 +264,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 if (error.name === 'ApiError' && error.status === 429) {
                     console.warn("⚠️ face-stretch fallback activated due to API rate limit.");
                     return res.status(200).json({
-                        stretchedImageBase64: "", // Empty image signals frontend to handle this case
+                        stretchedImageBase64: "",
                         comment: "현재 요청이 너무 많아 AI가 잠시 쉬고 있어요. 잠시 후 다시 시도해주세요."
                     });
                 }

@@ -63,7 +63,13 @@ export const FaceStretcherPage: React.FC<{ onBack: () => void; }> = ({ onBack })
                 </div>
                 <div className="flex flex-col items-center gap-2">
                     <h2 className="text-xl font-bold text-cyan-300">변형된 이미지</h2>
-                    <img src={`data:image/jpeg;base64,${analysisResult!.stretchedImageBase64}`} alt="Stretched" className="rounded-lg shadow-lg w-full" />
+                    {analysisResult!.stretchedImageBase64 ? (
+                        <img src={`data:image/jpeg;base64,${analysisResult!.stretchedImageBase64}`} alt="Stretched" className="rounded-lg shadow-lg w-full" />
+                    ) : (
+                        <div className="w-full h-full min-h-[200px] aspect-[1/1] bg-slate-800/50 border border-slate-700 rounded-lg flex items-center justify-center p-4">
+                            <p className="text-slate-400 text-center">이미지를 생성할 수 없습니다.</p>
+                        </div>
+                    )}
                 </div>
             </div>
             <div className="mt-8 bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 text-center">
