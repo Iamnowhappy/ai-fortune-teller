@@ -65,7 +65,7 @@ export const AstrologyResultDisplay: React.FC<AstrologyResultDisplayProps> = ({ 
                 </div>
                 <div className="space-y-6 mt-8">
                     <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
-                        <h3 className="text-xl font-bold text-white mb-3 font-display">핵심 성격 요약 (무료)</h2>
+                        <h3 className="text-xl font-bold text-white mb-3 font-display">핵심 성격 요약 (무료)</h3>
                         <TypingResult text={result.summary} className="text-slate-400 leading-relaxed" />
                     </div>
                 </div>
