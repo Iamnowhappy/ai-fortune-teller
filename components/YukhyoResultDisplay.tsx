@@ -22,13 +22,6 @@ const itemVariants: Variants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, vis
 export const YukhyoResultDisplay: React.FC<YukhyoResultDisplayProps> = ({ result, onReset, onBack, onSave, isSaved, isSavedView, question, onNavigate, email }) => {
   const shareText = `질문: "${question || '나의 운세'}"\n괘: ${result.hexagram_name}\n\n[종합 해설]\n${result.overall_interpretation}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
   
-  const PremiumContent = () => (
-     <motion.div variants={itemVariants} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 mt-8">
-        <h3 className="text-xl font-bold text-white mb-3 font-display">종합 해설 및 조언</h3>
-        <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{result.overall_interpretation}</p>
-    </motion.div>
-  );
-
   return (
     <AnalysisResultLayout
       onBack={onBack}
@@ -82,7 +75,12 @@ export const YukhyoResultDisplay: React.FC<YukhyoResultDisplayProps> = ({ result
             </div>
         </>
       }
-      premiumContent={<PremiumContent />}
+      premiumContent={
+        <motion.div variants={itemVariants} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 mt-8">
+            <h3 className="text-xl font-bold text-white mb-3 font-display">종합 해설 및 조언</h3>
+            <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{result.overall_interpretation}</p>
+        </motion.div>
+      }
     />
   );
 };

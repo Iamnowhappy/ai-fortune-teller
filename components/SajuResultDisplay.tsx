@@ -21,31 +21,6 @@ const itemVariants: Variants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, vis
 export const SajuResultDisplay: React.FC<SajuResultDisplayProps> = ({ result, onReset, onBack, onSave, isSaved, isSavedView, onNavigate, email }) => {
   const shareText = `AI 사주 분석 결과, 저의 일간은 ${result.day_master} 입니다.\n\n[오늘의 운세 요약]\n${result.daily_fortune_summary}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
   
-  const PremiumContent = () => (
-     <motion.div variants={itemVariants} className="space-y-6 mt-8">
-        <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display text-center">사주 심층 분석</h2>
-         <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
-            <h3 className="text-xl font-bold text-white mb-3 font-display">종합 분석</h3>
-            <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{result.premium_analysis.overall_analysis}</p>
-        </div>
-        <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
-            <h3 className="text-xl font-bold text-white mb-3 font-display">오행의 균형</h3>
-            <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{result.premium_analysis.elemental_balance}</p>
-        </div>
-         <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
-            <h3 className="text-xl font-bold text-white mb-3 font-display">분야별 상세운</h3>
-            <p className="text-slate-400 leading-relaxed whitespace-pre-wrap"><strong className="text-cyan-400">연애운:</strong> {result.premium_analysis.love_fortune}</p>
-            <p className="text-slate-400 leading-relaxed whitespace-pre-wrap mt-2"><strong className="text-cyan-400">재물운:</strong> {result.premium_analysis.money_fortune}</p>
-            <p className="text-slate-400 leading-relaxed whitespace-pre-wrap mt-2"><strong className="text-cyan-400">직업운:</strong> {result.premium_analysis.career_fortune}</p>
-            <p className="text-slate-400 leading-relaxed whitespace-pre-wrap mt-2"><strong className="text-cyan-400">건강운:</strong> {result.premium_analysis.health_fortune}</p>
-        </div>
-        <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
-            <h3 className="text-xl font-bold text-white mb-3 font-display">삶의 조언</h3>
-            <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{result.premium_analysis.life_advice}</p>
-        </div>
-      </motion.div>
-  );
-
   return (
     <AnalysisResultLayout
       onBack={onBack}
@@ -84,7 +59,30 @@ export const SajuResultDisplay: React.FC<SajuResultDisplayProps> = ({ result, on
             </div>
         </>
       }
-      premiumContent={<PremiumContent />}
+      premiumContent={
+         <motion.div variants={itemVariants} className="space-y-6 mt-8">
+            <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display text-center">사주 심층 분석</h2>
+            <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+                <h3 className="text-xl font-bold text-white mb-3 font-display">종합 분석</h3>
+                <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{result.premium_analysis.overall_analysis}</p>
+            </div>
+            <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+                <h3 className="text-xl font-bold text-white mb-3 font-display">오행의 균형</h3>
+                <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{result.premium_analysis.elemental_balance}</p>
+            </div>
+            <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+                <h3 className="text-xl font-bold text-white mb-3 font-display">분야별 상세운</h3>
+                <p className="text-slate-400 leading-relaxed whitespace-pre-wrap"><strong className="text-cyan-400">연애운:</strong> {result.premium_analysis.love_fortune}</p>
+                <p className="text-slate-400 leading-relaxed whitespace-pre-wrap mt-2"><strong className="text-cyan-400">재물운:</strong> {result.premium_analysis.money_fortune}</p>
+                <p className="text-slate-400 leading-relaxed whitespace-pre-wrap mt-2"><strong className="text-cyan-400">직업운:</strong> {result.premium_analysis.career_fortune}</p>
+                <p className="text-slate-400 leading-relaxed whitespace-pre-wrap mt-2"><strong className="text-cyan-400">건강운:</strong> {result.premium_analysis.health_fortune}</p>
+            </div>
+            <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+                <h3 className="text-xl font-bold text-white mb-3 font-display">삶의 조언</h3>
+                <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{result.premium_analysis.life_advice}</p>
+            </div>
+          </motion.div>
+      }
     />
   );
 };

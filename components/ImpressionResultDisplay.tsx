@@ -21,39 +21,6 @@ const itemVariants: Variants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, vis
 export const ImpressionResultDisplay: React.FC<ImpressionResultDisplayProps> = ({ result, onReset, onBack, onSave, isSaved, isSavedView, onNavigate, email }) => {
   const shareText = `AI가 분석한 저의 첫인상 요약은 '${result.summary}' 입니다.\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
   
-  const PremiumContent = () => (
-     <motion.div variants={itemVariants} className="mt-8 space-y-6">
-        <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-2 text-center font-display">상세 분석 리포트</h2>
-        <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
-            <h3 className="text-xl font-bold text-white mb-3 font-display">핵심 키워드</h3>
-            <div className="flex flex-wrap gap-3">
-                {result.premium_analysis.keywords.map((keyword, index) => (
-                    <span key={index} className="bg-cyan-500/20 text-cyan-300 text-sm font-semibold px-3 py-1 rounded-full">
-                        # {keyword}
-                    </span>
-                ))}
-            </div>
-        </div>
-        <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
-            <h3 className="text-xl font-bold text-white mb-3 font-display">상세 분석</h3>
-            <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{result.premium_analysis.detailed_analysis}</p>
-        </div>
-        <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
-            <h3 className="text-xl font-bold text-white mb-3 font-display">상황별 첫인상</h3>
-            <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{result.premium_analysis.situational_analysis}</p>
-        </div>
-        <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 flex items-start gap-4">
-            <div className="flex-shrink-0 pt-1">
-                <LightbulbIcon className="w-8 h-8 text-yellow-400" />
-            </div>
-            <div>
-                <h3 className="text-xl font-bold text-yellow-300 mb-2 font-display">첫인상 개선 TIP</h3>
-                <p className="text-slate-400 leading-relaxed">{result.premium_analysis.improvement_tip}</p>
-            </div>
-        </div>
-    </motion.div>
-  );
-
   return (
     <AnalysisResultLayout
       onBack={onBack}
@@ -71,7 +38,38 @@ export const ImpressionResultDisplay: React.FC<ImpressionResultDisplayProps> = (
             <TypingResult text={result.summary} className="text-slate-300 leading-relaxed whitespace-pre-wrap" />
           </div>
       }
-      premiumContent={<PremiumContent />}
+      premiumContent={
+         <motion.div variants={itemVariants} className="mt-8 space-y-6">
+            <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-2 text-center font-display">상세 분석 리포트</h2>
+            <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+                <h3 className="text-xl font-bold text-white mb-3 font-display">핵심 키워드</h3>
+                <div className="flex flex-wrap gap-3">
+                    {result.premium_analysis.keywords.map((keyword, index) => (
+                        <span key={index} className="bg-cyan-500/20 text-cyan-300 text-sm font-semibold px-3 py-1 rounded-full">
+                            # {keyword}
+                        </span>
+                    ))}
+                </div>
+            </div>
+            <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+                <h3 className="text-xl font-bold text-white mb-3 font-display">상세 분석</h3>
+                <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{result.premium_analysis.detailed_analysis}</p>
+            </div>
+            <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+                <h3 className="text-xl font-bold text-white mb-3 font-display">상황별 첫인상</h3>
+                <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{result.premium_analysis.situational_analysis}</p>
+            </div>
+            <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 flex items-start gap-4">
+                <div className="flex-shrink-0 pt-1">
+                    <LightbulbIcon className="w-8 h-8 text-yellow-400" />
+                </div>
+                <div>
+                    <h3 className="text-xl font-bold text-yellow-300 mb-2 font-display">첫인상 개선 TIP</h3>
+                    <p className="text-slate-400 leading-relaxed">{result.premium_analysis.improvement_tip}</p>
+                </div>
+            </div>
+        </motion.div>
+      }
     />
   );
 };

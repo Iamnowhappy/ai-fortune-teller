@@ -88,59 +88,6 @@ export const TarotResultDisplay: React.FC<TarotResultDisplayProps> = ({ result, 
   const shareText = `질문: "${question || '나의 운세'}"\n타로 리딩 요약: ${result.overall_summary}`;
   const spreadLabels = getSpreadLabels(drawnCards.length);
   
-  const PremiumContent = () => (
-    <motion.div variants={itemVariants} className="space-y-6 mt-8">
-      <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display text-center">상세 리딩 리포트</h2>
-      
-      <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
-        <h3 className="text-xl font-bold text-white mb-3 font-display">심층 리딩</h3>
-        <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{result.premium_reading.detailed_reading}</p>
-      </div>
-
-      <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
-        <h3 className="text-xl font-bold text-white mb-3 font-display">상황별 조언</h3>
-        <p className="text-slate-400 leading-relaxed whitespace-pre-wrap"><strong className="text-cyan-400">연애:</strong> {result.premium_reading.situational_advice.love}</p>
-        <p className="text-slate-400 leading-relaxed whitespace-pre-wrap mt-2"><strong className="text-cyan-400">금전:</strong> {result.premium_reading.situational_advice.money}</p>
-        <p className="text-slate-400 leading-relaxed whitespace-pre-wrap mt-2"><strong className="text-cyan-400">직업:</strong> {result.premium_reading.situational_advice.work}</p>
-      </div>
-
-      <h3 className="text-xl font-bold text-white pt-4 font-display text-center">카드별 상세 해석</h3>
-      {result.premium_reading.cards.map((interp, index) => {
-        const correspondingCard = drawnCards[index];
-        const VisualComponent = getCardVisualComponent(interp.card_name);
-        return (
-          <div key={index} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 sm:p-8 flex flex-col gap-4">
-            {correspondingCard && (
-                 <div className="w-full max-w-sm mx-auto rounded-lg overflow-hidden relative shadow-lg my-2 bg-slate-900/50">
-                    <div className={`transition-transform duration-500 ${correspondingCard.orientation === '역방향' ? 'transform rotate-180' : ''}`}>
-                        {correspondingCard.imageData && correspondingCard.mimeType ? (
-                        <img 
-                            src={`data:${correspondingCard.mimeType};base64,${correspondingCard.imageData}`} 
-                            alt={`${interp.card_name} user image`} 
-                            className="w-full h-auto object-contain" 
-                        />
-                        ) : (
-                        <div className="w-full aspect-[3/5] flex justify-center items-center">
-                            <VisualComponent className="w-24 h-24 text-cyan-400/70" />
-                        </div>
-                        )}
-                    </div>
-                    <div className="absolute inset-0 bg-black/10 pointer-events-none"></div>
-                </div>
-            )}
-            <div className="text-center">
-              <h3 className="text-2xl font-bold text-white font-display">{interp.card_name}</h3>
-              <p className={`text-lg font-medium ${interp.orientation === '역방향' ? 'text-yellow-400' : 'text-cyan-400'}`}>
-                ({interp.orientation})
-              </p>
-            </div>
-            <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{interp.meaning}</p>
-          </div>
-        );
-      })}
-    </motion.div>
-  );
-  
   return (
     <AnalysisResultLayout
       onBack={onBack}
@@ -169,7 +116,58 @@ export const TarotResultDisplay: React.FC<TarotResultDisplayProps> = ({ result, 
             </div>
         </>
       }
-      premiumContent={<PremiumContent />}
+      premiumContent={
+        <motion.div variants={itemVariants} className="space-y-6 mt-8">
+          <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display text-center">상세 리딩 리포트</h2>
+          
+          <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+            <h3 className="text-xl font-bold text-white mb-3 font-display">심층 리딩</h3>
+            <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{result.premium_reading.detailed_reading}</p>
+          </div>
+
+          <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+            <h3 className="text-xl font-bold text-white mb-3 font-display">상황별 조언</h3>
+            <p className="text-slate-400 leading-relaxed whitespace-pre-wrap"><strong className="text-cyan-400">연애:</strong> {result.premium_reading.situational_advice.love}</p>
+            <p className="text-slate-400 leading-relaxed whitespace-pre-wrap mt-2"><strong className="text-cyan-400">금전:</strong> {result.premium_reading.situational_advice.money}</p>
+            <p className="text-slate-400 leading-relaxed whitespace-pre-wrap mt-2"><strong className="text-cyan-400">직업:</strong> {result.premium_reading.situational_advice.work}</p>
+          </div>
+
+          <h3 className="text-xl font-bold text-white pt-4 font-display text-center">카드별 상세 해석</h3>
+          {result.premium_reading.cards.map((interp, index) => {
+            const correspondingCard = drawnCards[index];
+            const VisualComponent = getCardVisualComponent(interp.card_name);
+            return (
+              <div key={index} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 sm:p-8 flex flex-col gap-4">
+                {correspondingCard && (
+                     <div className="w-full max-w-sm mx-auto rounded-lg overflow-hidden relative shadow-lg my-2 bg-slate-900/50">
+                        <div className={`transition-transform duration-500 ${correspondingCard.orientation === '역방향' ? 'transform rotate-180' : ''}`}>
+                            {correspondingCard.imageData && correspondingCard.mimeType ? (
+                            <img 
+                                src={`data:${correspondingCard.mimeType};base64,${correspondingCard.imageData}`} 
+                                alt={`${interp.card_name} user image`} 
+                                className="w-full h-auto object-contain" 
+                            />
+                            ) : (
+                            <div className="w-full aspect-[3/5] flex justify-center items-center">
+                                <VisualComponent className="w-24 h-24 text-cyan-400/70" />
+                            </div>
+                            )}
+                        </div>
+                        <div className="absolute inset-0 bg-black/10 pointer-events-none"></div>
+                    </div>
+                )}
+                <div className="text-center">
+                  <h3 className="text-2xl font-bold text-white font-display">{interp.card_name}</h3>
+                  <p className={`text-lg font-medium ${interp.orientation === '역방향' ? 'text-yellow-400' : 'text-cyan-400'}`}>
+                    ({interp.orientation})
+                  </p>
+                </div>
+                <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{interp.meaning}</p>
+              </div>
+            );
+          })}
+        </motion.div>
+      }
     />
   );
 };
