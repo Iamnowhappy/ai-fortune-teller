@@ -3,11 +3,12 @@ import type { PalmistryResult } from '../types';
 import { RefreshIcon, HomeIcon, HeartLineIcon, HeadLineIcon, LifeLineIcon, LineIcon, SaveIcon, ArrowLeftIcon } from './icons';
 import { AnalysisInfo } from './AnalysisInfo';
 import { ShareButtons } from './ShareButtons';
-import { UpgradeCTA } from './PremiumPlaceholder';
 import { TypingResult } from './TypingResult';
 import { motion, Variants } from 'framer-motion';
-import { PremiumRoute } from './shared/PremiumRoute';
+import { AnalysisResultLayout } from './shared/AnalysisResultLayout';
 
+
+// FIX: Added onNavigate and email to props interface to pass to AnalysisResultLayout.
 interface PalmResultDisplayProps {
   result: PalmistryResult;
   onReset: () => void;
@@ -34,18 +35,20 @@ const getLineIcon = (lineName: string) => {
     return <LineIcon className="w-8 h-8 text-cyan-400" />; // Fallback
 }
 
-const containerVariants: Variants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
 const itemVariants: Variants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } } };
 
+// FIX: Destructure and pass new props to AnalysisResultLayout.
 export const PalmResultDisplay: React.FC<PalmResultDisplayProps> = ({ result, onReset, onBack, onSave, isSaved, isSavedView, onNavigate, email }) => {
-  // FIX: Property 'overall_analysis' does not exist on type 'PalmistryResult'. Use 'summary' for free content.
   const shareText = `AI 손금 분석 결과입니다:\n\n[요약]\n${result.summary}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
-  const featureName = "AI 손금 분석";
   
   const PremiumContent = () => (
     <motion.div variants={itemVariants} className="space-y-6 mt-8">
-      <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 font-display text-center">주요 손금 상세 분석 (프리미엄)</h2>
-      {/* FIX: Property 'lines' does not exist on type 'PalmistryResult'. Access via 'premium_analysis'. */}
+      <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 font-display text-center">주요 손금 상세 분석</h2>
+        <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+            <h3 className="text-xl font-bold text-white mb-3 font-display">종합 총평</h3>
+            <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{result.premium_analysis.overall_analysis}</p>
+        </div>
+      <h3 className="text-xl font-bold text-white pt-4 font-display">주요 손금별 해설</h3>
       {result.premium_analysis.lines.map((line, index) => (
         <motion.div variants={itemVariants} key={index} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 flex items-start gap-4 transition-transform duration-300 hover:scale-105 hover:border-cyan-500">
           <div className="flex-shrink-0 pt-1">
@@ -61,66 +64,33 @@ export const PalmResultDisplay: React.FC<PalmResultDisplayProps> = ({ result, on
   );
 
   return (
-    <motion.div 
-      className="w-full max-w-3xl"
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-    >
-      <motion.div variants={itemVariants} className="bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8">
-        <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display">손금 분석 요약 (무료)</h2>
-        {/* FIX: Property 'overall_analysis' does not exist on type 'PalmistryResult'. Use 'summary' for free content. */}
-        <TypingResult text={result.summary} className="text-slate-300 leading-relaxed whitespace-pre-wrap" />
-      </motion.div>
-
-      <motion.div variants={itemVariants} className="mt-8 bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
-        <h3 className="text-xl font-bold text-cyan-300 mb-3 font-display">분석 신뢰도 (무료)</h3>
-        <div className="flex items-center gap-4 sm:gap-6">
-          <div className="text-4xl font-bold text-white">{result.credibility_score}%</div>
-          <p className="text-slate-400 leading-relaxed text-left text-sm flex-1">{result.credibility_comment}</p>
+    <AnalysisResultLayout
+      onBack={onBack}
+      onReset={onReset}
+      onSave={onSave}
+      isSaved={isSaved}
+      isSavedView={isSavedView}
+      // FIX: Passed missing props to AnalysisResultLayout.
+      onNavigate={onNavigate}
+      email={email}
+      featureName="AI 손금 분석"
+      shareText={shareText}
+      freeContent={
+        <div className="bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8">
+            <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display">손금 분석 요약 (무료)</h2>
+            <TypingResult text={result.summary} className="text-slate-300 leading-relaxed whitespace-pre-wrap" />
         </div>
-      </motion.div>
-
-      {!isSavedView && <motion.div variants={itemVariants}><UpgradeCTA featureName={featureName} /></motion.div>}
-
-      {isSavedView ? <PremiumContent /> : (
-        <PremiumRoute navigate={onNavigate} email={email} featureName={featureName}>
-          <PremiumContent />
-        </PremiumRoute>
-      )}
-
-      <motion.div variants={itemVariants}><AnalysisInfo /></motion.div>
-      {!isSavedView && <motion.div variants={itemVariants}><ShareButtons shareText={shareText} /></motion.div>}
-
-      <motion.div variants={itemVariants} className="mt-10 text-center flex flex-wrap justify-center gap-4">
-        <button
-          onClick={onBack}
-          className="py-3 px-6 bg-slate-600 text-white font-bold text-lg rounded-lg shadow-md transition-all duration-300 hover:bg-slate-500 flex items-center gap-2"
-        >
-          {isSavedView ? <ArrowLeftIcon className="w-5 h-5" /> : <HomeIcon className="w-5 h-5" />}
-          {isSavedView ? '목록으로' : '홈으로'}
-        </button>
-        
-        {!isSavedView && (
-          <>
-            <button
-              onClick={onReset}
-              className="py-3 px-6 bg-cyan-500 text-slate-900 font-bold text-lg rounded-lg shadow-md transition-all duration-300 hover:bg-cyan-400 hover:shadow-cyan-400/30 flex items-center gap-2"
-            >
-              <RefreshIcon className="w-5 h-5" />
-              다시 분석
-            </button>
-            <button
-              onClick={onSave}
-              disabled={isSaved}
-              className="py-3 px-6 bg-slate-700 text-white font-bold text-lg rounded-lg shadow-md transition-all duration-300 hover:bg-slate-600 disabled:bg-green-500 disabled:text-slate-900 disabled:cursor-not-allowed flex items-center gap-2"
-            >
-              <SaveIcon className="w-5 h-5" />
-              {isSaved ? '저장됨!' : '결과 저장'}
-            </button>
-          </>
-        )}
-      </motion.div>
-    </motion.div>
+      }
+      extraContent={
+        <motion.div variants={itemVariants} className="mt-8 bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+            <h3 className="text-xl font-bold text-cyan-300 mb-3 font-display">분석 신뢰도 (무료)</h3>
+            <div className="flex items-center gap-4 sm:gap-6">
+                <div className="text-4xl font-bold text-white">{result.credibility_score}%</div>
+                <p className="text-slate-400 leading-relaxed text-left text-sm flex-1">{result.credibility_comment}</p>
+            </div>
+        </motion.div>
+      }
+      premiumContent={<PremiumContent />}
+    />
   );
 };

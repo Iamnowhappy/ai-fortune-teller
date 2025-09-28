@@ -1,13 +1,11 @@
 import React from 'react';
 import type { ImpressionAnalysisResult } from '../types';
 import { RefreshIcon, HomeIcon, LightbulbIcon, SaveIcon, ArrowLeftIcon } from './icons';
-import { AnalysisInfo } from './AnalysisInfo';
-import { ShareButtons } from './ShareButtons';
-import { UpgradeCTA } from './PremiumPlaceholder';
 import { TypingResult } from './TypingResult';
 import { motion, Variants } from 'framer-motion';
-import { PremiumRoute } from './shared/PremiumRoute';
+import { AnalysisResultLayout } from './shared/AnalysisResultLayout';
 
+// FIX: Added onNavigate and email to props interface.
 interface ImpressionResultDisplayProps {
   result: ImpressionAnalysisResult;
   onReset: () => void;
@@ -19,78 +17,64 @@ interface ImpressionResultDisplayProps {
   email: string | null;
 }
 
-const containerVariants: Variants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1 } } };
 const itemVariants: Variants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } } };
 
+// FIX: Destructured and passed new props to AnalysisResultLayout.
 export const ImpressionResultDisplay: React.FC<ImpressionResultDisplayProps> = ({ result, onReset, onBack, onSave, isSaved, isSavedView, onNavigate, email }) => {
-  // FIX: Properties 'keywords' and 'detailed_analysis' do not exist on type 'ImpressionAnalysisResult'. Use 'summary'.
   const shareText = `AI가 분석한 저의 첫인상 요약은 '${result.summary}' 입니다.\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
-  const featureName = "AI 첫인상 분석";
   
   const PremiumContent = () => (
-     <motion.div variants={itemVariants} className="mt-8 bg-slate-800/50 border border-slate-700 rounded-2xl p-6 flex items-start gap-4">
-        <div className="flex-shrink-0 pt-1">
-            <LightbulbIcon className="w-8 h-8 text-yellow-400" />
+     <motion.div variants={itemVariants} className="mt-8 space-y-6">
+        <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-2 text-center font-display">상세 분석 리포트</h2>
+        <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+            <h3 className="text-xl font-bold text-white mb-3 font-display">핵심 키워드</h3>
+            <div className="flex flex-wrap gap-3">
+                {result.premium_analysis.keywords.map((keyword, index) => (
+                    <span key={index} className="bg-cyan-500/20 text-cyan-300 text-sm font-semibold px-3 py-1 rounded-full">
+                        # {keyword}
+                    </span>
+                ))}
+            </div>
         </div>
-        <div>
-            <h3 className="text-xl font-bold text-yellow-300 mb-2 font-display">첫인상 개선을 위한 TIP (프리미엄)</h3>
-            {/* FIX: Property 'improvement_tip' does not exist on type 'ImpressionAnalysisResult'. Access via 'premium_analysis'. */}
-            <p className="text-slate-400 leading-relaxed">{result.premium_analysis.improvement_tip}</p>
+        <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+            <h3 className="text-xl font-bold text-white mb-3 font-display">상세 분석</h3>
+            <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{result.premium_analysis.detailed_analysis}</p>
         </div>
-      </motion.div>
+        <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+            <h3 className="text-xl font-bold text-white mb-3 font-display">상황별 첫인상</h3>
+            <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{result.premium_analysis.situational_analysis}</p>
+        </div>
+        <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 flex items-start gap-4">
+            <div className="flex-shrink-0 pt-1">
+                <LightbulbIcon className="w-8 h-8 text-yellow-400" />
+            </div>
+            <div>
+                <h3 className="text-xl font-bold text-yellow-300 mb-2 font-display">첫인상 개선 TIP</h3>
+                <p className="text-slate-400 leading-relaxed">{result.premium_analysis.improvement_tip}</p>
+            </div>
+        </div>
+    </motion.div>
   );
 
   return (
-    <motion.div 
-      className="w-full max-w-3xl"
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-    >
-      {/* FIX: Corrected component to show 'summary' as free content, instead of premium fields 'keywords' and 'detailed_analysis'. */}
-      <motion.div variants={itemVariants} className="bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8">
-        <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display">첫인상 요약 (무료)</h2>
-        <TypingResult text={result.summary} className="text-slate-300 leading-relaxed whitespace-pre-wrap" />
-      </motion.div>
-
-      {isSavedView ? <PremiumContent /> : (
-          <PremiumRoute navigate={onNavigate} email={email} featureName={featureName}>
-              <PremiumContent />
-          </PremiumRoute>
-      )}
-      
-      <motion.div variants={itemVariants}><AnalysisInfo /></motion.div>
-      {!isSavedView && <motion.div variants={itemVariants}><ShareButtons shareText={shareText} /></motion.div>}
-
-      <motion.div variants={itemVariants} className="mt-10 text-center flex flex-wrap justify-center gap-4">
-        <button
-          onClick={onBack}
-          className="py-3 px-6 bg-slate-600 text-white font-bold text-lg rounded-lg shadow-md transition-all duration-300 hover:bg-slate-500 flex items-center gap-2"
-        >
-          {isSavedView ? <ArrowLeftIcon className="w-5 h-5" /> : <HomeIcon className="w-5 h-5" />}
-          {isSavedView ? '목록으로' : '홈으로'}
-        </button>
-        
-        {!isSavedView && (
-          <>
-            <button
-              onClick={onReset}
-              className="py-3 px-6 bg-cyan-500 text-slate-900 font-bold text-lg rounded-lg shadow-md transition-all duration-300 hover:bg-cyan-400 hover:shadow-cyan-400/30 flex items-center gap-2"
-            >
-              <RefreshIcon className="w-5 h-5" />
-              다시 분석
-            </button>
-            <button
-              onClick={onSave}
-              disabled={isSaved}
-              className="py-3 px-6 bg-slate-700 text-white font-bold text-lg rounded-lg shadow-md transition-all duration-300 hover:bg-slate-600 disabled:bg-green-500 disabled:text-slate-900 disabled:cursor-not-allowed flex items-center gap-2"
-            >
-              <SaveIcon className="w-5 h-5" />
-              {isSaved ? '저장됨!' : '결과 저장'}
-            </button>
-          </>
-        )}
-      </motion.div>
-    </motion.div>
+    <AnalysisResultLayout
+      onBack={onBack}
+      onReset={onReset}
+      onSave={onSave}
+      isSaved={isSaved}
+      isSavedView={isSavedView}
+      // FIX: Passed missing props.
+      onNavigate={onNavigate}
+      email={email}
+      featureName="AI 첫인상 분석"
+      shareText={shareText}
+      freeContent={
+          <div className="bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8">
+            <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display">첫인상 요약 (무료)</h2>
+            <TypingResult text={result.summary} className="text-slate-300 leading-relaxed whitespace-pre-wrap" />
+          </div>
+      }
+      premiumContent={<PremiumContent />}
+    />
   );
 };
