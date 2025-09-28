@@ -1,6 +1,5 @@
 import React from 'react';
 import type { YukhyoResult } from '../types';
-import { RefreshIcon, HomeIcon, SaveIcon, ArrowLeftIcon } from './icons';
 import { TypingResult } from './TypingResult';
 import { motion, Variants } from 'framer-motion';
 import { AnalysisResultLayout } from './shared/AnalysisResultLayout';
@@ -19,15 +18,15 @@ interface YukhyoResultDisplayProps {
 
 const itemVariants: Variants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } } };
 
-export const YukhyoResultDisplay: React.FC<YukhyoResultDisplayProps> = ({ result, onReset, onBack, onSave, isSaved, isSavedView, question, onNavigate, email }) => {
-  const shareText = `질문: "${question || '나의 운세'}"\n괘: ${result.hexagram_name}\n\n[종합 해설]\n${result.overall_interpretation}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
-  
-  const PremiumContent = () => (
+const PremiumContent: React.FC<{ result: YukhyoResult }> = ({ result }) => (
     <motion.div variants={itemVariants} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 mt-8">
         <h3 className="text-xl font-bold text-white mb-3 font-display">종합 해설 및 조언</h3>
         <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{result.overall_interpretation}</p>
     </motion.div>
-  );
+);
+  
+export const YukhyoResultDisplay: React.FC<YukhyoResultDisplayProps> = ({ result, onReset, onBack, onSave, isSaved, isSavedView, question, onNavigate, email }) => {
+  const shareText = `질문: "${question || '나의 운세'}"\n괘: ${result.hexagram_name}\n\n[종합 해설]\n${result.overall_interpretation}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
   
   return (
     <AnalysisResultLayout
@@ -36,10 +35,10 @@ export const YukhyoResultDisplay: React.FC<YukhyoResultDisplayProps> = ({ result
       onSave={onSave}
       isSaved={isSaved}
       isSavedView={isSavedView}
+      shareText={shareText}
       onNavigate={onNavigate}
       email={email}
       featureName="AI 육효 분석가"
-      shareText={shareText}
       freeContent={
         <>
             <div className="bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8">
@@ -82,7 +81,7 @@ export const YukhyoResultDisplay: React.FC<YukhyoResultDisplayProps> = ({ result
             </div>
         </>
       }
-      premiumContent={<PremiumContent />}
+      premiumContent={<PremiumContent result={result} />}
     />
   );
 };

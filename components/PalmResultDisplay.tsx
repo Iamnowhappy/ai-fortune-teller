@@ -1,12 +1,9 @@
 import React from 'react';
 import type { PalmistryResult } from '../types';
-import { RefreshIcon, HomeIcon, HeartLineIcon, HeadLineIcon, LifeLineIcon, LineIcon, SaveIcon, ArrowLeftIcon } from './icons';
-import { AnalysisInfo } from './AnalysisInfo';
-import { ShareButtons } from './ShareButtons';
+import { HeartLineIcon, HeadLineIcon, LifeLineIcon, LineIcon } from './icons';
 import { TypingResult } from './TypingResult';
 import { motion, Variants } from 'framer-motion';
 import { AnalysisResultLayout } from './shared/AnalysisResultLayout';
-
 
 interface PalmResultDisplayProps {
   result: PalmistryResult;
@@ -36,12 +33,9 @@ const getLineIcon = (lineName: string) => {
 
 const itemVariants: Variants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } } };
 
-export const PalmResultDisplay: React.FC<PalmResultDisplayProps> = ({ result, onReset, onBack, onSave, isSaved, isSavedView, onNavigate, email }) => {
-  const shareText = `AI 손금 분석 결과입니다:\n\n[요약]\n${result.summary}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
-
-  const PremiumContent = () => (
+const PremiumContent: React.FC<{result: PalmistryResult}> = ({ result }) => (
     <motion.div variants={itemVariants} className="space-y-6 mt-8">
-      <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 font-display text-center">주요 손금 상세 분석</h2>
+      <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 font-display text-center">상세 분석 리포트</h2>
         <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
             <h3 className="text-xl font-bold text-white mb-3 font-display">종합 총평</h3>
             <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{result.premium_analysis.overall_analysis}</p>
@@ -59,7 +53,10 @@ export const PalmResultDisplay: React.FC<PalmResultDisplayProps> = ({ result, on
         </motion.div>
       ))}
     </motion.div>
-  );
+);
+
+export const PalmResultDisplay: React.FC<PalmResultDisplayProps> = ({ result, onReset, onBack, onSave, isSaved, isSavedView, onNavigate, email }) => {
+  const shareText = `AI 손금 분석 결과입니다:\n\n[요약]\n${result.summary}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
 
   return (
     <AnalysisResultLayout
@@ -68,10 +65,10 @@ export const PalmResultDisplay: React.FC<PalmResultDisplayProps> = ({ result, on
       onSave={onSave}
       isSaved={isSaved}
       isSavedView={isSavedView}
+      shareText={shareText}
       onNavigate={onNavigate}
       email={email}
       featureName="AI 손금 분석"
-      shareText={shareText}
       freeContent={
         <div className="bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8">
             <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display">손금 분석 요약 (무료)</h2>
@@ -87,7 +84,7 @@ export const PalmResultDisplay: React.FC<PalmResultDisplayProps> = ({ result, on
             </div>
         </motion.div>
       }
-      premiumContent={<PremiumContent />}
+      premiumContent={<PremiumContent result={result} />}
     />
   );
 };

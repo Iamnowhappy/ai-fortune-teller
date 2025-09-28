@@ -1,6 +1,5 @@
 import React from 'react';
 import type { AstrologyResult } from '../types';
-import { RefreshIcon, HomeIcon, SaveIcon, ArrowLeftIcon } from './icons';
 import { TypingResult } from './TypingResult';
 import { motion, Variants } from 'framer-motion';
 import { AnalysisResultLayout } from './shared/AnalysisResultLayout';
@@ -18,10 +17,7 @@ interface AstrologyResultDisplayProps {
 
 const itemVariants: Variants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } } };
 
-export const AstrologyResultDisplay: React.FC<AstrologyResultDisplayProps> = ({ result, onReset, onBack, onSave, isSaved, isSavedView, onNavigate, email }) => {
-  const shareText = `AI가 분석한 저의 별자리는 ${result.zodiac_sign}입니다.\n\n[성격 요약]\n${result.summary}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
-  
-  const PremiumContent = () => (
+const PremiumContent: React.FC<{ result: AstrologyResult }> = ({ result }) => (
     <motion.div variants={itemVariants} className="space-y-6 mt-8">
         <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display text-center">상세 운세 분석</h2>
         <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
@@ -41,8 +37,11 @@ export const AstrologyResultDisplay: React.FC<AstrologyResultDisplayProps> = ({ 
             <p className="text-slate-400 leading-relaxed">{result.premium_analysis.health_fortune}</p>
         </div>
     </motion.div>
-  );
+);
 
+export const AstrologyResultDisplay: React.FC<AstrologyResultDisplayProps> = ({ result, onReset, onBack, onSave, isSaved, isSavedView, onNavigate, email }) => {
+  const shareText = `AI가 분석한 저의 별자리는 ${result.zodiac_sign}입니다.\n\n[성격 요약]\n${result.summary}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
+  
   return (
     <AnalysisResultLayout
         onBack={onBack}
@@ -50,10 +49,10 @@ export const AstrologyResultDisplay: React.FC<AstrologyResultDisplayProps> = ({ 
         onSave={onSave}
         isSaved={isSaved}
         isSavedView={isSavedView}
+        shareText={shareText}
         onNavigate={onNavigate}
         email={email}
         featureName="AI 별자리 운세"
-        shareText={shareText}
         freeContent={
             <>
                 <div className="bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8 text-center">
@@ -66,13 +65,13 @@ export const AstrologyResultDisplay: React.FC<AstrologyResultDisplayProps> = ({ 
                 </div>
                 <div className="space-y-6 mt-8">
                     <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
-                        <h3 className="text-xl font-bold text-white mb-3 font-display">핵심 성격 요약 (무료)</h3>
+                        <h3 className="text-xl font-bold text-white mb-3 font-display">핵심 성격 요약 (무료)</h2>
                         <TypingResult text={result.summary} className="text-slate-400 leading-relaxed" />
                     </div>
                 </div>
             </>
         }
-        premiumContent={<PremiumContent />}
+        premiumContent={<PremiumContent result={result} />}
     />
   );
 };

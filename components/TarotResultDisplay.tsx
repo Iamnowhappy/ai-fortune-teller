@@ -1,6 +1,6 @@
 import React from 'react';
 import type { TarotResult, CardDraw } from '../types';
-import { RefreshIcon, HomeIcon, TarotCardBackIcon, SaveIcon, ArrowLeftIcon } from './icons';
+import { TarotCardBackIcon } from './icons';
 import { getCardVisualComponent } from '../utils/tarotUtils';
 import { TypingResult } from './TypingResult';
 import { motion, Variants } from 'framer-motion';
@@ -84,11 +84,7 @@ const getSpreadLabels = (count: number): string[] => {
 
 const itemVariants: Variants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } } };
 
-export const TarotResultDisplay: React.FC<TarotResultDisplayProps> = ({ result, drawnCards, onReset, onBack, onSave, isSaved, isSavedView, question, onNavigate, email }) => {
-  const shareText = `질문: "${question || '나의 운세'}"\n타로 리딩 요약: ${result.overall_summary}`;
-  const spreadLabels = getSpreadLabels(drawnCards.length);
-  
-  const PremiumContent = () => (
+const PremiumContent: React.FC<{result: TarotResult; drawnCards: CardDraw[]}> = ({result, drawnCards}) => (
     <motion.div variants={itemVariants} className="space-y-6 mt-8">
       <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display text-center">상세 리딩 리포트</h2>
       
@@ -139,8 +135,12 @@ export const TarotResultDisplay: React.FC<TarotResultDisplayProps> = ({ result, 
         );
       })}
     </motion.div>
-  );
+);
 
+export const TarotResultDisplay: React.FC<TarotResultDisplayProps> = ({ result, drawnCards, onReset, onBack, onSave, isSaved, isSavedView, question, onNavigate, email }) => {
+  const shareText = `질문: "${question || '나의 운세'}"\n타로 리딩 요약: ${result.overall_summary}`;
+  const spreadLabels = getSpreadLabels(drawnCards.length);
+  
   return (
     <AnalysisResultLayout
       onBack={onBack}
@@ -148,10 +148,10 @@ export const TarotResultDisplay: React.FC<TarotResultDisplayProps> = ({ result, 
       onSave={onSave}
       isSaved={isSaved}
       isSavedView={isSavedView}
+      shareText={shareText}
       onNavigate={onNavigate}
       email={email}
       featureName="AI 타로 마스터"
-      shareText={shareText}
       freeContent={
         <>
             <div className="flex flex-row flex-wrap justify-center items-start gap-x-6 sm:gap-x-8 gap-y-4 mb-8">
@@ -169,7 +169,7 @@ export const TarotResultDisplay: React.FC<TarotResultDisplayProps> = ({ result, 
             </div>
         </>
       }
-      premiumContent={<PremiumContent />}
+      premiumContent={<PremiumContent result={result} drawnCards={drawnCards} />}
     />
   );
 };
