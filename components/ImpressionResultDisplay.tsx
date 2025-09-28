@@ -23,7 +23,8 @@ const containerVariants: Variants = { hidden: { opacity: 0 }, visible: { opacity
 const itemVariants: Variants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } } };
 
 export const ImpressionResultDisplay: React.FC<ImpressionResultDisplayProps> = ({ result, onReset, onBack, onSave, isSaved, isSavedView, onNavigate, email }) => {
-  const shareText = `AI가 분석한 저의 첫인상 키워드는 '${result.keywords.join(', ')}' 입니다.\n\n[상세 분석]\n${result.detailed_analysis}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
+  // FIX: Properties 'keywords' and 'detailed_analysis' do not exist on type 'ImpressionAnalysisResult'. Use 'summary'.
+  const shareText = `AI가 분석한 저의 첫인상 요약은 '${result.summary}' 입니다.\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
   const featureName = "AI 첫인상 분석";
   
   const PremiumContent = () => (
@@ -33,7 +34,8 @@ export const ImpressionResultDisplay: React.FC<ImpressionResultDisplayProps> = (
         </div>
         <div>
             <h3 className="text-xl font-bold text-yellow-300 mb-2 font-display">첫인상 개선을 위한 TIP (프리미엄)</h3>
-            <p className="text-slate-400 leading-relaxed">{result.improvement_tip}</p>
+            {/* FIX: Property 'improvement_tip' does not exist on type 'ImpressionAnalysisResult'. Access via 'premium_analysis'. */}
+            <p className="text-slate-400 leading-relaxed">{result.premium_analysis.improvement_tip}</p>
         </div>
       </motion.div>
   );
@@ -45,16 +47,10 @@ export const ImpressionResultDisplay: React.FC<ImpressionResultDisplayProps> = (
       initial="hidden"
       animate="visible"
     >
+      {/* FIX: Corrected component to show 'summary' as free content, instead of premium fields 'keywords' and 'detailed_analysis'. */}
       <motion.div variants={itemVariants} className="bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8">
-        <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display">첫인상 분석 결과 (무료)</h2>
-        <div className="flex flex-wrap gap-3 mb-6">
-            {result.keywords.map((keyword, index) => (
-                <span key={index} className="bg-cyan-500/20 text-cyan-300 text-sm font-semibold px-3 py-1 rounded-full">
-                    # {keyword}
-                </span>
-            ))}
-        </div>
-        <TypingResult text={result.detailed_analysis} className="text-slate-300 leading-relaxed whitespace-pre-wrap" />
+        <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display">첫인상 요약 (무료)</h2>
+        <TypingResult text={result.summary} className="text-slate-300 leading-relaxed whitespace-pre-wrap" />
       </motion.div>
 
       {!isSavedView && <motion.div variants={itemVariants}><UpgradeCTA featureName={featureName} /></motion.div>}

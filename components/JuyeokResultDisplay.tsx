@@ -48,15 +48,18 @@ const containerVariants: Variants = { hidden: { opacity: 0 }, visible: { opacity
 const itemVariants: Variants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } } };
 
 export const JuyeokResultDisplay: React.FC<JuyeokResultDisplayProps> = ({ result, reading, onReset, onBack, onSave, isSaved, isSavedView, question, onNavigate, email }) => {
-  const shareText = `질문: "${question || '나의 운세'}"\n본괘: ${result.present_hexagram_name}\n\n[종합 해설]\n${result.interpretation}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
+  // FIX: Property 'interpretation' does not exist on type 'JuyeokResult'. Use 'summary'.
+  const shareText = `질문: "${question || '나의 운세'}"\n본괘: ${result.present_hexagram_name}\n\n[요약]\n${result.summary}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
   const featureName = "AI 주역 전문가";
   
   const PremiumContent = () => (
     <>
-      {result.changing_lines_interpretation && (
+      {/* FIX: Property 'changing_lines_interpretation' does not exist on type 'JuyeokResult'. Access via 'premium_analysis'. */}
+      {result.premium_analysis.changing_lines_interpretation && (
         <motion.div variants={itemVariants} className="mt-8 bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
             <h3 className="text-xl font-bold text-white mb-3 font-display">변화의 핵심 (變爻) - 프리미엄</h3>
-            <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{result.changing_lines_interpretation}</p>
+            {/* FIX: Property 'changing_lines_interpretation' does not exist on type 'JuyeokResult'. Access via 'premium_analysis'. */}
+            <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{result.premium_analysis.changing_lines_interpretation}</p>
         </motion.div>
       )}
     </>
@@ -98,8 +101,9 @@ export const JuyeokResultDisplay: React.FC<JuyeokResultDisplayProps> = ({ result
         </motion.div>
 
       <motion.div variants={itemVariants} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 sm:p-8">
-        <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display">종합 해설 (무료)</h2>
-        <TypingResult text={result.interpretation} className="text-slate-300 leading-relaxed whitespace-pre-wrap" />
+        <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display">핵심 요약 (무료)</h2>
+        {/* FIX: Property 'interpretation' does not exist on type 'JuyeokResult'. Use 'summary'. */}
+        <TypingResult text={result.summary} className="text-slate-300 leading-relaxed whitespace-pre-wrap" />
       </motion.div>
 
       {!isSavedView && <motion.div variants={itemVariants}><UpgradeCTA featureName={featureName} /></motion.div>}

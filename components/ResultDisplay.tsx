@@ -41,7 +41,8 @@ const containerVariants: Variants = { hidden: { opacity: 0 }, visible: { opacity
 const itemVariants: Variants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } } };
 
 export const ResultDisplay: React.FC<ResultDisplayProps> = ({ result, onReset, onBack, onSave, isSaved, isSavedView, onNavigate, email }) => {
-  const shareText = `AI 관상가로 분석한 저의 관상 결과입니다:\n\n[총평]\n${result.overall_impression}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
+  // FIX: Property 'overall_impression' does not exist on type 'PhysiognomyResult'. Use 'summary' for free content.
+  const shareText = `AI 관상가로 분석한 저의 관상 결과입니다:\n\n[요약]\n${result.summary}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
   const featureName = "AI 관상가";
 
   const PremiumContent = () => (
@@ -72,8 +73,9 @@ export const ResultDisplay: React.FC<ResultDisplayProps> = ({ result, onReset, o
       animate="visible"
     >
       <motion.div variants={itemVariants} className="bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8">
-        <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display">관상 분석 총평 (무료)</h2>
-        <TypingResult text={result.overall_impression} className="text-slate-300 leading-relaxed whitespace-pre-wrap" />
+        <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display">관상 분석 요약 (무료)</h2>
+        {/* FIX: Property 'overall_impression' does not exist on type 'PhysiognomyResult'. Use 'summary' for free content. */}
+        <TypingResult text={result.summary} className="text-slate-300 leading-relaxed whitespace-pre-wrap" />
       </motion.div>
       
       {!isSavedView && <motion.div variants={itemVariants}><UpgradeCTA featureName={featureName} /></motion.div>}

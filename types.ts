@@ -1,15 +1,23 @@
 
 
+export interface PhysiognomyResult {
+  summary: string; // Free
+  premium_analysis: {
+    overall_impression: string;
+    job_suitability: string;
+    love_style: string;
+    health_advice: string;
+  };
+  features: FeatureAnalysis[]; // Premium
+}
+
+
 export interface FeatureAnalysis {
   feature: string;
   shape: string;
   analysis: string;
 }
 
-export interface PhysiognomyResult {
-  overall_impression: string;
-  features: FeatureAnalysis[];
-}
 
 export interface LineAnalysis {
   line_name: string;
@@ -17,30 +25,40 @@ export interface LineAnalysis {
 }
 
 export interface PalmistryResult {
-  overall_analysis: string;
-  lines: LineAnalysis[];
+  summary: string; // Free
+  premium_analysis: {
+      overall_analysis: string;
+      lines: LineAnalysis[];
+  };
   credibility_score: number;
   credibility_comment: string;
 }
 
 export interface ImpressionAnalysisResult {
-  keywords: string[];
-  detailed_analysis: string;
-  improvement_tip: string;
+  summary: string; // Free
+  premium_analysis: {
+      keywords: string[];
+      detailed_analysis: string;
+      situational_analysis: string; // e.g., business, dating
+      improvement_tip: string;
+  };
 }
 
 export interface AstrologyResult {
   zodiac_sign: string;
-  ruling_planet: string;
-  element: string;
-  analysis: {
+  summary: string; // Free
+  premium_analysis: {
     personality: string;
     love_life: string;
     work_career: string;
+    health_fortune: string;
   };
+  ruling_planet: string;
+  element: string;
 }
 
 export interface SajuResult {
+  daily_fortune_summary: string; // Free
   four_pillars: {
     year_pillar: string;
     month_pillar: string;
@@ -48,9 +66,15 @@ export interface SajuResult {
     hour_pillar: string;
   };
   day_master: string;
-  overall_analysis: string;
-  elemental_analysis: string;
-  life_advice: string;
+  premium_analysis: {
+      overall_analysis: string;
+      elemental_balance: string;
+      love_fortune: string;
+      money_fortune: string;
+      career_fortune: string;
+      health_fortune: string;
+      life_advice: string;
+  };
 }
 
 export type CardOrientation = '정방향' | '역방향';
@@ -69,8 +93,16 @@ export interface CardInterpretation {
 }
 
 export interface TarotResult {
-  overall_reading: string;
-  cards: CardInterpretation[];
+  overall_summary: string; // Free
+  premium_reading: {
+    detailed_reading: string;
+    situational_advice: { // love, money, work
+        love: string;
+        money: string;
+        work: string;
+    };
+    cards: CardInterpretation[];
+  }
 }
 
 // --- Daily Tarot Types ---
@@ -93,10 +125,14 @@ export interface JuyeokReading {
 }
 
 export interface JuyeokResult {
+  summary: string; // Free
   present_hexagram_name: string;
   changing_hexagram_name: string | null;
-  interpretation: string;
-  changing_lines_interpretation: string | null;
+  premium_analysis: {
+    detailed_interpretation: string;
+    changing_lines_interpretation: string | null;
+    situational_advice: string; // e.g., love, business, health
+  };
 }
 
 // --- Yukhyo Types ---

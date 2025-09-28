@@ -1,5 +1,7 @@
-import React, { useEffect, useState } from "react";
+// FIX: Imported 'useCallback' to resolve 'Cannot find name' error.
+import React, { useEffect, useState, useCallback } from "react";
 import { API_BASE_URL } from "../../utils/apiConfig";
+import { UpgradeCTA } from "../PremiumPlaceholder";
 
 type NavigateFunction = (page: string) => void;
 
@@ -7,7 +9,7 @@ interface PremiumRouteProps {
   children: React.ReactNode;
   navigate: NavigateFunction;
   email: string | null;
-  redirectOnFail?: boolean; // New prop to control redirection
+  redirectOnFail?: boolean;
   featureName?: string;
 }
 
@@ -30,10 +32,10 @@ export const PremiumRoute: React.FC<PremiumRouteProps> = ({ children, navigate, 
   const [isChecking, setIsChecking] = useState(true);
   const [isPremium, setIsPremium] = useState<boolean | null>(null);
 
-  const navigateToCheckout = () => {
+  const navigateToCheckout = useCallback(() => {
     const featureQuery = featureName ? `?feature=${encodeURIComponent(featureName)}` : '';
     navigate(`checkout${featureQuery}`);
-  };
+  }, [navigate, featureName]);
 
   useEffect(() => {
     const checkStatus = async () => {
@@ -57,11 +59,9 @@ export const PremiumRoute: React.FC<PremiumRouteProps> = ({ children, navigate, 
     };
 
     checkStatus();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [email, navigate, redirectOnFail, featureName]);
+  }, [email, navigate, redirectOnFail, featureName, navigateToCheckout]);
 
   if (isChecking) {
-    // For full-page routes, show a full loader. For inline, show a smaller one.
     if (redirectOnFail) {
       return (
         <main className="flex-grow flex flex-col items-center justify-center text-center py-10">
@@ -85,11 +85,14 @@ export const PremiumRoute: React.FC<PremiumRouteProps> = ({ children, navigate, 
     );
   }
 
-  // If redirectOnFail is true, we should return null while redirecting.
-  if (!isPremium && redirectOnFail) {
-    return null;
+  if (isPremium) {
+    return <>{children}</>;
+  }
+
+  if (redirectOnFail) {
+    return null; // Redirect is handled by useEffect
   }
   
-  // Render children only if premium. Otherwise, render null (the UpgradeCTA will be visible).
-  return isPremium ? <>{children}</> : null;
+  // For inline gating, show the UpgradeCTA if not premium
+  return <UpgradeCTA featureName={featureName} />;
 };

@@ -38,13 +38,15 @@ const containerVariants: Variants = { hidden: { opacity: 0 }, visible: { opacity
 const itemVariants: Variants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } } };
 
 export const PalmResultDisplay: React.FC<PalmResultDisplayProps> = ({ result, onReset, onBack, onSave, isSaved, isSavedView, onNavigate, email }) => {
-  const shareText = `AI 손금 분석 결과입니다:\n\n[총평]\n${result.overall_analysis}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
+  // FIX: Property 'overall_analysis' does not exist on type 'PalmistryResult'. Use 'summary' for free content.
+  const shareText = `AI 손금 분석 결과입니다:\n\n[요약]\n${result.summary}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
   const featureName = "AI 손금 분석";
   
   const PremiumContent = () => (
     <motion.div variants={itemVariants} className="space-y-6 mt-8">
       <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 font-display text-center">주요 손금 상세 분석 (프리미엄)</h2>
-      {result.lines.map((line, index) => (
+      {/* FIX: Property 'lines' does not exist on type 'PalmistryResult'. Access via 'premium_analysis'. */}
+      {result.premium_analysis.lines.map((line, index) => (
         <motion.div variants={itemVariants} key={index} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 flex items-start gap-4 transition-transform duration-300 hover:scale-105 hover:border-cyan-500">
           <div className="flex-shrink-0 pt-1">
               {getLineIcon(line.line_name)}
@@ -66,8 +68,9 @@ export const PalmResultDisplay: React.FC<PalmResultDisplayProps> = ({ result, on
       animate="visible"
     >
       <motion.div variants={itemVariants} className="bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8">
-        <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display">손금 분석 총평 (무료)</h2>
-        <TypingResult text={result.overall_analysis} className="text-slate-300 leading-relaxed whitespace-pre-wrap" />
+        <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display">손금 분석 요약 (무료)</h2>
+        {/* FIX: Property 'overall_analysis' does not exist on type 'PalmistryResult'. Use 'summary' for free content. */}
+        <TypingResult text={result.summary} className="text-slate-300 leading-relaxed whitespace-pre-wrap" />
       </motion.div>
 
       <motion.div variants={itemVariants} className="mt-8 bg-slate-800/50 border border-slate-700 rounded-2xl p-6">

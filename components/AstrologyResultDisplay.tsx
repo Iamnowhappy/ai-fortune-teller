@@ -24,7 +24,8 @@ const itemVariants: Variants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, vis
 
 
 export const AstrologyResultDisplay: React.FC<AstrologyResultDisplayProps> = ({ result, onReset, onBack, onSave, isSaved, isSavedView, onNavigate, email }) => {
-  const shareText = `AI가 분석한 저의 별자리는 ${result.zodiac_sign}입니다.\n\n[성격 분석]\n${result.analysis.personality}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
+  // FIX: Property 'analysis' does not exist on type 'AstrologyResult'. Use 'summary'.
+  const shareText = `AI가 분석한 저의 별자리는 ${result.zodiac_sign}입니다.\n\n[성격 요약]\n${result.summary}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
   const featureName = "AI 별자리 운세";
   
   const PremiumContent = () => (
@@ -32,11 +33,13 @@ export const AstrologyResultDisplay: React.FC<AstrologyResultDisplayProps> = ({ 
         <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display text-center">상세 운세 분석 (프리미엄)</h2>
         <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
             <h3 className="text-xl font-bold text-white mb-3 font-display">연애 및 관계</h3>
-            <p className="text-slate-400 leading-relaxed">{result.analysis.love_life}</p>
+            {/* FIX: Property 'analysis' does not exist on type 'AstrologyResult'. Access via 'premium_analysis'. */}
+            <p className="text-slate-400 leading-relaxed">{result.premium_analysis.love_life}</p>
         </div>
         <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
             <h3 className="text-xl font-bold text-white mb-3 font-display">직업 및 경력</h3>
-            <p className="text-slate-400 leading-relaxed">{result.analysis.work_career}</p>
+            {/* FIX: Property 'analysis' does not exist on type 'AstrologyResult'. Access via 'premium_analysis'. */}
+            <p className="text-slate-400 leading-relaxed">{result.premium_analysis.work_career}</p>
         </div>
       </motion.div>
   );
@@ -59,8 +62,9 @@ export const AstrologyResultDisplay: React.FC<AstrologyResultDisplayProps> = ({ 
 
       <motion.div variants={itemVariants} className="space-y-6 mt-8">
         <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
-            <h3 className="text-xl font-bold text-white mb-3 font-display">성격 분석 (무료)</h3>
-            <TypingResult text={result.analysis.personality} className="text-slate-400 leading-relaxed" />
+            <h3 className="text-xl font-bold text-white mb-3 font-display">핵심 성격 요약 (무료)</h3>
+            {/* FIX: Property 'analysis' does not exist on type 'AstrologyResult'. Use 'summary' for free content. */}
+            <TypingResult text={result.summary} className="text-slate-400 leading-relaxed" />
         </div>
       </motion.div>
       

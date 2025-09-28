@@ -23,7 +23,8 @@ const containerVariants: Variants = { hidden: { opacity: 0 }, visible: { opacity
 const itemVariants: Variants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } } };
 
 export const SajuResultDisplay: React.FC<SajuResultDisplayProps> = ({ result, onReset, onBack, onSave, isSaved, isSavedView, onNavigate, email }) => {
-  const shareText = `AI 사주 분석 결과, 저의 일간은 ${result.day_master} 입니다.\n\n[종합 분석]\n${result.overall_analysis}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
+  // FIX: Property 'overall_analysis' does not exist on type 'SajuResult'. Use 'daily_fortune_summary'.
+  const shareText = `AI 사주 분석 결과, 저의 일간은 ${result.day_master} 입니다.\n\n[오늘의 운세 요약]\n${result.daily_fortune_summary}\n\n결과가 궁금하다면 AI 운세 시리즈를 방문해보세요!`;
   const featureName = "AI 사주 분석";
   
   const PremiumContent = () => (
@@ -31,11 +32,13 @@ export const SajuResultDisplay: React.FC<SajuResultDisplayProps> = ({ result, on
         <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display text-center">사주 심층 분석 (프리미엄)</h2>
         <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
             <h3 className="text-xl font-bold text-white mb-3 font-display">오행의 균형</h3>
-            <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{result.elemental_analysis}</p>
+            {/* FIX: Property 'elemental_analysis' does not exist on type 'SajuResult'. Use 'premium_analysis.elemental_balance'. */}
+            <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{result.premium_analysis.elemental_balance}</p>
         </div>
         <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
             <h3 className="text-xl font-bold text-white mb-3 font-display">삶의 조언</h3>
-            <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{result.life_advice}</p>
+            {/* FIX: Property 'life_advice' does not exist on type 'SajuResult'. Access via 'premium_analysis'. */}
+            <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{result.premium_analysis.life_advice}</p>
         </div>
       </motion.div>
   );
@@ -66,8 +69,9 @@ export const SajuResultDisplay: React.FC<SajuResultDisplayProps> = ({ result, on
 
       <motion.div variants={itemVariants} className="space-y-6 mt-8">
         <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
-            <h3 className="text-xl font-bold text-white mb-3 font-display">종합 분석 (무료)</h3>
-            <TypingResult text={result.overall_analysis} className="text-slate-400 leading-relaxed whitespace-pre-wrap" />
+            <h3 className="text-xl font-bold text-white mb-3 font-display">오늘의 운세 요약 (무료)</h3>
+            {/* FIX: Property 'overall_analysis' does not exist on type 'SajuResult'. Use 'daily_fortune_summary'. */}
+            <TypingResult text={result.daily_fortune_summary} className="text-slate-400 leading-relaxed whitespace-pre-wrap" />
         </div>
       </motion.div>
       

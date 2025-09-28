@@ -1,409 +1,1164 @@
-import { GoogleGenAI, Type, Modality } from "@google/genai";
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import './index.css';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import { motion, Variants } from 'framer-motion';
+import { Header } from './components/Header';
+import { ImageUploader } from './components/ImageUploader';
+import { BirthDateInput } from './components/BirthDateInput';
+import { AnalysisResultLayout } from './components/shared/AnalysisResultLayout';
+import { TypingResult } from './components/TypingResult';
 
-// --- Base64 Cleaner ---
-function cleanBase64(data: string) {
-  if (!data) return '';
-  return data.replace(/^data:image\/[a-zA-Z]+;base64,/, "");
-}
+import { DailyTarotPage } from './components/DailyTarotPage';
+import SavedResultsPage from './components/SavedResultsPage';
+import { AboutPage } from './components/AboutPage';
+import { PrivacyPolicyPage } from './components/PrivacyPolicyPage';
+import { TermsOfServicePage } from './components/TermsOfServicePage';
+import { GuidePage } from './components/GuidePage';
+import { Loader } from './components/Loader';
+import { analyzeFace, analyzePalm, analyzeImpression, analyzeAstrology, analyzeSaju, analyzeTarotReading, analyzeJuyeok, analyzeYukhyo } from './services/geminiService';
+import type { PhysiognomyResult, PalmistryResult, ImpressionAnalysisResult, AstrologyResult, SajuResult, TarotResult, JuyeokResult, YukhyoResult, CardDraw, JuyeokReading, SavedResult, LineType } from './types';
+import { Footer } from './components/Footer';
+import { FaceIcon, PalmIcon, ImpressionIcon, AstrologyIcon, SajuIcon, TarotIcon, JuyeokIcon, YukhyoIcon, BoxIcon, TheSunIcon, StarIcon, LockIcon, HappyFaceIcon, EyeIcon, NoseIcon, MouthIcon, ForeheadIcon, ChinIcon, EarIcon, LifeLineIcon, HeartLineIcon, HeadLineIcon, LineIcon, LightbulbIcon, HomeIcon, RefreshIcon, SaveIcon } from './components/icons';
+import { generateIChingReading, getDailyFortune } from './utils/divinationUtils';
+import { saveResult } from './utils/storage';
+import { TarotReaderPage } from './components/TarotReaderPage';
+import { ChangelogPage } from './components/Changelog';
+import { ImageAndQuestionUploader } from './components/ImageAndQuestionUploader';
+import { PremiumRoute } from './components/shared/PremiumRoute';
+import { FaceStretcherPage } from './components/FaceStretcherPage';
+import { API_BASE_URL } from './utils/apiConfig';
+import { useAnalysis } from './hooks/useAnalysis';
+import { ErrorMessage } from './components/shared/ErrorMessage';
+import { AnalysisInfo } from './components/AnalysisInfo';
+import { ShareButtons } from './components/ShareButtons';
+import { UpgradeCTA } from './components/PremiumPlaceholder';
 
-// --- All schema definitions are now on the server, in Korean ---
 
-const analysisSchema = {
-  type: Type.OBJECT,
-  properties: {
-    overall_impression: {
-      type: Type.STRING,
-      description: "사진 속 인물의 전반적인 관상 총평. 2~3 문장으로 작성합니다. 만약 얼굴 인식이 어렵다면, '얼굴을 인식하기 어렵습니다. 더 선명한 정면 사진을 사용해주세요.' 라고 응답해야 합니다."
-    },
-    features: {
-      type: Type.ARRAY,
-      description: "얼굴의 각 부위별 관상 분석 결과입니다.",
-      items: {
-        type: Type.OBJECT,
-        properties: {
-          feature: { type: Type.STRING, description: "분석하는 얼굴 부위의 이름 (예: 눈, 코, 입, 이마, 턱, 귀)." },
-          shape: { type: Type.STRING, description: "해당 부위의 구체적인 모양이나 특징에 대한 묘사." },
-          analysis: { type: Type.STRING, description: "해당 부위의 특징이 관상학적으로 무엇을 의미하는지에 대한 상세한 설명." }
-        },
-        required: ["feature", "shape", "analysis"]
+type Page = 'home' | 'face-reader' | 'palm-reader' | 'impression-analyzer' | 'astrology-reader' | 'saju-analyzer' | 'tarot-reader' | 'juyeok-reader' | 'yukhyo-analyzer' | 'daily-tarot' | 'saved-results' | 'about' | 'privacy' | 'terms' | 'guide' | 'changelog' | 'checkout' | 'face-stretcher';
+
+// --- HomePage Component ---
+const HomePage: React.FC<{ onNavigate: (page: Page) => void; }> = ({ onNavigate }) => {
+  const dailyFortuneData = getDailyFortune();
+  const dailyFortune = dailyFortuneData.text;
+  const fortuneImageUrl = dailyFortuneData.imageUrl;
+
+  const stars = useMemo(() => {
+    return Array.from({ length: 20 }).map((_, i) => ({
+      id: i,
+      top: `${Math.random() * 100}%`,
+      left: `${Math.random() * 100}%`,
+      delay: Math.random() * 4,
+      duration: Math.random() * 2 + 2,
+      scale: Math.random() * 0.8 + 0.5,
+    }));
+  }, []);
+
+  useEffect(() => {
+    // Check for payment success message in URL hash
+    const hashParams = new URLSearchParams(window.location.hash.split('?')[1]);
+    if (hashParams.get("payment") === "success") {
+        alert("결제가 성공적으로 완료되었습니다! 30일간 프리미엄 기능을 이용하실 수 있습니다.");
+        // Clean up the URL
+        const newUrl = window.location.pathname + window.location.hash.split('?')[0];
+        window.history.replaceState({}, document.title, newUrl);
+    }
+  }, []);
+
+  useEffect(() => {
+    const originalTitle = document.title;
+    const metaDescriptionTag = document.querySelector('meta[name="description"]');
+    const originalDescription = metaDescriptionTag ? metaDescriptionTag.getAttribute('content') : '';
+
+    if (dailyFortune) {
+      document.title = `오늘의 운세 - ${dailyFortune}`;
+      if (metaDescriptionTag) {
+        const truncatedFortune = dailyFortune.length > 40 ? `${dailyFortune.substring(0, 40)}...` : dailyFortune;
+        metaDescriptionTag.setAttribute('content', `${truncatedFortune} 매일 바뀌는 오늘의 운세와 AI 운세 시리즈에서 당신의 하루를 확인하세요.`);
       }
     }
-  },
-  required: ["overall_impression", "features"]
-};
 
-const palmAnalysisSchema = {
-  type: Type.OBJECT,
-  properties: {
-    overall_analysis: {
-      type: Type.STRING,
-      description: "사진 속 손금에 대한 전반적인 총평. 2~3 문장으로 작성합니다. 만약 손금 인식이 어렵다면, '손금을 인식하기 어렵습니다. 손바닥 전체가 선명하게 나온 사진을 사용해주세요.' 라고 응답해야 합니다."
-    },
-    lines: {
-      type: Type.ARRAY,
-      description: "주요 손금(생명선, 감정선, 두뇌선)에 대한 분석 결과입니다.",
-      items: {
-        type: Type.OBJECT,
-        properties: {
-          line_name: { type: Type.STRING, description: "분석하는 손금의 이름 (예: 생명선, 감정선, 두뇌선)." },
-          analysis: { type: Type.STRING, description: "해당 손금이 무엇을 의미하는지에 대한 상세한 설명. 강점과 함께 주의할 점이나 개선할 점을 균형 있게 포함합니다." }
-        },
-        required: ["line_name", "analysis"]
+    return () => {
+      document.title = originalTitle;
+      if (metaDescriptionTag && originalDescription) {
+        metaDescriptionTag.setAttribute('content', originalDescription);
       }
-    },
-    credibility_score: {
-        type: Type.INTEGER,
-        description: "이 손금 분석에 대한 신뢰도 점수 (70~95 사이의 정수). 분석이 어려울 경우 70점으로 설정합니다."
-    },
-    credibility_comment: {
-        type: Type.STRING,
-        description: "손금은 정해진 미래가 아닌 가능성을 보여주는 지표라는 점, 그리고 사진 품질에 따라 정확도가 달라질 수 있다는 점을 설명하는 짧은 코멘트."
+    };
+  }, [dailyFortune]);
+
+  return (
+    <main className="flex-grow flex flex-col items-center justify-center text-center py-10">
+      <header className="text-center py-6 mb-10">
+        <h1 className="text-4xl sm:text-5xl font-bold font-display tracking-wider text-white" translate="no">
+          AI 운세 시리즈
+        </h1>
+        <p className="mt-3 text-lg text-slate-400">
+          AI가 당신의 미래를 다각도로 분석해 드립니다.
+        </p>
+      </header>
+
+      {/* Daily Fortune Card */}
+      <div className="w-full max-w-7xl mb-6">
+        <div 
+          className="relative border border-cyan-700/50 rounded-2xl p-6 flex flex-col items-center gap-4 shadow-lg overflow-hidden min-h-[160px] justify-center bg-slate-800 transition-all duration-500"
+        >
+          <div 
+            className="absolute inset-0 bg-cover bg-center transition-opacity duration-1000 animate-fade-in-slow"
+            style={{ backgroundImage: `url(${fortuneImageUrl})` }}
+          ></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent"></div>
+          
+          {/* Twinkling Stars Background */}
+          <div className="absolute inset-0 pointer-events-none z-0">
+            {stars.map((star) => (
+              <motion.div
+                key={star.id}
+                className="absolute text-yellow-400/80"
+                initial={{ opacity: 0, scale: star.scale }}
+                animate={{ opacity: [0, 1, 0] }}
+                transition={{
+                  duration: star.duration,
+                  repeat: Infinity,
+                  delay: star.delay,
+                  ease: "easeInOut",
+                }}
+                style={{
+                  top: star.top,
+                  left: star.left,
+                }}
+              >
+                <StarIcon className="w-2 h-2" />
+              </motion.div>
+            ))}
+          </div>
+          
+          <div className="relative z-10 flex flex-col items-center gap-3">
+              <h2 className="text-2xl font-bold text-white flex items-center gap-3 text-shadow">
+              <TheSunIcon className="w-8 h-8 text-yellow-300" />
+              오늘의 운세
+            </h2>
+            <p className="text-slate-200 text-lg text-shadow">{dailyFortune}</p>
+          </div>
+        </div>
+      </div>
+
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-7xl">
+        {/* Daily Tarot Card */}
+        <div
+          onClick={() => onNavigate('daily-tarot')}
+          className="bg-[#059669]/80 border border-[#047857] rounded-2xl p-6 flex flex-col items-center gap-4 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:border-[#34D399] cursor-pointer group shadow-lg"
+          role="button"
+          tabIndex={0}
+          aria-label="오늘의 타로 실행하기"
+          onKeyDown={(e) => e.key === 'Enter' && onNavigate('daily-tarot')}
+        >
+          <TarotIcon className="w-16 h-16 text-white transition-transform duration-500 group-hover:rotate-12 group-hover:scale-110" />
+          <h2 className="text-2xl font-bold text-white">오늘의 타로</h2>
+          <p className="text-slate-200">하루에 한 번, 오늘의 AI 타로점을 확인하세요.</p>
+        </div>
+
+        {/* Face Reader Card */}
+        <div
+          onClick={() => onNavigate('face-reader')}
+          className="bg-[#F59E0B]/80 border border-[#D97706] rounded-2xl p-6 flex flex-col items-center gap-4 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:border-[#FBBF24] cursor-pointer group shadow-lg"
+          role="button"
+          tabIndex={0}
+          aria-label="AI 관상가 실행하기"
+          onKeyDown={(e) => e.key === 'Enter' && onNavigate('face-reader')}
+        >
+          <FaceIcon className="w-16 h-16 text-white transition-transform duration-500 group-hover:rotate-12 group-hover:scale-110" />
+          <h2 className="text-2xl font-bold text-white">AI 관상가</h2>
+          <p className="text-slate-200">얼굴 사진으로 당신의 성격과 미래를 분석합니다.</p>
+        </div>
+
+        {/* Palm Reader Card */}
+        <div
+          onClick={() => onNavigate('palm-reader')}
+          className="bg-[#DC2626]/80 border border-[#B91C1C] rounded-2xl p-6 flex flex-col items-center gap-4 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:border-[#F87171] cursor-pointer group shadow-lg"
+          role="button"
+          tabIndex={0}
+          aria-label="AI 손금 분석 실행하기"
+          onKeyDown={(e) => e.key === 'Enter' && onNavigate('palm-reader')}
+        >
+          <PalmIcon className="w-16 h-16 text-white transition-transform duration-500 group-hover:rotate-12 group-hover:scale-110" />
+          <h2 className="text-2xl font-bold text-white">AI 손금 분석</h2>
+          <p className="text-slate-200">손금 사진으로 당신의 운명을 읽어드립니다.</p>
+        </div>
+
+        {/* First Impression Card */}
+        <div
+          onClick={() => onNavigate('impression-analyzer')}
+          className="bg-[#0D9488]/80 border border-[#0F766E] rounded-2xl p-6 flex flex-col items-center gap-4 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:border-[#2DD4BF] cursor-pointer group shadow-lg"
+          role="button"
+          tabIndex={0}
+          aria-label="AI 첫인상 분석 실행하기"
+          onKeyDown={(e) => e.key === 'Enter' && onNavigate('impression-analyzer')}
+        >
+          <ImpressionIcon className="w-16 h-16 text-white transition-transform duration-500 group-hover:rotate-12 group-hover:scale-110" />
+          <h2 className="text-2xl font-bold text-white">AI 첫인상 분석</h2>
+          <p className="text-slate-200">사진 속 당신의 첫인상은 어떨까요? AI가 알려드립니다.</p>
+        </div>
+
+        {/* Astrology Reader Card */}
+        <div
+          onClick={() => onNavigate('astrology-reader')}
+          className="bg-[#4338CA]/80 border border-[#3730A3] rounded-2xl p-6 flex flex-col items-center gap-4 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:border-[#818CF8] cursor-pointer group shadow-lg"
+          role="button"
+          tabIndex={0}
+          aria-label="AI 별자리 운세 실행하기"
+          onKeyDown={(e) => e.key === 'Enter' && onNavigate('astrology-reader')}
+        >
+          <AstrologyIcon className="w-16 h-16 text-white transition-transform duration-500 group-hover:rotate-12 group-hover:scale-110" />
+          <h2 className="text-2xl font-bold text-white">AI 별자리 운세</h2>
+          <p className="text-slate-200">생년월일로 당신의 별자리를 분석하고 운세를 예측합니다.</p>
+        </div>
+
+        {/* Saju Analyzer Card */}
+        <div
+          onClick={() => onNavigate('saju-analyzer')}
+          className="bg-[#2563EB]/80 border border-[#1D4ED8] rounded-2xl p-6 flex flex-col items-center gap-4 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:border-[#60A5FA] cursor-pointer group shadow-lg"
+          role="button"
+          tabIndex={0}
+          aria-label="AI 사주 분석 실행하기"
+          onKeyDown={(e) => e.key === 'Enter' && onNavigate('saju-analyzer')}
+        >
+          <SajuIcon className="w-16 h-16 text-white transition-transform duration-500 group-hover:rotate-12 group-hover:scale-110" />
+          <h2 className="text-2xl font-bold text-white">AI 사주 분석</h2>
+          <p className="text-slate-200">생년월일시로 타고난 운명의 지도를 해석해 드립니다.</p>
+        </div>
+
+        {/* Tarot Reader Card */}
+        <div
+          onClick={() => onNavigate('tarot-reader')}
+          className="bg-[#7E22CE]/80 border border-[#6B21A8] rounded-2xl p-6 flex flex-col items-center gap-4 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:border-[#A78BFA] cursor-pointer group shadow-lg"
+          role="button"
+          tabIndex={0}
+          aria-label="AI 타로 마스터 실행하기"
+          onKeyDown={(e) => e.key === 'Enter' && onNavigate('tarot-reader')}
+        >
+          <TarotIcon className="w-16 h-16 text-white transition-transform duration-500 group-hover:rotate-12 group-hover:scale-110" />
+          <h2 className="text-2xl font-bold text-white">AI 타로 마스터</h2>
+          <p className="text-slate-200">당신의 질문에 AI가 타로 카드로 답해드립니다.</p>
+        </div>
+
+        {/* Juyeok Reader Card */}
+        <div
+          onClick={() => onNavigate('juyeok-reader')}
+          className="bg-[#9333EA]/80 border border-[#7E22CE] rounded-2xl p-6 flex flex-col items-center gap-4 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:border-[#C084FC] cursor-pointer group shadow-lg"
+          role="button"
+          tabIndex={0}
+          aria-label="AI 주역 전문가 실행하기"
+          onKeyDown={(e) => e.key === 'Enter' && onNavigate('juyeok-reader')}
+        >
+          <JuyeokIcon className="w-16 h-16 text-white transition-transform duration-500 group-hover:rotate-12 group-hover:scale-110" />
+          <h2 className="text-2xl font-bold text-white">AI 주역 전문가</h2>
+          <p className="text-slate-200">주역 64괘로 당신의 고민에 대한 통찰을 제공합니다.</p>
+        </div>
+
+        {/* Yukhyo Analyzer Card */}
+        <div
+          onClick={() => onNavigate('yukhyo-analyzer')}
+          className="bg-[#0EA5E9]/80 border border-[#0284C7] rounded-2xl p-6 flex flex-col items-center gap-4 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:border-[#38BDF8] cursor-pointer group shadow-lg"
+          role="button"
+          tabIndex={0}
+          aria-label="AI 육효 분석가 실행하기"
+          onKeyDown={(e) => e.key === 'Enter' && onNavigate('yukhyo-analyzer')}
+        >
+          <YukhyoIcon className="w-16 h-16 text-white transition-transform duration-500 group-hover:rotate-12 group-hover:scale-110" />
+          <h2 className="text-2xl font-bold text-white">AI 육효 분석가</h2>
+          <p className="text-slate-200">질문 시점의 기운으로 구체적인 길흉을 예측합니다.</p>
+        </div>
+        
+        {/* Face Stretcher Card */}
+        <div
+          onClick={() => onNavigate('face-stretcher')}
+          className="bg-[#EC4899]/80 border border-[#DB2777] rounded-2xl p-6 flex flex-col items-center gap-4 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:border-[#F472B6] cursor-pointer group shadow-lg"
+          role="button"
+          tabIndex={0}
+          aria-label="AI 얼굴 늘리기 실행하기"
+          onKeyDown={(e) => e.key === 'Enter' && onNavigate('face-stretcher')}
+        >
+          <HappyFaceIcon className="w-16 h-16 text-white transition-transform duration-500 group-hover:rotate-12 group-hover:scale-110" />
+          <h2 className="text-2xl font-bold text-white">AI 얼굴 늘리기</h2>
+          <p className="text-slate-200">AI가 당신의 얼굴을 재미있게 변형시켜 드립니다.</p>
+        </div>
+        
+        {/* Saved Results Card (Premium) */}
+        <div
+          onClick={() => onNavigate('saved-results')}
+          className="relative bg-slate-800/80 border border-[#475569] rounded-2xl p-6 flex flex-col items-center gap-4 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:border-[#94A3B8] hover:bg-slate-700/60 cursor-pointer group shadow-lg"
+          role="button"
+          tabIndex={0}
+          aria-label="나의 운세함 보기 (프리미엄 기능)"
+          onKeyDown={(e) => e.key === 'Enter' && onNavigate('saved-results')}
+        >
+          <div className="absolute top-3 right-3 bg-cyan-500 text-slate-900 text-xs font-bold px-2 py-1 rounded-full shadow-md z-10">
+            PREMIUM
+          </div>
+          <div className="opacity-70 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center gap-4 text-center">
+            <BoxIcon className="w-16 h-16 text-white transition-transform duration-500 group-hover:rotate-12 group-hover:scale-110" />
+            <div className="flex items-center gap-2">
+              <LockIcon className="w-6 h-6 text-cyan-400" />
+              <h2 className="text-2xl font-bold text-white">나의 운세함</h2>
+            </div>
+            <p className="text-slate-200">저장된 분석 결과를 다시 확인합니다.</p>
+          </div>
+        </div>
+      </div>
+       <style>{`
+        .text-shadow {
+          text-shadow: 0 2px 4px rgba(0, 0, 0, 0.7);
+        }
+        @keyframes fade-in-slow {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        .animate-fade-in-slow {
+          animation: fade-in-slow 1s ease-out forwards;
+        }
+      `}</style>
+    </main>
+  );
+};
+
+// --- CheckoutPage Component ---
+const CheckoutPage: React.FC<{ onBack: () => void; email: string | null; }> = ({ onBack, email }) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [featureName, setFeatureName] = useState<string | null>(null);
+
+  useEffect(() => {
+    const hashParams = new URLSearchParams(window.location.hash.split('?')[1]);
+    const feature = hashParams.get('feature');
+    if (feature) {
+        setFeatureName(decodeURIComponent(feature));
     }
-  },
-  required: ["overall_analysis", "lines", "credibility_score", "credibility_comment"]
-};
+  }, []);
 
-const impressionAnalysisSchema = {
-    type: Type.OBJECT,
-    properties: {
-        keywords: {
-            type: Type.ARRAY,
-            description: "사진 속 인물의 첫인상을 가장 잘 나타내는 핵심 키워드 3-4개.",
-            items: { type: Type.STRING }
-        },
-        detailed_analysis: {
-            type: Type.STRING,
-            description: "사진 속 인물의 표정, 분위기, 스타일 등을 종합하여 다른 사람에게 어떤 첫인상을 주는지 3-4문장으로 상세하게 분석합니다. 긍정적인 측면을 중심으로 서술합니다. 만약 인물 인식이 어렵다면, '인물 인식이 어렵습니다. 더 선명한 사진을 사용해주세요.' 라고 응답해야 합니다."
-        },
-        improvement_tip: {
-            type: Type.STRING,
-            description: "더 긍정적이고 매력적인 첫인상을 주기 위한 구체적이고 실용적인 팁 한 가지를 제안합니다."
-        }
-    },
-    required: ["keywords", "detailed_analysis", "improvement_tip"]
-};
-
-const astrologyAnalysisSchema = {
-    type: Type.OBJECT,
-    properties: {
-        zodiac_sign: { type: Type.STRING, description: "생년월일에 해당하는 서양 별자리 이름 (예: 양자리, 황소자리)." },
-        ruling_planet: { type: Type.STRING, description: "해당 별자리의 지배 행성 (예: 화성, 금성)." },
-        element: { type: Type.STRING, description: "해당 별자리의 4원소 (불, 흙, 공기, 물)." },
-        analysis: {
-            type: Type.OBJECT,
-            properties: {
-                personality: { type: Type.STRING, description: "별자리에 따른 성격적 특성, 장점, 단점에 대한 상세 분석." },
-                love_life: { type: Type.STRING, description: "연애 스타일 및 관계에서의 특징에 대한 분석." },
-                work_career: { type: Type.STRING, description: "직업적 강점 및 추천 진로에 대한 분석." }
-            },
-            required: ["personality", "love_life", "work_career"]
-        }
-    },
-    required: ["zodiac_sign", "ruling_planet", "element", "analysis"]
-};
-
-const sajuAnalysisSchema = {
-    type: Type.OBJECT,
-    properties: {
-        four_pillars: {
-            type: Type.OBJECT,
-            properties: {
-                year_pillar: { type: Type.STRING, description: "태어난 해를 나타내는 연주 (예: 갑자(甲子)년)." },
-                month_pillar: { type: Type.STRING, description: "태어난 월을 나타내는 월주 (예: 병인(丙寅)월)." },
-                day_pillar: { type: Type.STRING, description: "태어난 일을 나타내는 일주 (예: 정묘(丁卯)일)." },
-                hour_pillar: { type: Type.STRING, description: "태어난 시간을 나타내는 시주 (예: 무진(戊辰)시). 시간이 없으면 '알 수 없음'으로 표기." }
-            },
-            required: ["year_pillar", "month_pillar", "day_pillar", "hour_pillar"]
-        },
-        day_master: { type: Type.STRING, description: "사주의 주체이자 본질을 나타내는 일간 (日干) (예: 갑(甲)목)." },
-        overall_analysis: { type: Type.STRING, description: "사주 전체의 구조와 기운을 바탕으로 한 종합적인 분석 및 총평." },
-        elemental_analysis: { type: Type.STRING, description: "사주에 나타난 오행(목, 화, 토, 금, 수)의 분포와 균형에 대한 분석." },
-        life_advice: { type: Type.STRING, description: "타고난 사주를 바탕으로 삶을 더 나은 방향으로 이끌기 위한 조언." }
-    },
-    required: ["four_pillars", "day_master", "overall_analysis", "elemental_analysis", "life_advice"]
-};
-
-const tarotAnalysisSchema = {
-    type: Type.OBJECT,
-    properties: {
-        overall_reading: {
-            type: Type.STRING,
-            description: "뽑힌 카드들을 종합적으로 해석하여 사용자의 질문에 대한 총체적인 답변과 조언을 제공합니다."
-        },
-        cards: {
-            type: Type.ARRAY,
-            description: "뽑힌 카드 각각에 대한 개별 해석입니다.",
-            items: {
-                type: Type.OBJECT,
-                properties: {
-                    card_name: { type: Type.STRING, description: "해석하는 카드의 이름 (예: The Fool, Strength)." },
-                    orientation: { type: Type.STRING, description: "카드의 방향 ('정방향' 또는 '역방향')." },
-                    meaning: { type: Type.STRING, description: "해당 카드가 현재 상황에서 의미하는 바에 대한 상세한 설명." }
-                },
-                required: ["card_name", "orientation", "meaning"]
-            }
-        }
-    },
-    required: ["overall_reading", "cards"]
-};
-
-const dailyTarotAnalysisSchema = {
-    type: Type.OBJECT,
-    properties: {
-        interpretation: {
-            type: Type.STRING,
-            description: "오늘 하루를 위한 짧고 긍정적인 조언을 한 문장으로 제공합니다."
-        }
-    },
-    required: ["interpretation"]
-};
-
-const juyeokAnalysisSchema = {
-    type: Type.OBJECT,
-    properties: {
-        present_hexagram_name: { type: Type.STRING, description: "현재 상황을 나타내는 본괘의 이름 (예: 건위천(乾爲天))." },
-        changing_hexagram_name: { type: Type.STRING, nullable: true, description: "미래의 변화를 나타내는 변괘의 이름. 변효가 없으면 null." },
-        interpretation: { type: Type.STRING, description: "사용자의 질문에 대해 본괘와 변괘가 의미하는 바를 종합적으로 해석한 내용." },
-        changing_lines_interpretation: { type: Type.STRING, nullable: true, description: "변화가 일어나는 효(변효)가 구체적으로 어떤 의미를 가지는지에 대한 상세한 설명. 변효가 없으면 null." }
-    },
-    required: ["present_hexagram_name", "changing_hexagram_name", "interpretation", "changing_lines_interpretation"]
-};
-
-const yukhyoAnalysisSchema = {
-    type: Type.OBJECT,
-    properties: {
-        ganji_date: { type: Type.STRING, description: "점을 친 날의 간지 (예: 갑자(甲子)년 병인(丙寅)월 정묘(丁卯)일)." },
-        hexagram_name: { type: Type.STRING, description: "뽑힌 괘의 이름." },
-        yongsin: { type: Type.STRING, description: "질문의 핵심이 되는 용신(用神)과 그 상태(왕상휴수). 예: '재물(妻財)이 왕(旺)하여...'" },
-        lines: {
-            type: Type.ARRAY,
-            items: {
-                type: Type.OBJECT,
-                properties: {
-                    line_number: { type: Type.INTEGER, description: "효의 위치 (1~6)." },
-                    six_relatives: { type: Type.STRING, description: "효에 붙는 육친 (부모, 형제, 자손, 처재, 관귀)." },
-                    earthly_branch: { type: Type.STRING, description: "효에 붙는 12지지 (자, 축, 인, 묘...)." },
-                    marker: { type: Type.STRING, nullable: true, description: "세(世) 또는 응(應) 표시, 해당 없으면 null." }
-                },
-                required: ["line_number", "six_relatives", "earthly_branch", "marker"]
-            }
-        },
-        overall_interpretation: { type: Type.STRING, description: "용신을 중심으로 괘 전체를 해석하여, 사용자의 질문에 대한 구체적인 길흉과 조언을 제공합니다." }
-    },
-    required: ["ganji_date", "hexagram_name", "yongsin", "lines", "overall_interpretation"]
-};
-
-
-// --- Serverless Function Handler ---
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-    // --- CORS 헤더 ---
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-
-    if (req.method === "OPTIONS") {
-      return res.status(204).end();
+  const handleCheckout = async () => {
+    if (!email) {
+      setError("프리미엄 결제를 위해 이메일을 먼저 입력해주세요.");
+      return;
     }
-
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method Not Allowed' });
-    }
-    
-    console.log("📌 [API/analyze] Request received:", {
-      type: req.body?.type,
-      imageLength: req.body?.payload?.data?.length ?? 'N/A',
-    });
-
+    setIsLoading(true);
+    setError(null);
     try {
-        const { type, payload } = req.body;
-        
-        const apiKey = process.env.API_KEY;
-        if (!apiKey) {
-            console.error("❌ API_KEY is not set");
-            return res.status(500).json({ error: 'Server configuration error.' });
-        }
-        const ai = new GoogleGenAI({ apiKey });
-
-        // --- Base64 cleanup ---
-        if (payload?.data) {
-          payload.data = cleanBase64(payload.data);
-        }
-        if (payload?.cards) {
-          payload.cards = payload.cards.map((card: any) => {
-            if (card.imageData) {
-              card.imageData = cleanBase64(card.imageData);
-            }
-            return card;
-          });
-        }
-        
-        // --- Face Stretch (special case with its own error handling) ---
-        if (type === 'face-stretch') {
-            try {
-                if (!payload?.data) return res.status(400).json({ error: "Image data not sent." });
-                const prompt = `사진 속 인물의 얼굴을 세로로 길게, 위아래로 최대한 늘려서 과장되고 재미있는 이미지로 만들어줘. 그리고 이 변형된 얼굴에 대한 재미있는 한 줄 평을 함께 알려줘.`;
-                const response = await ai.models.generateContent({
-                    model: 'gemini-2.5-flash-image-preview',
-                    contents: { parts: [{ text: prompt }, { inlineData: { mimeType: payload.mimeType, data: payload.data } }] },
-                    config: { responseModalities: [Modality.IMAGE, Modality.TEXT] },
-                });
-                let stretchedImageBase64 = '', comment = '';
-                if (response.candidates?.[0]?.content?.parts) {
-                    for (const part of response.candidates[0].content.parts) {
-                        if (part.text) comment = part.text;
-                        else if (part.inlineData) stretchedImageBase64 = part.inlineData.data;
-                    }
-                }
-                if (!stretchedImageBase64 || !comment) throw new Error("AI failed to generate image or comment.");
-                
-                console.log("✅ [API/analyze] Face-stretch successful.");
-                return res.status(200).json({ stretchedImageBase64, comment });
-            } catch (error: any) {
-                // Graceful fallback specifically for face-stretcher on rate limit error
-                if (error.name === 'ApiError' && error.status === 429) {
-                    console.warn("⚠️ face-stretch fallback activated due to API rate limit.");
-                    return res.status(200).json({
-                        stretchedImageBase64: "",
-                        comment: "현재 요청이 너무 많아 AI가 잠시 쉬고 있어요. 잠시 후 다시 시도해주세요."
-                    });
-                }
-                // For other errors in face-stretch, re-throw to be caught by the main handler
-                throw error;
-            }
-        }
-
-
-        // --- Main Analysis Logic ---
-        let contents: any;
-        let schema: any;
-
-        const jsonOutputRuleKo = `응답은 반드시 제공된 JSON 스키마를 엄격히 준수하는 JSON 객체여야 합니다. JSON 객체 자체 외에 어떠한 텍스트, 설명, 또는 \`\`\`json 같은 마크다운 서식도 추가해서는 안 됩니다. JSON 스키마의 모든 필드는 의미 있고, 관련성 있으며, 비어 있지 않은 내용으로 채워져야 합니다. 정보가 불확실할 경우, 지식을 바탕으로 가장 가능성 있는 해석을 제공하세요.`;
-
-        switch (type) {
-            case 'face':
-                schema = analysisSchema;
-                contents = {
-                    parts: [
-                        { text: `당신은 AI 관상 전문가입니다. 제공된 이미지 속 인물의 얼굴 특징을 관상학적으로 상세히 분석하세요. ${jsonOutputRuleKo}` },
-                        { inlineData: { mimeType: payload.mimeType, data: payload.data } },
-                    ],
-                };
-                break;
-            case 'palm':
-                schema = palmAnalysisSchema;
-                contents = {
-                    parts: [
-                        { text: `당신은 AI 손금 전문가입니다. 제공된 손금 이미지에서 주요 3대선(생명선, 감정선, 두뇌선)을 분석하세요. 신뢰도 점수는 70에서 95 사이의 정수여야 합니다. ${jsonOutputRuleKo}` },
-                        { inlineData: { mimeType: payload.mimeType, data: payload.data } },
-                    ],
-                };
-                break;
-            case 'impression':
-                schema = impressionAnalysisSchema;
-                contents = {
-                    parts: [
-                        { text: `당신은 첫인상 분석 전문가입니다. 제공된 이미지 속 인물의 첫인상에 대해 긍정적인 측면을 중심으로 키워드 3~4개, 상세 분석, 개선을 위한 팁 한 가지를 제공하세요. ${jsonOutputRuleKo}` },
-                        { inlineData: { mimeType: payload.mimeType, data: payload.data } },
-                    ],
-                };
-                break;
-            case 'tarot': {
-                schema = tarotAnalysisSchema;
-                const introPrompt = `당신은 지혜로운 타로 마스터입니다. 사용자의 질문은 다음과 같습니다: "${payload.question}". 뽑힌 카드와 함께 제공된 사용자 이미지를 영감의 원천으로 삼아, 종합적인 리딩과 각 카드에 대한 상세한 해석을 제공하세요. ${jsonOutputRuleKo}`;
-                const contentParts: any[] = [{ text: introPrompt }];
-                payload.cards.forEach((card: any) => {
-                    let cardDescription = `카드: ${card.name} (${card.orientation})`;
-                    if (card.imageData) {
-                        cardDescription += " - 해석에 영감을 줄 사용자 이미지 포함.";
-                    }
-                    contentParts.push({ text: cardDescription });
-                    if (card.imageData && card.mimeType) {
-                        contentParts.push({ inlineData: { mimeType: card.mimeType, data: card.imageData } });
-                    }
-                });
-                contents = { parts: contentParts };
-                break;
-            }
-            case 'astrology':
-                schema = astrologyAnalysisSchema;
-                contents = `당신은 점성술 전문가입니다. 생년월일 ${payload.birthDate}을(를) 바탕으로 상세한 별자리 운세를 생성하세요. 별자리, 수호성, 원소를 포함하여 성격, 연애, 직업에 대한 상세한 분석을 제공해야 합니다. ${jsonOutputRuleKo}`;
-                break;
-            case 'saju':
-                schema = sajuAnalysisSchema;
-                contents = `당신은 사주 명리학 전문가입니다. 생년월일시 ${payload.birthDate} ${payload.birthTime}을(를) 바탕으로 사주 분석을 생성하세요. 사주팔자, 일간, 종합 분석, 오행 분석, 삶의 조언을 포함해야 합니다. ${jsonOutputRuleKo}`;
-                break;
-            case 'daily-tarot':
-                schema = dailyTarotAnalysisSchema;
-                contents = `당신은 지혜로운 타로 마스터입니다. 오늘의 카드는 '${payload.card.name}' (${payload.card.orientation}) 입니다. 오늘 하루를 위한 짧고 긍정적인 조언을 한 문장으로 제공하세요. ${jsonOutputRuleKo}`;
-                break;
-            case 'juyeok':
-                schema = juyeokAnalysisSchema;
-                contents = `당신은 주역 전문가입니다. 사용자의 질문은 "${payload.question}" 입니다. 점괘 결과 현재 괘는 '${payload.reading.presentHexagram.name}', 미래 괘는 '${payload.reading.changingHexagram?.name || '변화 없음'}' 이며, 변효는 ${payload.reading.changingLines.join(', ') || '없음'} 입니다. 이를 바탕으로 종합적인 해석을 제공하세요. 변효가 없을 경우 'changing_lines_interpretation' 필드는 반드시 null이어야 합니다. ${jsonOutputRuleKo}`;
-                break;
-            case 'yukhyo':
-                schema = yukhyoAnalysisSchema;
-                contents = `당신은 육효 전문가입니다. 오늘 날짜를 기준으로 "${payload.question}"이라는 질문에 대한 육효점을 치세요. 괘, 용신, 각 효를 분석하여 구체적인 예측과 조언을 제공해야 합니다. ${jsonOutputRuleKo}`;
-                break;
-            default:
-                return res.status(400).json({ error: 'Invalid analysis type' });
-        }
-        
-        const model = "gemini-2.5-flash";
-        
-        console.log(`📌 [API/analyze] Requesting analysis for type: ${type}. Model: ${model}.`);
-
-        // --- Gemini API Call ---
-        const response = await ai.models.generateContent({
-            model,
-            contents,
-            config: {
-                responseMimeType: "application/json",
-                responseSchema: schema,
-            }
-        });
-        
-        let jsonText = response.text.trim();
-        
-        // Clean up potential markdown code fences from the response
-        if (jsonText.startsWith("```json")) {
-            jsonText = jsonText.substring(7, jsonText.length - 3).trim();
-        } else if (jsonText.startsWith("```")) {
-             jsonText = jsonText.substring(3, jsonText.length - 3).trim();
-        }
-        
-        let result: any;
-        try {
-            result = JSON.parse(jsonText);
-        } catch (e) {
-            console.error("❌ JSON parse failed. Raw response:", jsonText);
-            throw new Error("AI response was not valid JSON.");
-        }
-        
-        console.log("✅ [API/analyze] Gemini response (parsed successfully)");
-
-        res.status(200).json(result);
-
-    } catch (error: any) {
-        const type = req.body?.type || 'unknown';
-        console.error("❌ [API/analyze] API error occurred in main handler");
-        console.error(`Analysis Type: ${type}`);
-        console.error(`Timestamp: ${new Date().toISOString()}`);
-        console.error("Error Name:", error.name);
-        console.error("Error Message:", error.message);
-        if (error.cause) console.error("Error Cause:", error.cause);
-        console.error("Full Error Object:", JSON.stringify(error, null, 2));
-        
-        if (error.name === 'ApiError' && error.status === 429) {
-            return res.status(429).json({
-                error: '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.',
-                details: error.message || 'API rate limit exceeded.'
-            });
-        }
-
-        res.status(500).json({
-          error: 'Server internal error occurred.', 
-          details: error.message || "Unknown error" 
-        });
+      const response = await fetch(`${API_BASE_URL}/api/create-checkout-session`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || '결제 세션 생성에 실패했습니다.');
+      }
+      window.location.href = data.url;
+    } catch (err: any) {
+      if (err.message && err.message.includes('Stripe Price ID is not configured')) {
+        setError('결제 설정이 완료되지 않았습니다. 관리자에게 문의하세요.');
+      } else {
+        setError(err.message);
+      }
+      setIsLoading(false);
     }
-}
+  };
+
+  return (
+    <>
+      <Header
+        icon={<LockIcon className="w-10 h-10 text-cyan-400" />}
+        title={featureName ? `프리미엄 - ${featureName}` : "프리미엄 전용 기능"}
+        description={featureName ? `'${featureName}'의 모든 상세 분석을 이용하려면 플랜을 업그레이드하세요.` : "더욱 상세한 분석을 원하시면 프리미엄 플랜을 이용해보세요."}
+        onBack={onBack}
+      />
+      <main className="flex-grow flex flex-col items-center justify-center text-center py-10">
+        <div className="w-full max-w-md flex flex-col items-center gap-6 p-8 bg-slate-800/50 rounded-2xl shadow-lg border border-slate-700">
+          <h2 className="text-2xl font-bold text-white">프리미엄 플랜으로 업그레이드</h2>
+          <p className="text-slate-400">
+            모든 상세 분석 리포트, 광고 제거, 분석 결과 무제한 저장 등 특별한 혜택을 누려보세요.
+          </p>
+          <button
+            onClick={handleCheckout}
+            disabled={isLoading}
+            className="w-full py-3 px-6 bg-cyan-500 text-slate-900 font-bold text-lg rounded-lg shadow-md transition-all duration-300 hover:bg-cyan-400 hover:shadow-cyan-400/30 disabled:opacity-50 disabled:cursor-wait"
+          >
+            {isLoading ? '세션 생성 중...' : '₩990원으로 시작하기'}
+          </button>
+           <ErrorMessage message={error} />
+        </div>
+      </main>
+    </>
+  );
+};
+
+
+// --- FaceReaderPage Component ---
+const FaceReaderPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) => void; email: string | null; }> = ({ onBack, onNavigate, email }) => {
+    const [imageFile, setImageFile] = useState<File | null>(null);
+    const [imageUrl, setImageUrl] = useState<string | null>(null);
+    const [isSaved, setIsSaved] = useState(false);
+    const { result, isLoading, error, runAnalysis, reset } = useAnalysis(analyzeFace);
+
+    const handleImageSelect = (file: File) => {
+        setImageFile(file);
+        setImageUrl(URL.createObjectURL(file));
+        reset();
+        setIsSaved(false);
+    };
+
+    const handleAnalyze = useCallback(() => {
+        if (imageFile) {
+            runAnalysis(imageFile);
+        }
+    }, [imageFile, runAnalysis]);
+    
+    const handleSave = useCallback(() => {
+        if (!result) return;
+        saveResult({
+            id: new Date().toISOString(),
+            type: 'face-reader',
+            typeName: 'AI 관상가',
+            date: new Date().toISOString(),
+            result,
+        });
+        setIsSaved(true);
+        setTimeout(() => setIsSaved(false), 2000);
+    }, [result]);
+
+    const handleReset = useCallback(() => {
+        setImageFile(null);
+        setImageUrl(null);
+        reset();
+        setIsSaved(false);
+    }, [reset]);
+
+    // --- Specific rendering logic ---
+    const featureIcons: { [key: string]: React.ReactNode } = {
+        '눈': <EyeIcon className="w-8 h-8 text-cyan-400" />, '코': <NoseIcon className="w-8 h-8 text-cyan-400" />,
+        '입': <MouthIcon className="w-8 h-8 text-cyan-400" />, '이마': <ForeheadIcon className="w-8 h-8 text-cyan-400" />,
+        '턱': <ChinIcon className="w-8 h-8 text-cyan-400" />, '귀': <EarIcon className="w-8 h-8 text-cyan-400" />,
+    };
+    const getFeatureIcon = (featureName: string) => Object.keys(featureIcons).find(key => featureName.includes(key)) ? featureIcons[Object.keys(featureIcons).find(key => featureName.includes(key))!] : null;
+    
+    const itemVariants: Variants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } } };
+
+    return (
+        <>
+            <Header
+                icon={<FaceIcon className="w-10 h-10 text-cyan-400" />}
+                title="AI 관상가"
+                description="AI가 당신의 얼굴을 분석하여 미래를 읽어드립니다."
+                onBack={onBack}
+            />
+            <main className="flex-grow flex flex-col items-center justify-center text-center py-10">
+                {isLoading ? ( <Loader type="face" /> )
+                : result ? (
+                    <AnalysisResultLayout
+                        onBack={onBack}
+                        onReset={handleReset}
+                        onSave={handleSave}
+                        isSaved={isSaved}
+                        onNavigate={onNavigate}
+                        email={email}
+                        shareText={`AI 관상가로 분석한 저의 관상 요약:\n${result.summary}`}
+                        featureName="AI 관상가"
+                        freeContent={
+                            <div className="bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8">
+                                <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display">관상 분석 요약 (무료)</h2>
+                                <TypingResult text={result.summary} className="text-slate-300 leading-relaxed whitespace-pre-wrap" />
+                            </div>
+                        }
+                        premiumContent={
+                            <div className="mt-8 space-y-6">
+                                <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-2 text-center font-display">상세 분석 리포트 (프리미엄)</h2>
+                                <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+                                    <h3 className="text-xl font-bold text-white mb-3 font-display">종합 총평</h3>
+                                    <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{result.premium_analysis.overall_impression}</p>
+                                </div>
+                                <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+                                    <h3 className="text-xl font-bold text-white mb-3 font-display">직업 및 적성</h3>
+                                    <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{result.premium_analysis.job_suitability}</p>
+                                </div>
+                                <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+                                    <h3 className="text-xl font-bold text-white mb-3 font-display">연애 및 대인관계</h3>
+                                    <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{result.premium_analysis.love_style}</p>
+                                </div>
+                                <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+                                    <h3 className="text-xl font-bold text-white mb-3 font-display">건강 및 조언</h3>
+                                    <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{result.premium_analysis.health_advice}</p>
+                                </div>
+                                <h3 className="text-xl font-bold text-white pt-4 font-display">부위별 세부 해설</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {result.features.map((feature, index) => (
+                                    <motion.div variants={itemVariants} key={index} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 flex flex-col gap-4 transition-transform duration-300 hover:scale-105 hover:border-cyan-500">
+                                        <div className="flex items-center gap-4">
+                                        {getFeatureIcon(feature.feature)}
+                                        <div>
+                                            <h3 className="text-xl font-bold text-white">{feature.feature}</h3>
+                                            <p className="text-sm text-cyan-400 font-semibold">{feature.shape}</p>
+                                        </div>
+                                        </div>
+                                        <p className="text-slate-400 leading-relaxed text-left text-base">{feature.analysis}</p>
+                                    </motion.div>
+                                    ))}
+                                </div>
+                            </div>
+                        }
+                    />
+                ) : (
+                    <ImageUploader
+                        onImageSelect={handleImageSelect}
+                        imageUrl={imageUrl}
+                        onAnalyze={handleAnalyze}
+                        hasImage={!!imageFile}
+                    />
+                )}
+                <ErrorMessage message={error} />
+            </main>
+        </>
+    );
+};
+
+// --- PalmReaderPage Component ---
+const PalmReaderPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) => void; email: string | null; }> = ({ onBack, onNavigate, email }) => {
+    const [imageFile, setImageFile] = useState<File | null>(null);
+    const [imageUrl, setImageUrl] = useState<string | null>(null);
+    const [isSaved, setIsSaved] = useState(false);
+    const { result, isLoading, error, runAnalysis, reset } = useAnalysis(analyzePalm);
+
+    const handleImageSelect = (file: File) => {
+        setImageFile(file);
+        setImageUrl(URL.createObjectURL(file));
+        reset();
+        setIsSaved(false);
+    };
+
+    const handleAnalyze = useCallback(() => {
+        if (imageFile) {
+            runAnalysis(imageFile);
+        }
+    }, [imageFile, runAnalysis]);
+
+    const handleSave = useCallback(() => {
+        if (!result) return;
+        saveResult({
+            id: new Date().toISOString(), type: 'palm-reader', typeName: 'AI 손금 분석',
+            date: new Date().toISOString(), result,
+        });
+        setIsSaved(true);
+        setTimeout(() => setIsSaved(false), 2000);
+    }, [result]);
+
+    const handleReset = useCallback(() => {
+        setImageFile(null); setImageUrl(null); reset(); setIsSaved(false);
+    }, [reset]);
+    
+    const lineIcons: { [key: string]: React.ReactNode } = {
+        '생명선': <LifeLineIcon className="w-8 h-8 text-cyan-400" />, '감정선': <HeartLineIcon className="w-8 h-8 text-cyan-400" />,
+        '두뇌선': <HeadLineIcon className="w-8 h-8 text-cyan-400" />,
+    };
+    const getLineIcon = (lineName: string) => Object.keys(lineIcons).find(key => lineName.includes(key)) ? lineIcons[Object.keys(lineIcons).find(key => lineName.includes(key))!] : <LineIcon className="w-8 h-8 text-cyan-400" />;
+    const itemVariants: Variants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } } };
+
+    return (
+        <>
+            <Header 
+                icon={<PalmIcon className="w-10 h-10 text-cyan-400" />}
+                title="AI 손금 분석"
+                description="AI가 당신의 손금을 분석하여 운명을 읽어드립니다."
+                onBack={onBack}
+            />
+            <main className="flex-grow flex flex-col items-center justify-center text-center py-10">
+                {isLoading ? ( <Loader type="palm" /> )
+                : result ? (
+                    <AnalysisResultLayout
+                        onBack={onBack} onReset={handleReset} onSave={handleSave} isSaved={isSaved}
+                        onNavigate={onNavigate} email={email}
+                        shareText={`AI 손금 분석 결과 요약:\n${result.summary}`}
+                        featureName="AI 손금 분석"
+                        freeContent={
+                            <div className="bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8">
+                                <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display">손금 분석 요약 (무료)</h2>
+                                <TypingResult text={result.summary} className="text-slate-300 leading-relaxed whitespace-pre-wrap" />
+                            </div>
+                        }
+                        extraContent={
+                             <div className="mt-8 bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+                                <h3 className="text-xl font-bold text-cyan-300 mb-3 font-display">분석 신뢰도 (무료)</h3>
+                                <div className="flex items-center gap-4 sm:gap-6">
+                                    <div className="text-4xl font-bold text-white">{result.credibility_score}%</div>
+                                    <p className="text-slate-400 leading-relaxed text-left text-sm flex-1">{result.credibility_comment}</p>
+                                </div>
+                            </div>
+                        }
+                        premiumContent={
+                            <div className="space-y-6 mt-8">
+                                <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 font-display text-center">상세 분석 리포트 (프리미엄)</h2>
+                                <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+                                    <h3 className="text-xl font-bold text-white mb-3 font-display">종합 총평</h3>
+                                    <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{result.premium_analysis.overall_analysis}</p>
+                                </div>
+                                <h3 className="text-xl font-bold text-white pt-4 font-display">주요 손금별 해설</h3>
+                                {result.premium_analysis.lines.map((line, index) => (
+                                    <motion.div variants={itemVariants} key={index} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 flex items-start gap-4 transition-transform duration-300 hover:scale-105 hover:border-cyan-500">
+                                    <div className="flex-shrink-0 pt-1">{getLineIcon(line.line_name)}</div>
+                                    <div>
+                                        <h3 className="text-xl font-bold text-white">{line.line_name}</h3>
+                                        <p className="text-slate-400 leading-relaxed mt-2">{line.analysis}</p>
+                                    </div>
+                                    </motion.div>
+                                ))}
+                            </div>
+                        }
+                    />
+                ) : (
+                    <ImageUploader
+                        onImageSelect={handleImageSelect} imageUrl={imageUrl} onAnalyze={handleAnalyze} hasImage={!!imageFile} buttonText="손금 분석하기"
+                    />
+                )}
+                <ErrorMessage message={error} />
+            </main>
+        </>
+    );
+};
+
+// --- ImpressionAnalyzerPage Component ---
+const ImpressionAnalyzerPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) => void; email: string | null; }> = ({ onBack, onNavigate, email }) => {
+    const [imageFile, setImageFile] = useState<File | null>(null);
+    const [imageUrl, setImageUrl] = useState<string | null>(null);
+    const [isSaved, setIsSaved] = useState(false);
+    const { result, isLoading, error, runAnalysis, reset } = useAnalysis(analyzeImpression);
+
+    const handleImageSelect = (file: File) => {
+        setImageFile(file); setImageUrl(URL.createObjectURL(file)); reset(); setIsSaved(false);
+    };
+
+    const handleAnalyze = useCallback(() => {
+        if (imageFile) runAnalysis(imageFile);
+    }, [imageFile, runAnalysis]);
+
+    const handleSave = useCallback(() => {
+        if (!result) return;
+        saveResult({
+            id: new Date().toISOString(), type: 'impression-analyzer', typeName: 'AI 첫인상 분석',
+            date: new Date().toISOString(), result,
+        });
+        setIsSaved(true);
+        setTimeout(() => setIsSaved(false), 2000);
+    }, [result]);
+
+    const handleReset = useCallback(() => {
+        setImageFile(null); setImageUrl(null); reset(); setIsSaved(false);
+    }, [reset]);
+
+    return (
+        <>
+            <Header
+                icon={<ImpressionIcon className="w-10 h-10 text-cyan-400" />}
+                title="AI 첫인상 분석"
+                description="AI가 사진을 통해 당신의 첫인상을 분석해 드립니다."
+                onBack={onBack}
+            />
+            <main className="flex-grow flex flex-col items-center justify-center text-center py-10">
+                {isLoading ? ( <Loader type="impression" /> )
+                : result ? (
+                    <AnalysisResultLayout
+                        onBack={onBack} onReset={handleReset} onSave={handleSave} isSaved={isSaved}
+                        onNavigate={onNavigate} email={email}
+                        shareText={`AI가 분석한 저의 첫인상 요약:\n${result.summary}`}
+                        featureName="AI 첫인상 분석"
+                        freeContent={
+                             <div className="bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8">
+                                <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display">첫인상 요약 (무료)</h2>
+                                <TypingResult text={result.summary} className="text-slate-300 leading-relaxed whitespace-pre-wrap" />
+                            </div>
+                        }
+                        premiumContent={
+                            <div className="mt-8 space-y-6">
+                                 <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-2 text-center font-display">상세 분석 리포트 (프리미엄)</h2>
+                                 <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+                                    <h3 className="text-xl font-bold text-white mb-3 font-display">핵심 키워드</h3>
+                                    <div className="flex flex-wrap gap-3">
+                                        {result.premium_analysis.keywords.map((keyword, index) => (
+                                            <span key={index} className="bg-cyan-500/20 text-cyan-300 text-sm font-semibold px-3 py-1 rounded-full">
+                                                # {keyword}
+                                            </span>
+                                        ))}
+                                    </div>
+                                 </div>
+                                 <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+                                    <h3 className="text-xl font-bold text-white mb-3 font-display">상세 분석</h3>
+                                    <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{result.premium_analysis.detailed_analysis}</p>
+                                 </div>
+                                 <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+                                    <h3 className="text-xl font-bold text-white mb-3 font-display">상황별 첫인상</h3>
+                                    <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{result.premium_analysis.situational_analysis}</p>
+                                 </div>
+                                 <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 flex items-start gap-4">
+                                    <div className="flex-shrink-0 pt-1">
+                                        <LightbulbIcon className="w-8 h-8 text-yellow-400" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-xl font-bold text-yellow-300 mb-2 font-display">첫인상 개선 TIP</h3>
+                                        <p className="text-slate-400 leading-relaxed">{result.premium_analysis.improvement_tip}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    />
+                ) : (
+                    <ImageUploader
+                        onImageSelect={handleImageSelect} imageUrl={imageUrl} onAnalyze={handleAnalyze} hasImage={!!imageFile} buttonText="첫인상 분석하기"
+                    />
+                )}
+                <ErrorMessage message={error} />
+            </main>
+        </>
+    );
+};
+
+// --- AstrologyReaderPage Component ---
+const AstrologyReaderPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) => void; email: string | null; }> = ({ onBack, onNavigate, email }) => {
+    const [isSaved, setIsSaved] = useState(false);
+    const { result, isLoading, error, runAnalysis, reset } = useAnalysis(analyzeAstrology);
+
+    const handleAnalyze = useCallback((birthDate: string) => {
+        runAnalysis(birthDate);
+    }, [runAnalysis]);
+    
+    const handleSave = useCallback(() => {
+        if (!result) return;
+        saveResult({
+            id: new Date().toISOString(), type: 'astrology-reader', typeName: 'AI 별자리 운세',
+            date: new Date().toISOString(), result,
+        });
+        setIsSaved(true);
+        setTimeout(() => setIsSaved(false), 2000);
+    }, [result]);
+
+    const handleReset = useCallback(() => {
+        reset();
+        setIsSaved(false);
+    }, [reset]);
+
+    return (
+        <>
+            <Header
+                icon={<AstrologyIcon className="w-10 h-10 text-cyan-400" />}
+                title="AI 별자리 운세"
+                description="생년월일을 입력하면 AI가 당신의 별자리 운세를 알려드립니다."
+                onBack={onBack}
+            />
+            <main className="flex-grow flex flex-col items-center justify-center text-center py-10">
+                {isLoading ? ( <Loader type="astrology" /> )
+                : result ? (
+                    <AnalysisResultLayout
+                        onBack={onBack} onReset={handleReset} onSave={handleSave} isSaved={isSaved}
+                        onNavigate={onNavigate} email={email}
+                        shareText={`AI가 분석한 저의 별자리(${result.zodiac_sign}) 요약:\n${result.summary}`}
+                        featureName="AI 별자리 운세"
+                        freeContent={
+                            <>
+                                <div className="bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8 text-center">
+                                    <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-2 font-display">당신의 별자리 (무료)</h2>
+                                    <p className="text-4xl sm:text-5xl font-bold text-white mb-4">{result.zodiac_sign}</p>
+                                    <div className="flex justify-center gap-6 text-slate-300">
+                                        <span>수호성: {result.ruling_planet}</span>
+                                        <span>속성: {result.element}</span>
+                                    </div>
+                                </div>
+                                <div className="space-y-6 mt-8">
+                                    <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+                                        <h3 className="text-xl font-bold text-white mb-3 font-display">핵심 성격 요약 (무료)</h3>
+                                        <TypingResult text={result.summary} className="text-slate-400 leading-relaxed" />
+                                    </div>
+                                </div>
+                            </>
+                        }
+                        premiumContent={
+                            <div className="space-y-6 mt-8">
+                                <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display text-center">상세 운세 리포트 (프리미엄)</h2>
+                                <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+                                    <h3 className="text-xl font-bold text-white mb-3 font-display">상세 성격 분석</h3>
+                                    <p className="text-slate-400 leading-relaxed">{result.premium_analysis.personality}</p>
+                                </div>
+                                <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+                                    <h3 className="text-xl font-bold text-white mb-3 font-display">연애 및 관계</h3>
+                                    <p className="text-slate-400 leading-relaxed">{result.premium_analysis.love_life}</p>
+                                </div>
+                                <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+                                    <h3 className="text-xl font-bold text-white mb-3 font-display">직업 및 경력</h3>
+                                    <p className="text-slate-400 leading-relaxed">{result.premium_analysis.work_career}</p>
+                                </div>
+                                 <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+                                    <h3 className="text-xl font-bold text-white mb-3 font-display">건강운</h3>
+                                    <p className="text-slate-400 leading-relaxed">{result.premium_analysis.health_fortune}</p>
+                                </div>
+                            </div>
+                        }
+                    />
+                ) : (
+                    <BirthDateInput onAnalyze={(birthDate) => handleAnalyze(birthDate)} buttonText="별자리 운세 보기" />
+                )}
+                <ErrorMessage message={error} />
+            </main>
+        </>
+    );
+};
+
+// --- SajuAnalyzerPage Component ---
+const SajuAnalyzerPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) => void; email: string | null; }> = ({ onBack, onNavigate, email }) => {
+    const [isSaved, setIsSaved] = useState(false);
+    const { result, isLoading, error, runAnalysis, reset } = useAnalysis(analyzeSaju);
+
+    const handleAnalyze = useCallback(async (birthDate: string, birthTime: string) => {
+        runAnalysis(birthDate, birthTime);
+    }, [runAnalysis]);
+
+    const handleSave = useCallback(() => {
+        if (!result) return;
+        saveResult({
+            id: new Date().toISOString(), type: 'saju-analyzer', typeName: 'AI 사주 분석',
+            date: new Date().toISOString(), result,
+        });
+        setIsSaved(true);
+        setTimeout(() => setIsSaved(false), 2000);
+    }, [result]);
+    
+    const handleReset = useCallback(() => {
+        reset();
+        setIsSaved(false);
+    }, [reset]);
+
+    return (
+        <>
+            <Header
+                icon={<SajuIcon className="w-10 h-10 text-cyan-400" />}
+                title="AI 사주 분석"
+                description="생년월일시를 입력하면 AI가 당신의 사주를 분석해 드립니다."
+                onBack={onBack}
+            />
+            <main className="flex-grow flex flex-col items-center justify-center text-center py-10">
+                {isLoading ? ( <Loader type="saju" /> )
+                : result ? (
+                    <AnalysisResultLayout
+                        onBack={onBack} onReset={handleReset} onSave={handleSave} isSaved={isSaved}
+                        onNavigate={onNavigate} email={email}
+                        shareText={`AI 사주로 분석한 저의 오늘의 운세:\n${result.daily_fortune_summary}`}
+                        featureName="AI 사주 분석"
+                        freeContent={
+                            <>
+                                <div className="bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8">
+                                    <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display">오늘의 운세 요약 (무료)</h2>
+                                     <TypingResult text={result.daily_fortune_summary} className="text-slate-300 leading-relaxed whitespace-pre-wrap" />
+                                </div>
+                            </>
+                        }
+                        premiumContent={
+                            <div className="space-y-6 mt-8">
+                                <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display text-center">사주 심층 분석 리포트 (프리미엄)</h2>
+                                <div className="bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8">
+                                    <h3 className="text-xl font-bold text-white mb-3 font-display">사주 명식</h3>
+                                    <div className="grid grid-cols-4 gap-2 text-center text-white rounded-lg overflow-hidden border border-slate-700">
+                                        <div className="bg-slate-700/50 p-2 font-bold">시주</div><div className="bg-slate-700/50 p-2 font-bold">일주</div>
+                                        <div className="bg-slate-700/50 p-2 font-bold">월주</div><div className="bg-slate-700/50 p-2 font-bold">연주</div>
+                                        <div className="bg-slate-800 p-4 text-lg">{result.four_pillars.hour_pillar}</div>
+                                        <div className="bg-cyan-500/10 border-2 border-cyan-500 p-4 text-lg font-bold text-cyan-300">{result.four_pillars.day_pillar}</div>
+                                        <div className="bg-slate-800 p-4 text-lg">{result.four_pillars.month_pillar}</div>
+                                        <div className="bg-slate-800 p-4 text-lg">{result.four_pillars.year_pillar}</div>
+                                    </div>
+                                    <p className="text-center text-sm text-slate-400 mt-3">당신의 본질을 나타내는 일간(日干)은 <strong className="text-cyan-400">{result.day_master}</strong> 입니다.</p>
+                                </div>
+                                <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6"><h3 className="text-xl font-bold text-white mb-3 font-display">종합 분석</h3><p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{result.premium_analysis.overall_analysis}</p></div>
+                                <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6"><h3 className="text-xl font-bold text-white mb-3 font-display">오행의 균형</h3><p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{result.premium_analysis.elemental_balance}</p></div>
+                                <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6"><h3 className="text-xl font-bold text-white mb-3 font-display">분야별 상세운</h3>
+                                    <p className="text-slate-400 leading-relaxed whitespace-pre-wrap"><strong className="text-cyan-400">연애운:</strong> {result.premium_analysis.love_fortune}</p>
+                                    <p className="text-slate-400 leading-relaxed whitespace-pre-wrap mt-2"><strong className="text-cyan-400">재물운:</strong> {result.premium_analysis.money_fortune}</p>
+                                    <p className="text-slate-400 leading-relaxed whitespace-pre-wrap mt-2"><strong className="text-cyan-400">직업운:</strong> {result.premium_analysis.career_fortune}</p>
+                                    <p className="text-slate-400 leading-relaxed whitespace-pre-wrap mt-2"><strong className="text-cyan-400">건강운:</strong> {result.premium_analysis.health_fortune}</p>
+                                </div>
+                                <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6"><h3 className="text-xl font-bold text-white mb-3 font-display">삶의 조언</h3><p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{result.premium_analysis.life_advice}</p></div>
+                            </div>
+                        }
+                    />
+                ) : (
+                    <BirthDateInput onAnalyze={handleAnalyze} buttonText="사주 분석하기" showTimeInput={true} />
+                )}
+                <ErrorMessage message={error} />
+            </main>
+        </>
+    );
+};
+
+// --- JuyeokReaderPage Component ---
+const JuyeokReaderPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) => void; email: string | null; }> = ({ onBack, onNavigate, email }) => {
+    const [question, setQuestion] = useState<string>('');
+    const [juyeokReading, setJuyeokReading] = useState<JuyeokReading | null>(null);
+    const [isSaved, setIsSaved] = useState(false);
+    const { result, isLoading, error, runAnalysis, reset } = useAnalysis(analyzeJuyeok);
+
+    const handleAnalyze = useCallback(() => {
+        if (!question.trim()) return;
+        const reading = generateIChingReading();
+        setJuyeokReading(reading);
+        runAnalysis(question, reading);
+    }, [question, runAnalysis]);
+
+    const handleSave = useCallback(() => {
+        if (!result || !juyeokReading) return;
+        saveResult({
+            id: new Date().toISOString(), type: 'juyeok-reader', typeName: 'AI 주역 전문가',
+            date: new Date().toISOString(), result, context: { question, reading: juyeokReading }
+        });
+        setIsSaved(true);
+        setTimeout(() => setIsSaved(false), 2000);
+    }, [result, juyeokReading, question]);
+    
+    const handleReset = useCallback(() => {
+        setQuestion(''); setJuyeokReading(null); reset(); setIsSaved(false);
+    }, [reset]);
+
+    const HexagramVisual: React.FC<{ lines: LineType[], changingLines?: number[] }> = ({ lines, changingLines = [] }) => (
+        <div className="flex flex-col-reverse gap-1.5 items-center">
+            {lines.map((line, index) => {
+                const isChanging = changingLines.includes(index + 1);
+                const lineClasses = "h-1.5 rounded-full transition-all duration-300";
+                const changingClasses = isChanging ? "bg-cyan-400 shadow-[0_0_8px] shadow-cyan-400" : "bg-slate-500";
+                return line === 'yang' ? <div key={index} className={`w-16 ${lineClasses} ${changingClasses}`} /> : (
+                    <div key={index} className="w-16 flex justify-between">
+                        <div className={`w-7 ${lineClasses} ${changingClasses}`} /><div className={`w-7 ${lineClasses} ${changingClasses}`} />
+                    </div>
+                );
+            })}
+        </div>
+    );
+    const itemVariants: Variants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } } };
+
+
+    return (
+        <>
+            <Header
+                icon={<JuyeokIcon className="w-10 h-10 text-cyan-400" />}
+                title="AI 주역 전문가"
+                description="마음속 질문을 입력하면, AI가 주역 괘로 답을 드립니다."
+                onBack={onBack}
+            />
+            <main className="flex-grow flex flex-col items-center justify-center text-center py-10">
+                {isLoading ? ( <Loader type="juyeok" /> )
+                : result && juyeokReading ? (
+                    <>
+                        <motion.div initial="hidden" animate="visible" variants={itemVariants} className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8 mb-8 w-full max-w-4xl">
+                            <div className="flex flex-col items-center gap-2"><h3 className="text-lg font-bold text-slate-300">현재 (本卦)</h3><HexagramVisual lines={juyeokReading.presentHexagram.lines} changingLines={juyeokReading.changingLines} /><p className="text-xl font-semibold text-white mt-2">{result.present_hexagram_name}</p></div>
+                            <div className="flex justify-center items-center"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-cyan-400 transform md:rotate-0 rotate-90"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></div>
+                            <div className="flex flex-col items-center gap-2"><h3 className="text-lg font-bold text-slate-300">미래 (之卦)</h3>{juyeokReading.changingHexagram ? (<><HexagramVisual lines={juyeokReading.changingHexagram.lines} /><p className="text-xl font-semibold text-white mt-2">{result.changing_hexagram_name}</p></>) : (<div className="h-full flex items-center"><p className="text-slate-400">변화 없음</p></div>)}</div>
+                        </motion.div>
+                        <AnalysisResultLayout
+                            onBack={onBack} onReset={handleReset} onSave={handleSave} isSaved={isSaved} onNavigate={onNavigate} email={email}
+                            shareText={`질문: "${question}"\n주역점 요약: ${result.summary}`}
+                            featureName="AI 주역 전문가"
+                            freeContent={
+                                <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 sm:p-8"><h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display">핵심 요약 (무료)</h2><TypingResult text={result.summary} className="text-slate-300 leading-relaxed whitespace-pre-wrap" /></div>
+                            }
+                            premiumContent={
+                                <div className="space-y-6 mt-8">
+                                    <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-2 text-center font-display">상세 분석 리포트 (프리미엄)</h2>
+                                    <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6"><h3 className="text-xl font-bold text-white mb-3 font-display">종합 해설</h3><p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{result.premium_analysis.detailed_interpretation}</p></div>
+                                    {result.premium_analysis.changing_lines_interpretation && (<div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6"><h3 className="text-xl font-bold text-white mb-3 font-display">변화의 핵심 (變爻)</h3><p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{result.premium_analysis.changing_lines_interpretation}</p></div>)}
+                                    <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6"><h3 className="text-xl font-bold text-white mb-3 font-display">상황별 조언</h3><p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{result.premium_analysis.situational_advice}</p></div>
+                                </div>
+                            }
+                        />
+                    </>
+                ) : (
+                    <div className="w-full max-w-md flex flex-col items-center gap-8 p-6 bg-slate-800/50 rounded-2xl shadow-lg border border-slate-700">
+                        <div className="w-full flex flex-col gap-4"><label htmlFor="juyeok-question" className="block text-lg font-medium text-slate-300">어떤 점이 궁금하신가요?</label><textarea id="juyeok-question" value={question} onChange={(e) => setQuestion(e.target.value)} placeholder="예) 제가 지금 추진하는 프로젝트의 미래는 어떨까요?" className="w-full p-3 h-32 bg-slate-700/50 border border-slate-600 rounded-lg text-white resize-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500" /></div>
+                        <button onClick={handleAnalyze} disabled={!question.trim()} className="w-full py-3 px-6 bg-cyan-500 text-slate-900 font-bold text-lg rounded-lg shadow-md transition-all duration-300 hover:bg-cyan-400 disabled:bg-slate-600 disabled:cursor-not-allowed">주역점 보기</button>
+                    </div>
+                )}
+                <ErrorMessage message={error} />
+            </main>
+        </>
+    );
+};
+
+// --- YukhyoAnalyzerPage Component ---
+const YukhyoAnalyzerPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) => void; email: string | null; }> = ({ onBack, onNavigate, email }) => {
+    const [question, setQuestion] = useState<string>('');
+    const [isSaved, setIsSaved] = useState(false);
+    const { result, isLoading, error, runAnalysis, reset } = useAnalysis(analyzeYukhyo);
+
+    const handleAnalyze = useCallback(() => {
+        if (question.trim()) {
+            runAnalysis(question);
+        }
+    }, [question, runAnalysis]);
+
+    const handleSave = useCallback(() => {
+        if (!result) return;
+        saveResult({
+            id: new Date().toISOString(), type: 'yukhyo-analyzer', typeName: 'AI 육효 분석가',
+            date: new Date().toISOString(), result, context: { question }
+        });
+        setIsSaved(true);
+        setTimeout(() => setIsSaved(false), 2000);
+    }, [result, question]);
+    
+    const handleReset = useCallback(() => {
+        setQuestion(''); reset(); setIsSaved(false);
+    }, [reset]);
+
+    return (
+        <>
+            <Header
+                icon={<YukhyoIcon className="w-10 h-10 text-cyan-400" />}
+                title="AI 육효 분석가"
+                description="질문을 입력하면 AI가 시점의 기운으로 구체적인 길흉을 예측합니다."
+                onBack={onBack}
+            />
+            <main className="flex-grow flex flex-col items-center justify-center text-center py-10">
+                {isLoading ? ( <Loader type="yukhyo" /> )
+                : result ? (
+                    <AnalysisResultLayout
+                        onBack={onBack} onReset={handleReset} onSave={handleSave} isSaved={isSaved}
+                        onNavigate={onNavigate} email={email}
+                        shareText={`질문: "${question}"\n괘: ${result.hexagram_name}\n\n[종합 해설]\n${result.overall_interpretation}`}
+                        featureName="AI 육효 분석가"
+                        freeContent={
+                            <>
+                                <div className="bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8">
+                                    <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-1 font-display">육효 분석 (무료)</h2>
+                                    <p className="text-slate-400 mb-4">{result.ganji_date} 기준</p>
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-center text-white border-collapse"><thead className="bg-slate-700/50"><tr><th className="p-3 border border-slate-600">괘</th><th className="p-3 border border-slate-600">효</th><th className="p-3 border border-slate-600">세/응</th><th className="p-3 border border-slate-600">육친</th><th className="p-3 border border-slate-600">지지</th></tr></thead>
+                                            <tbody className="bg-slate-800">{result.lines.sort((a, b) => b.line_number - a.line_number).map((line) => (<tr key={line.line_number}>{line.line_number === 6 && <td rowSpan={6} className="p-3 border border-slate-600 font-bold text-xl">{result.hexagram_name}</td>}<td className="p-3 border border-slate-600">{line.line_number}효</td><td className={`p-3 border border-slate-600 font-bold ${line.marker === '세(世)' ? 'text-cyan-400' : line.marker === '응(應)' ? 'text-yellow-400' : ''}`}>{line.marker || '-'}</td><td className="p-3 border border-slate-600">{line.six_relatives}</td><td className="p-3 border border-slate-600">{line.earthly_branch}</td></tr>))}</tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div className="space-y-6 mt-8">
+                                    <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6"><h3 className="text-xl font-bold text-white mb-3 font-display">핵심 분석 (용신) - 무료</h3><TypingResult text={result.yongsin} className="text-slate-400 leading-relaxed whitespace-pre-wrap" /></div>
+                                </div>
+                            </>
+                        }
+                        premiumContent={
+                            <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 mt-8"><h3 className="text-xl font-bold text-white mb-3 font-display">종합 해설 및 조언 (프리미엄)</h3><p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{result.overall_interpretation}</p></div>
+                        }
+                    />
+                ) : (
+                    <div className="w-full max-w-md flex flex-col items-center gap-8 p-6 bg-slate-800/50 rounded-2xl shadow-lg border border-slate-700">
+                        <div className="w-full flex flex-col gap-4"><label htmlFor="yukhyo-question" className="block text-lg font-medium text-slate-300">어떤 점이 궁금하신가요?</label><textarea id="yukhyo-question" value={question} onChange={(e) => setQuestion(e.target.value)} placeholder="예) 이번 시험에 합격할 수 있을까요?" className="w-full p-3 h-32 bg-slate-700/50 border border-slate-600 rounded-lg text-white resize-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"/></div>
+                        <button onClick={handleAnalyze} disabled={!question.trim()} className="w-full py-3 px-6 bg-cyan-500 text-slate-900 font-bold text-lg rounded-lg shadow-md transition-all duration-300 hover:bg-cyan-400 disabled:bg-slate-600 disabled:cursor-not-allowed">육효점 보기</button>
+                    </div>
+                )}
+                <ErrorMessage message={error} />
+            </main>
+        </>
+    );
+};
+
+
+// --- UserAuth Component for testing ---
+const UserAuth: React.FC<{ email: string | null; onLogin: (email: string) => void; onLogout: () => void; }> = ({ email, onLogin, onLogout }) => {
+    const [inputEmail, setInputEmail] = useState('');
+    if (email) {
+        return (
+            <div className="absolute top-4 right-4 text-sm text-slate-300 flex items-center gap-2">
+                <span>{email}</span>
+                <button onClick={onLogout} className="bg-slate-600 text-xs p-1 rounded hover:bg-slate-500">Logout</button>
+            </div>
+        );
+    }
+    return (
+        <form onSubmit={(e) => { e.preventDefault(); onLogin(inputEmail); }} className="absolute top-4 right-4 flex gap-2 items-center z-20">
+            <input 
+                type="email" 
+                value={inputEmail} 
+                onChange={e => setInputEmail(e.target.value)} 
+                placeholder="테스트 이메일 입력" 
+                className="bg-slate-700/80 border border-slate-600 text-sm p-2 rounded-md text-white w-48"
+                required
+            />
+            <button type="submit" className="bg-cyan-600 text-white text-sm py-2 px-3 rounded-md hover:bg-cyan-500 transition-colors">로그인</button>
+        </form>
+    );
+};
+
+
+// --- Main App Component (Router) ---
+const App: React.FC = () => {
+  const [currentPage, setCurrentPage] = useState<Page>('home');
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+
+  const navigateTo = (page: Page | string) => {
+    window.location.hash = page === 'home' ? '' : page;
+  };
+
+  useEffect(() => {
+    const handleHashChange = () => {
+      const pageFromHash = (window.location.hash.substring(1).split('?')[0] || 'home') as Page;
+      setCurrentPage(pageFromHash);
+      window.scrollTo(0, 0);
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    handleHashChange();
+
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  const renderPage = () => {
+    switch (currentPage) {
+      case 'face-reader':
+        return <FaceReaderPage onBack={() => navigateTo('home')} onNavigate={navigateTo} email={userEmail} />;
+      case 'palm-reader':
+        return <PalmReaderPage onBack={() => navigateTo('home')} onNavigate={navigateTo} email={userEmail} />;
+      case 'impression-analyzer':
+        return <ImpressionAnalyzerPage onBack={() => navigateTo('home')} onNavigate={navigateTo} email={userEmail} />;
+      case 'astrology-reader':
+        return <AstrologyReaderPage onBack={() => navigateTo('home')} onNavigate={navigateTo} email={userEmail} />;
+      case 'saju-analyzer':
+        return <SajuAnalyzerPage onBack={() => navigateTo('home')} onNavigate={navigateTo} email={userEmail} />;
+      case 'tarot-reader':
+        return <TarotReaderPage onBack={() => navigateTo('home')} onNavigate={navigateTo} email={userEmail} />;
+      case 'juyeok-reader':
+        return <JuyeokReaderPage onBack={() => navigateTo('home')} onNavigate={navigateTo} email={userEmail} />;
+      case 'yukhyo-analyzer':
+        return <YukhyoAnalyzerPage onBack={() => navigateTo('home')} onNavigate={navigateTo} email={userEmail} />;
+      case 'daily-tarot':
+        return <DailyTarotPage onBack={() => navigateTo('home')} />;
+      case 'face-stretcher':
+        return <FaceStretcherPage onBack={() => navigateTo('home')} />;
+      case 'saved-results':
+        return (
+          <PremiumRoute navigate={navigateTo} email={userEmail} redirectOnFail={true} featureName="나의 운세함">
+            <SavedResultsPage onBack={() => navigateTo('home')} onNavigate={navigateTo} email={userEmail} />
+          </PremiumRoute>
+        );
+      case 'about':
+        return <AboutPage onBack={() => navigateTo('home')} />;
+      case 'privacy':
+        return <PrivacyPolicyPage onBack={() => navigateTo('home')} />;
+      case 'terms':
+        return <TermsOfServicePage onBack={() => navigateTo('home')} />;
+      case 'guide':
+        return <GuidePage onBack={() => navigateTo('home')} />;
+      case 'changelog':
+        return <ChangelogPage onBack={() => navigateTo('home')} />;
+      case 'checkout':
+        return <CheckoutPage onBack={() => navigateTo('home')} email={userEmail} />;
+      case 'home':
+      default:
+        return <HomePage onNavigate={navigateTo} />;
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-900 text-white flex flex-col items-center p-4 sm:p-6 lg:p-8 relative">
+       <UserAuth email={userEmail} onLogin={setUserEmail} onLogout={() => setUserEmail(null)} />
+      <div className="w-full max-w-7xl mx-auto flex flex-col flex-grow">
+        {renderPage()}
+        <Footer onNavigate={navigateTo} />
+      </div>
+    </div>
+  );
+};
+
+export default App;
