@@ -78,8 +78,6 @@ export const ResultDisplay: React.FC<ResultDisplayProps> = ({ result, onReset, o
         <TypingResult text={result.summary} className="text-slate-300 leading-relaxed whitespace-pre-wrap" />
       </motion.div>
       
-      {!isSavedView && <motion.div variants={itemVariants}><UpgradeCTA featureName={featureName} /></motion.div>}
-
       {isSavedView ? <PremiumContent /> : (
         <PremiumRoute navigate={onNavigate} email={email} featureName={featureName}>
             <PremiumContent />

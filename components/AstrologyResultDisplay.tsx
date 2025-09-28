@@ -68,8 +68,6 @@ export const AstrologyResultDisplay: React.FC<AstrologyResultDisplayProps> = ({ 
         </div>
       </motion.div>
       
-      {!isSavedView && <motion.div variants={itemVariants}><UpgradeCTA featureName={featureName} /></motion.div>}
-
       {isSavedView ? <PremiumContent /> : (
         <PremiumRoute navigate={onNavigate} email={email} featureName={featureName}>
             <PremiumContent />
