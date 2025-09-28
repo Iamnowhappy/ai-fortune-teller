@@ -1,4 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { upsertUser } from '../db';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -20,12 +21,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: "Email is required." });
     }
 
-    // ✅ Stripe 대신 더미 성공 URL
+    // Simulate granting premium access
+    const premiumEndDate = new Date();
+    premiumEndDate.setDate(premiumEndDate.getDate() + 30);
+    
+    await upsertUser({
+        email,
+        stripeCustomerId: `cus_${Date.now()}`, // dummy customer ID
+        premiumEndDate: premiumEndDate.toISOString(),
+    });
+
+    console.log(`✅ [API/create-checkout-session] Mock premium granted for ${email} until ${premiumEndDate.toISOString()}`);
+
     const domain = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:5173';
     const successUrl = `${domain}/#home?payment=success`;
-    // const cancelUrl = `${domain}/#checkout?payment=cancelled`;
-
-    // 🔹 그냥 successUrl 바로 반환
+    
     return res.status(200).json({ url: successUrl });
 
   } catch (error: any) {

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { API_BASE_URL } from "../../utils/apiConfig";
 
 type NavigateFunction = (page: string) => void;
 
@@ -12,7 +13,7 @@ interface PremiumRouteProps {
 
 const checkPremiumStatus = async (email: string): Promise<boolean> => {
     try {
-        const response = await fetch(`/api/check-premium?email=${encodeURIComponent(email)}`);
+        const response = await fetch(`${API_BASE_URL}/api/check-premium?email=${encodeURIComponent(email)}`);
         if (!response.ok) {
             console.error('Failed to check premium status');
             return false;
