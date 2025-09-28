@@ -31,6 +31,13 @@ import { ErrorMessage } from './components/shared/ErrorMessage';
 import { AnalysisInfo } from './components/AnalysisInfo';
 import { ShareButtons } from './components/ShareButtons';
 import { UpgradeCTA } from './components/PremiumPlaceholder';
+import { ResultDisplay } from './components/ResultDisplay';
+import { PalmResultDisplay } from './components/PalmResultDisplay';
+import { ImpressionResultDisplay } from './components/ImpressionResultDisplay';
+import { AstrologyResultDisplay } from './components/AstrologyResultDisplay';
+import { SajuResultDisplay } from './components/SajuResultDisplay';
+import { JuyeokResultDisplay } from './components/JuyeokResultDisplay';
+import { YukhyoResultDisplay } from './components/YukhyoResultDisplay';
 
 
 type Page = 'home' | 'face-reader' | 'palm-reader' | 'impression-analyzer' | 'astrology-reader' | 'saju-analyzer' | 'tarot-reader' | 'juyeok-reader' | 'yukhyo-analyzer' | 'daily-tarot' | 'saved-results' | 'about' | 'privacy' | 'terms' | 'guide' | 'changelog' | 'checkout' | 'face-stretcher';
@@ -431,16 +438,6 @@ const FaceReaderPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) =>
         setIsSaved(false);
     }, [reset]);
 
-    // --- Specific rendering logic ---
-    const featureIcons: { [key: string]: React.ReactNode } = {
-        '눈': <EyeIcon className="w-8 h-8 text-cyan-400" />, '코': <NoseIcon className="w-8 h-8 text-cyan-400" />,
-        '입': <MouthIcon className="w-8 h-8 text-cyan-400" />, '이마': <ForeheadIcon className="w-8 h-8 text-cyan-400" />,
-        '턱': <ChinIcon className="w-8 h-8 text-cyan-400" />, '귀': <EarIcon className="w-8 h-8 text-cyan-400" />,
-    };
-    const getFeatureIcon = (featureName: string) => Object.keys(featureIcons).find(key => featureName.includes(key)) ? featureIcons[Object.keys(featureIcons).find(key => featureName.includes(key))!] : null;
-    
-    const itemVariants: Variants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } } };
-
     return (
         <>
             <Header
@@ -452,40 +449,15 @@ const FaceReaderPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) =>
             <main className="flex-grow flex flex-col items-center justify-center text-center py-10">
                 {isLoading ? ( <Loader type="face" /> )
                 : result ? (
-                    <AnalysisResultLayout
-                        onBack={onBack}
+                    <ResultDisplay
+                        result={result}
                         onReset={handleReset}
+                        onBack={onBack}
                         onSave={handleSave}
                         isSaved={isSaved}
+                        isSavedView={false}
                         onNavigate={onNavigate}
                         email={email}
-                        shareText={`AI 관상가로 분석한 저의 관상 결과:\n\n[총평]\n${result.overall_impression}`}
-                        featureName="AI 관상가"
-                        freeContent={
-                            <div className="bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8">
-                                <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display">관상 분석 총평 (무료)</h2>
-                                <TypingResult text={result.overall_impression} className="text-slate-300 leading-relaxed whitespace-pre-wrap" />
-                            </div>
-                        }
-                        premiumContent={
-                            <div className="mt-8">
-                                <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 text-center font-display">부위별 상세 분석 (프리미엄)</h2>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    {result.features.map((feature, index) => (
-                                    <motion.div variants={itemVariants} key={index} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 flex flex-col gap-4 transition-transform duration-300 hover:scale-105 hover:border-cyan-500">
-                                        <div className="flex items-center gap-4">
-                                        {getFeatureIcon(feature.feature)}
-                                        <div>
-                                            <h3 className="text-xl font-bold text-white">{feature.feature}</h3>
-                                            <p className="text-sm text-cyan-400 font-semibold">{feature.shape}</p>
-                                        </div>
-                                        </div>
-                                        <p className="text-slate-400 leading-relaxed text-left text-base">{feature.analysis}</p>
-                                    </motion.div>
-                                    ))}
-                                </div>
-                            </div>
-                        }
                     />
                 ) : (
                     <ImageUploader
@@ -534,13 +506,6 @@ const PalmReaderPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) =>
     const handleReset = useCallback(() => {
         setImageFile(null); setImageUrl(null); reset(); setIsSaved(false);
     }, [reset]);
-    
-    const lineIcons: { [key: string]: React.ReactNode } = {
-        '생명선': <LifeLineIcon className="w-8 h-8 text-cyan-400" />, '감정선': <HeartLineIcon className="w-8 h-8 text-cyan-400" />,
-        '두뇌선': <HeadLineIcon className="w-8 h-8 text-cyan-400" />,
-    };
-    const getLineIcon = (lineName: string) => Object.keys(lineIcons).find(key => lineName.includes(key)) ? lineIcons[Object.keys(lineIcons).find(key => lineName.includes(key))!] : <LineIcon className="w-8 h-8 text-cyan-400" />;
-    const itemVariants: Variants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } } };
 
     return (
         <>
@@ -553,40 +518,15 @@ const PalmReaderPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) =>
             <main className="flex-grow flex flex-col items-center justify-center text-center py-10">
                 {isLoading ? ( <Loader type="palm" /> )
                 : result ? (
-                    <AnalysisResultLayout
-                        onBack={onBack} onReset={handleReset} onSave={handleSave} isSaved={isSaved}
-                        onNavigate={onNavigate} email={email}
-                        shareText={`AI 손금 분석 결과입니다:\n\n[총평]\n${result.overall_analysis}`}
-                        featureName="AI 손금 분석"
-                        freeContent={
-                            <div className="bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8">
-                                <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display">손금 분석 총평 (무료)</h2>
-                                <TypingResult text={result.overall_analysis} className="text-slate-300 leading-relaxed whitespace-pre-wrap" />
-                            </div>
-                        }
-                        extraContent={
-                             <div className="mt-8 bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
-                                <h3 className="text-xl font-bold text-cyan-300 mb-3 font-display">분석 신뢰도 (무료)</h3>
-                                <div className="flex items-center gap-4 sm:gap-6">
-                                    <div className="text-4xl font-bold text-white">{result.credibility_score}%</div>
-                                    <p className="text-slate-400 leading-relaxed text-left text-sm flex-1">{result.credibility_comment}</p>
-                                </div>
-                            </div>
-                        }
-                        premiumContent={
-                            <div className="space-y-6 mt-8">
-                                <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 font-display text-center">주요 손금 상세 분석 (프리미엄)</h2>
-                                {result.lines.map((line, index) => (
-                                    <motion.div variants={itemVariants} key={index} className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 flex items-start gap-4 transition-transform duration-300 hover:scale-105 hover:border-cyan-500">
-                                    <div className="flex-shrink-0 pt-1">{getLineIcon(line.line_name)}</div>
-                                    <div>
-                                        <h3 className="text-xl font-bold text-white">{line.line_name}</h3>
-                                        <p className="text-slate-400 leading-relaxed mt-2">{line.analysis}</p>
-                                    </div>
-                                    </motion.div>
-                                ))}
-                            </div>
-                        }
+                    <PalmResultDisplay
+                        result={result}
+                        onReset={handleReset}
+                        onBack={onBack}
+                        onSave={handleSave}
+                        isSaved={isSaved}
+                        isSavedView={false}
+                        onNavigate={onNavigate}
+                        email={email}
                     />
                 ) : (
                     <ImageUploader
@@ -639,35 +579,15 @@ const ImpressionAnalyzerPage: React.FC<{ onBack: () => void; onNavigate: (page: 
             <main className="flex-grow flex flex-col items-center justify-center text-center py-10">
                 {isLoading ? ( <Loader type="impression" /> )
                 : result ? (
-                    <AnalysisResultLayout
-                        onBack={onBack} onReset={handleReset} onSave={handleSave} isSaved={isSaved}
-                        onNavigate={onNavigate} email={email}
-                        shareText={`AI가 분석한 저의 첫인상 키워드는 '${result.keywords.join(', ')}' 입니다.`}
-                        featureName="AI 첫인상 분석"
-                        freeContent={
-                             <div className="bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8">
-                                <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display">첫인상 분석 결과 (무료)</h2>
-                                <div className="flex flex-wrap gap-3 mb-6">
-                                    {result.keywords.map((keyword, index) => (
-                                        <span key={index} className="bg-cyan-500/20 text-cyan-300 text-sm font-semibold px-3 py-1 rounded-full">
-                                            # {keyword}
-                                        </span>
-                                    ))}
-                                </div>
-                                <TypingResult text={result.detailed_analysis} className="text-slate-300 leading-relaxed whitespace-pre-wrap" />
-                            </div>
-                        }
-                        premiumContent={
-                             <div className="mt-8 bg-slate-800/50 border border-slate-700 rounded-2xl p-6 flex items-start gap-4">
-                                <div className="flex-shrink-0 pt-1">
-                                    <LightbulbIcon className="w-8 h-8 text-yellow-400" />
-                                </div>
-                                <div>
-                                    <h3 className="text-xl font-bold text-yellow-300 mb-2 font-display">첫인상 개선을 위한 TIP (프리미엄)</h3>
-                                    <p className="text-slate-400 leading-relaxed">{result.improvement_tip}</p>
-                                </div>
-                            </div>
-                        }
+                    <ImpressionResultDisplay
+                        result={result}
+                        onReset={handleReset}
+                        onBack={onBack}
+                        onSave={handleSave}
+                        isSaved={isSaved}
+                        isSavedView={false}
+                        onNavigate={onNavigate}
+                        email={email}
                     />
                 ) : (
                     <ImageUploader
@@ -715,42 +635,15 @@ const AstrologyReaderPage: React.FC<{ onBack: () => void; onNavigate: (page: Pag
             <main className="flex-grow flex flex-col items-center justify-center text-center py-10">
                 {isLoading ? ( <Loader type="astrology" /> )
                 : result ? (
-                    <AnalysisResultLayout
-                        onBack={onBack} onReset={handleReset} onSave={handleSave} isSaved={isSaved}
-                        onNavigate={onNavigate} email={email}
-                        shareText={`AI가 분석한 저의 별자리는 ${result.zodiac_sign}입니다.`}
-                        featureName="AI 별자리 운세"
-                        freeContent={
-                            <>
-                                <div className="bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8 text-center">
-                                    <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-2 font-display">당신의 별자리 (무료)</h2>
-                                    <p className="text-4xl sm:text-5xl font-bold text-white mb-4">{result.zodiac_sign}</p>
-                                    <div className="flex justify-center gap-6 text-slate-300">
-                                        <span>수호성: {result.ruling_planet}</span>
-                                        <span>속성: {result.element}</span>
-                                    </div>
-                                </div>
-                                <div className="space-y-6 mt-8">
-                                    <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
-                                        <h3 className="text-xl font-bold text-white mb-3 font-display">성격 분석 (무료)</h3>
-                                        <TypingResult text={result.analysis.personality} className="text-slate-400 leading-relaxed" />
-                                    </div>
-                                </div>
-                            </>
-                        }
-                        premiumContent={
-                            <div className="space-y-6 mt-8">
-                                <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display text-center">상세 운세 분석 (프리미엄)</h2>
-                                <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
-                                    <h3 className="text-xl font-bold text-white mb-3 font-display">연애 및 관계</h3>
-                                    <p className="text-slate-400 leading-relaxed">{result.analysis.love_life}</p>
-                                </div>
-                                <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
-                                    <h3 className="text-xl font-bold text-white mb-3 font-display">직업 및 경력</h3>
-                                    <p className="text-slate-400 leading-relaxed">{result.analysis.work_career}</p>
-                                </div>
-                            </div>
-                        }
+                    <AstrologyResultDisplay
+                        result={result}
+                        onReset={handleReset}
+                        onBack={onBack}
+                        onSave={handleSave}
+                        isSaved={isSaved}
+                        isSavedView={false}
+                        onNavigate={onNavigate}
+                        email={email}
                     />
                 ) : (
                     <BirthDateInput onAnalyze={(birthDate) => handleAnalyze(birthDate)} buttonText="별자리 운세 보기" />
@@ -796,46 +689,15 @@ const SajuAnalyzerPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) 
             <main className="flex-grow flex flex-col items-center justify-center text-center py-10">
                 {isLoading ? ( <Loader type="saju" /> )
                 : result ? (
-                    <AnalysisResultLayout
-                        onBack={onBack} onReset={handleReset} onSave={handleSave} isSaved={isSaved}
-                        onNavigate={onNavigate} email={email}
-                        shareText={`AI 사주 분석 결과, 저의 일간은 ${result.day_master} 입니다.`}
-                        featureName="AI 사주 분석"
-                        freeContent={
-                            <>
-                                <div className="bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8">
-                                    <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display">사주 명식 (무료)</h2>
-                                    <div className="grid grid-cols-4 gap-2 text-center text-white rounded-lg overflow-hidden border border-slate-700">
-                                        <div className="bg-slate-700/50 p-2 font-bold">시주(時柱)</div><div className="bg-slate-700/50 p-2 font-bold">일주(日柱)</div>
-                                        <div className="bg-slate-700/50 p-2 font-bold">월주(月柱)</div><div className="bg-slate-700/50 p-2 font-bold">연주(年柱)</div>
-                                        <div className="bg-slate-800 p-4 text-lg">{result.four_pillars.hour_pillar}</div>
-                                        <div className="bg-cyan-500/10 border-2 border-cyan-500 p-4 text-lg font-bold text-cyan-300">{result.four_pillars.day_pillar}</div>
-                                        <div className="bg-slate-800 p-4 text-lg">{result.four_pillars.month_pillar}</div>
-                                        <div className="bg-slate-800 p-4 text-lg">{result.four_pillars.year_pillar}</div>
-                                    </div>
-                                    <p className="text-center text-sm text-slate-400 mt-3">당신의 본질을 나타내는 일간(日干)은 <strong className="text-cyan-400">{result.day_master}</strong> 입니다.</p>
-                                </div>
-                                <div className="space-y-6 mt-8">
-                                    <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
-                                        <h3 className="text-xl font-bold text-white mb-3 font-display">종합 분석 (무료)</h3>
-                                        <TypingResult text={result.overall_analysis} className="text-slate-400 leading-relaxed whitespace-pre-wrap" />
-                                    </div>
-                                </div>
-                            </>
-                        }
-                        premiumContent={
-                            <div className="space-y-6 mt-8">
-                                <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display text-center">사주 심층 분석 (프리미엄)</h2>
-                                <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
-                                    <h3 className="text-xl font-bold text-white mb-3 font-display">오행의 균형</h3>
-                                    <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{result.elemental_analysis}</p>
-                                </div>
-                                <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
-                                    <h3 className="text-xl font-bold text-white mb-3 font-display">삶의 조언</h3>
-                                    <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{result.life_advice}</p>
-                                </div>
-                            </div>
-                        }
+                    <SajuResultDisplay
+                        result={result}
+                        onReset={handleReset}
+                        onBack={onBack}
+                        onSave={handleSave}
+                        isSaved={isSaved}
+                        isSavedView={false}
+                        onNavigate={onNavigate}
+                        email={email}
                     />
                 ) : (
                     <BirthDateInput onAnalyze={handleAnalyze} buttonText="사주 분석하기" showTimeInput={true} />
@@ -874,23 +736,6 @@ const JuyeokReaderPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) 
         setQuestion(''); setJuyeokReading(null); reset(); setIsSaved(false);
     }, [reset]);
 
-    const HexagramVisual: React.FC<{ lines: LineType[], changingLines?: number[] }> = ({ lines, changingLines = [] }) => (
-        <div className="flex flex-col-reverse gap-1.5 items-center">
-            {lines.map((line, index) => {
-                const isChanging = changingLines.includes(index + 1);
-                const lineClasses = "h-1.5 rounded-full transition-all duration-300";
-                const changingClasses = isChanging ? "bg-cyan-400 shadow-[0_0_8px] shadow-cyan-400" : "bg-slate-500";
-                return line === 'yang' ? <div key={index} className={`w-16 ${lineClasses} ${changingClasses}`} /> : (
-                    <div key={index} className="w-16 flex justify-between">
-                        <div className={`w-7 ${lineClasses} ${changingClasses}`} /><div className={`w-7 ${lineClasses} ${changingClasses}`} />
-                    </div>
-                );
-            })}
-        </div>
-    );
-    const itemVariants: Variants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } } };
-
-
     return (
         <>
             <Header
@@ -902,24 +747,18 @@ const JuyeokReaderPage: React.FC<{ onBack: () => void; onNavigate: (page: Page) 
             <main className="flex-grow flex flex-col items-center justify-center text-center py-10">
                 {isLoading ? ( <Loader type="juyeok" /> )
                 : result && juyeokReading ? (
-                    <>
-                        <motion.div initial="hidden" animate="visible" variants={itemVariants} className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8 mb-8 w-full max-w-4xl">
-                            <div className="flex flex-col items-center gap-2"><h3 className="text-lg font-bold text-slate-300">현재 (本卦)</h3><HexagramVisual lines={juyeokReading.presentHexagram.lines} changingLines={juyeokReading.changingLines} /><p className="text-xl font-semibold text-white mt-2">{result.present_hexagram_name}</p></div>
-                            <div className="flex justify-center items-center"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-cyan-400 transform md:rotate-0 rotate-90"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></div>
-                            <div className="flex flex-col items-center gap-2"><h3 className="text-lg font-bold text-slate-300">미래 (之卦)</h3>{juyeokReading.changingHexagram ? (<><HexagramVisual lines={juyeokReading.changingHexagram.lines} /><p className="text-xl font-semibold text-white mt-2">{result.changing_hexagram_name}</p></>) : (<div className="h-full flex items-center"><p className="text-slate-400">변화 없음</p></div>)}</div>
-                        </motion.div>
-                        <AnalysisResultLayout
-                            onBack={onBack} onReset={handleReset} onSave={handleSave} isSaved={isSaved} onNavigate={onNavigate} email={email}
-                            shareText={`질문: "${question}"\n본괘: ${result.present_hexagram_name}\n\n[종합 해설]\n${result.interpretation}`}
-                            featureName="AI 주역 전문가"
-                            freeContent={
-                                <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 sm:p-8"><h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display">종합 해설 (무료)</h2><TypingResult text={result.interpretation} className="text-slate-300 leading-relaxed whitespace-pre-wrap" /></div>
-                            }
-                            premiumContent={
-                                result.changing_lines_interpretation && (<div className="mt-8 bg-slate-800/50 border border-slate-700 rounded-2xl p-6"><h3 className="text-xl font-bold text-white mb-3 font-display">변화의 핵심 (變爻) - 프리미엄</h3><p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{result.changing_lines_interpretation}</p></div>)
-                            }
-                        />
-                    </>
+                    <JuyeokResultDisplay
+                        result={result}
+                        reading={juyeokReading}
+                        question={question}
+                        onReset={handleReset}
+                        onBack={onBack}
+                        onSave={handleSave}
+                        isSaved={isSaved}
+                        isSavedView={false}
+                        onNavigate={onNavigate}
+                        email={email}
+                    />
                 ) : (
                     <div className="w-full max-w-md flex flex-col items-center gap-8 p-6 bg-slate-800/50 rounded-2xl shadow-lg border border-slate-700">
                         <div className="w-full flex flex-col gap-4"><label htmlFor="juyeok-question" className="block text-lg font-medium text-slate-300">어떤 점이 궁금하신가요?</label><textarea id="juyeok-question" value={question} onChange={(e) => setQuestion(e.target.value)} placeholder="예) 제가 지금 추진하는 프로젝트의 미래는 어떨까요?" className="w-full p-3 h-32 bg-slate-700/50 border border-slate-600 rounded-lg text-white resize-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500" /></div>
@@ -969,30 +808,16 @@ const YukhyoAnalyzerPage: React.FC<{ onBack: () => void; onNavigate: (page: Page
             <main className="flex-grow flex flex-col items-center justify-center text-center py-10">
                 {isLoading ? ( <Loader type="yukhyo" /> )
                 : result ? (
-                    <AnalysisResultLayout
-                        onBack={onBack} onReset={handleReset} onSave={handleSave} isSaved={isSaved}
-                        onNavigate={onNavigate} email={email}
-                        shareText={`질문: "${question}"\n괘: ${result.hexagram_name}\n\n[종합 해설]\n${result.overall_interpretation}`}
-                        featureName="AI 육효 분석가"
-                        freeContent={
-                            <>
-                                <div className="bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8">
-                                    <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-1 font-display">육효 분석 (무료)</h2>
-                                    <p className="text-slate-400 mb-4">{result.ganji_date} 기준</p>
-                                    <div className="overflow-x-auto">
-                                        <table className="w-full text-center text-white border-collapse"><thead className="bg-slate-700/50"><tr><th className="p-3 border border-slate-600">괘</th><th className="p-3 border border-slate-600">효</th><th className="p-3 border border-slate-600">세/응</th><th className="p-3 border border-slate-600">육친</th><th className="p-3 border border-slate-600">지지</th></tr></thead>
-                                            <tbody className="bg-slate-800">{result.lines.sort((a, b) => b.line_number - a.line_number).map((line) => (<tr key={line.line_number}>{line.line_number === 6 && <td rowSpan={6} className="p-3 border border-slate-600 font-bold text-xl">{result.hexagram_name}</td>}<td className="p-3 border border-slate-600">{line.line_number}효</td><td className={`p-3 border border-slate-600 font-bold ${line.marker === '세(世)' ? 'text-cyan-400' : line.marker === '응(應)' ? 'text-yellow-400' : ''}`}>{line.marker || '-'}</td><td className="p-3 border border-slate-600">{line.six_relatives}</td><td className="p-3 border border-slate-600">{line.earthly_branch}</td></tr>))}</tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                                <div className="space-y-6 mt-8">
-                                    <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6"><h3 className="text-xl font-bold text-white mb-3 font-display">핵심 분석 (용신) - 무료</h3><TypingResult text={result.yongsin} className="text-slate-400 leading-relaxed whitespace-pre-wrap" /></div>
-                                </div>
-                            </>
-                        }
-                        premiumContent={
-                            <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 mt-8"><h3 className="text-xl font-bold text-white mb-3 font-display">종합 해설 및 조언 (프리미엄)</h3><p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{result.overall_interpretation}</p></div>
-                        }
+                    <YukhyoResultDisplay
+                        result={result}
+                        question={question}
+                        onReset={handleReset}
+                        onBack={onBack}
+                        onSave={handleSave}
+                        isSaved={isSaved}
+                        isSavedView={false}
+                        onNavigate={onNavigate}
+                        email={email}
                     />
                 ) : (
                     <div className="w-full max-w-md flex flex-col items-center gap-8 p-6 bg-slate-800/50 rounded-2xl shadow-lg border border-slate-700">
