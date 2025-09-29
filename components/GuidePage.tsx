@@ -1,5 +1,5 @@
 import React from 'react';
-import { HomeIcon, FaceIcon, PalmIcon, SajuIcon, AstrologyIcon, TarotIcon, JuyeokIcon, DreamIcon, NameGeneratorIcon } from './icons';
+import { HomeIcon, FaceIcon, PalmIcon, SajuIcon, AstrologyIcon, TarotIcon, JuyeokIcon, DreamIcon, NameGeneratorIcon, BusinessIcon } from './icons';
 
 interface PageProps {
   onBack: () => void;
@@ -49,8 +49,13 @@ export const GuidePage: React.FC<PageProps> = ({ onBack }) => {
             <p>사주 명리학은 사람이 태어난 연, 월, 일, 시(사주)를 바탕으로 운명을 예측하는 학문입니다. 네 개의 기둥(사주)에 각각 천간과 지지를 붙여 총 여덟 글자(팔자)로 구성되며, 이 글자들의 상호 관계와 오행의 조화를 통해 타고난 기질, 재능, 삶의 큰 흐름을 분석합니다. AI 사주 분석은 복잡한 명리학 이론을 바탕으로 당신의 타고난 운명의 지도를 해석해 드립니다.</p>
         </GuideSection>
         
-        <GuideSection icon={<NameGeneratorIcon className="w-10 h-10" />} title="AI 작명가">
-            <p>작명은 사주팔자를 분석하여 부족한 오행의 기운을 보충하고, 이름의 소리(발음 오행), 한자의 의미, 획수의 조화(수리 오행)를 모두 고려하여 한 사람의 인생에 긍정적인 영향을 주는 이름을 짓는 과정입니다. 좋은 이름은 그 사람의 정체성을 나타내고 미래를 밝혀주는 첫 번째 선물입니다. AI 작명가는 전통 작명 이론을 기반으로 당신에게 가장 어울리는 이름을 찾아드립니다.</p>
+        <GuideSection icon={<NameGeneratorIcon className="w-10 h-10" />} title="AI 작명 센터">
+            <p>이름은 한 사람의 정체성과 미래에 큰 영향을 미칩니다. AI 작명 센터는 전통 성명학 이론과 사주 명리학을 기반으로 개인과 기업에 최적화된 이름을 추천하고 분석하는 종합 서비스입니다.</p>
+            <ul className="list-disc list-inside mt-2 pl-4 space-y-1">
+                <li><strong>신생아 작명/개명:</strong> 사주를 분석하여 부족한 기운을 보완하고, 평생의 길운을 열어주는 최고의 이름을 추천합니다.</li>
+                <li><strong>상호명 작명:</strong> 업종의 특성과 대표의 사주를 고려하여, 번영과 성공을 불러오는 상호명을 작명해 드립니다.</li>
+                <li><strong>이름 분석:</strong> 현재 사용 중인 이름(개인/상호)이 가진 기운과 운세를 분석하고, 개선 방향을 제시합니다.</li>
+            </ul>
         </GuideSection>
 
         <GuideSection icon={<AstrologyIcon className="w-10 h-10" />} title="AI 별자리 운세">

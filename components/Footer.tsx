@@ -1,7 +1,7 @@
 import React from 'react';
 import { AdSenseUnit } from './AdSenseUnit';
 
-type Page = 'home' | 'face-reader' | 'palm-reader' | 'impression-analyzer' | 'astrology-reader' | 'saju-analyzer' | 'tarot-reader' | 'juyeok-reader' | 'yukhyo-analyzer' | 'dream-interpreter' | 'name-generator' | 'saved-results' | 'about' | 'privacy' | 'terms' | 'guide' | 'changelog';
+type Page = 'home' | 'face-reader' | 'palm-reader' | 'impression-analyzer' | 'astrology-reader' | 'saju-analyzer' | 'tarot-reader' | 'juyeok-reader' | 'yukhyo-analyzer' | 'dream-interpreter' | 'naming-services' | 'newborn-namer' | 'business-namer' | 'personal-name-analyzer' | 'business-name-analyzer' | 'renamer' | 'saved-results' | 'about' | 'privacy' | 'terms' | 'guide' | 'changelog';
 
 interface FooterProps {
   onNavigate: (page: Page) => void;

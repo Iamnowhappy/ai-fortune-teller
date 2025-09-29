@@ -13,8 +13,8 @@ import { PrivacyPolicyPage } from './components/PrivacyPolicyPage';
 import { TermsOfServicePage } from './components/TermsOfServicePage';
 import { GuidePage } from './components/GuidePage';
 import { Loader } from './components/Loader';
-import { analyzeFace, analyzePalm, analyzeImpression, analyzeAstrology, analyzeSaju, analyzeTarotReading, analyzeJuyeok, analyzeYukhyo, analyzeDream, analyzeName } from './services/geminiService';
-import type { PhysiognomyResult, PalmistryResult, ImpressionAnalysisResult, AstrologyResult, SajuResult, TarotResult, JuyeokResult, YukhyoResult, CardDraw, JuyeokReading, SavedResult, LineType, DreamInterpretationResult, NameGenerationResult } from './types';
+import { analyzeFace, analyzePalm, analyzeImpression, analyzeAstrology, analyzeSaju, analyzeTarotReading, analyzeJuyeok, analyzeYukhyo, analyzeDream, generateNewbornName } from './services/geminiService';
+import type { PhysiognomyResult, PalmistryResult, ImpressionAnalysisResult, AstrologyResult, SajuResult, TarotResult, JuyeokResult, YukhyoResult, CardDraw, JuyeokReading, SavedResult, LineType, DreamInterpretationResult, NewbornNameResult } from './types';
 import { Footer } from './components/Footer';
 import { FaceIcon, PalmIcon, ImpressionIcon, AstrologyIcon, SajuIcon, TarotIcon, JuyeokIcon, YukhyoIcon, BoxIcon, TheSunIcon, StarIcon, LockIcon, HappyFaceIcon, EyeIcon, NoseIcon, MouthIcon, ForeheadIcon, ChinIcon, EarIcon, LifeLineIcon, HeartLineIcon, HeadLineIcon, LineIcon, LightbulbIcon, HomeIcon, RefreshIcon, SaveIcon, DreamIcon, NameGeneratorIcon } from './components/icons';
 import { generateIChingReading, getDailyFortune } from './utils/divinationUtils';
@@ -34,9 +34,14 @@ import { YukhyoResultDisplay } from './components/YukhyoResultDisplay';
 import { DreamResultDisplay } from './components/DreamResultDisplay';
 import { NameGeneratorPage } from './components/NameGeneratorPage';
 import { NameResultDisplay } from './components/NameResultDisplay';
+import { NamingServicesPage } from './components/NamingServicesPage';
+import { BusinessNamerPage } from './components/BusinessNamerPage';
+import { PersonalNameAnalyzerPage } from './components/PersonalNameAnalyzerPage';
+import { BusinessNameAnalyzerPage } from './components/BusinessNameAnalyzerPage';
+import { RenamerPage } from './components/RenamerPage';
 
 
-type Page = 'home' | 'face-reader' | 'palm-reader' | 'impression-analyzer' | 'astrology-reader' | 'saju-analyzer' | 'tarot-reader' | 'juyeok-reader' | 'yukhyo-analyzer' | 'dream-interpreter' | 'name-generator' | 'daily-tarot' | 'saved-results' | 'about' | 'privacy' | 'terms' | 'guide' | 'changelog' | 'face-stretcher';
+type Page = 'home' | 'face-reader' | 'palm-reader' | 'impression-analyzer' | 'astrology-reader' | 'saju-analyzer' | 'tarot-reader' | 'juyeok-reader' | 'yukhyo-analyzer' | 'dream-interpreter' | 'naming-services' | 'newborn-namer' | 'business-namer' | 'personal-name-analyzer' | 'business-name-analyzer' | 'renamer' | 'daily-tarot' | 'saved-results' | 'about' | 'privacy' | 'terms' | 'guide' | 'changelog' | 'face-stretcher';
 
 // --- HomePage Component ---
 const HomePage: React.FC<{ onNavigate: (page: Page) => void; }> = ({ onNavigate }) => {
@@ -232,18 +237,18 @@ const HomePage: React.FC<{ onNavigate: (page: Page) => void; }> = ({ onNavigate 
           <p className="text-slate-200">생년월일시로 타고난 운명의 지도를 해석해 드립니다.</p>
         </div>
         
-        {/* Name Generator Card */}
+        {/* Naming Center Card */}
         <div
-          onClick={() => onNavigate('name-generator')}
+          onClick={() => onNavigate('naming-services')}
           className="bg-[#0891B2]/80 border border-[#0E7490] rounded-2xl p-6 flex flex-col items-center gap-4 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:border-[#22D3EE] cursor-pointer group shadow-lg"
           role="button"
           tabIndex={0}
-          aria-label="AI 작명가 실행하기"
-          onKeyDown={(e) => e.key === 'Enter' && onNavigate('name-generator')}
+          aria-label="AI 작명 센터 실행하기"
+          onKeyDown={(e) => e.key === 'Enter' && onNavigate('naming-services')}
         >
           <NameGeneratorIcon className="w-16 h-16 text-white transition-transform duration-500 group-hover:rotate-12 group-hover:scale-110" />
-          <h2 className="text-2xl font-bold text-white">AI 작명가</h2>
-          <p className="text-slate-200">사주를 분석하여 최고의 이름을 추천해 드립니다.</p>
+          <h2 className="text-2xl font-bold text-white">AI 작명 센터</h2>
+          <p className="text-slate-200">신생아 작명, 개명, 상호명 추천 및 이름 분석 서비스</p>
         </div>
 
         {/* Tarot Reader Card */}
@@ -860,14 +865,24 @@ const App: React.FC = () => {
         return <YukhyoAnalyzerPage onBack={() => navigateTo('home')} />;
       case 'dream-interpreter':
         return <DreamInterpreterPage onBack={() => navigateTo('home')} />;
-       case 'name-generator':
-        return <NameGeneratorPage onBack={() => navigateTo('home')} />;
+      case 'naming-services':
+        return <NamingServicesPage onNavigate={navigateTo} onBack={() => navigateTo('home')} />;
+      case 'newborn-namer':
+        return <NameGeneratorPage onBack={() => navigateTo('naming-services')} />;
+      case 'business-namer':
+        return <BusinessNamerPage onBack={() => navigateTo('naming-services')} />;
+      case 'personal-name-analyzer':
+        return <PersonalNameAnalyzerPage onBack={() => navigateTo('naming-services')} />;
+      case 'business-name-analyzer':
+        return <BusinessNameAnalyzerPage onBack={() => navigateTo('naming-services')} />;
+      case 'renamer':
+        return <RenamerPage onBack={() => navigateTo('naming-services')} />;
       case 'daily-tarot':
         return <DailyTarotPage onBack={() => navigateTo('home')} />;
       case 'face-stretcher':
         return <FaceStretcherPage onBack={() => navigateTo('home')} />;
       case 'saved-results':
-        return <SavedResultsPage onBack={() => navigateTo('home')} />;
+        return <SavedResultsPage onBack={() => navigateTo('home')} onNavigate={navigateTo} />;
       case 'about':
         return <AboutPage onBack={() => navigateTo('home')} />;
       case 'privacy':

@@ -166,7 +166,6 @@ export interface GroundingChunk {
 
 export interface DreamInterpretationResult {
     summary: string; // Free
-    imageBase64?: string; // AI-generated image representing the dream
     premium_analysis: {
         detailed_interpretation: string;
         dream_symbols: DreamSymbol[];
@@ -175,9 +174,9 @@ export interface DreamInterpretationResult {
     groundingChunks?: GroundingChunk[];
 }
 
-// --- Name Generator Types ---
-export interface NameGenerationResult {
-    summary: string; // Free
+// --- Naming Service Types ---
+export interface NewbornNameResult {
+    summary: string;
     premium_analysis: {
         name: string;
         hanja: string;
@@ -188,11 +187,40 @@ export interface NameGenerationResult {
     };
 }
 
+export interface BusinessNameResult {
+    summary: string;
+    premium_analysis: {
+        names: { name: string; meaning: string; }[];
+        naming_strategy: string;
+        slogan_suggestions: string[];
+    }
+}
+
+export interface PersonalNameAnalysisResult {
+    summary: string;
+    premium_analysis: {
+        name_score: number; // 0-100
+        five_elements_analysis: string;
+        sound_analysis: string;
+        overall_fortune: string;
+        improvement_suggestion: string;
+    }
+}
+
+export interface BusinessNameAnalysisResult {
+    summary: string;
+    premium_analysis: {
+        name_score: number; // 0-100
+        detailed_analysis: string;
+        brand_image: string;
+        improvement_suggestions: string;
+    }
+}
 
 // --- Saved Result Type ---
 export interface SavedResult {
   id: string; // Unique ID for the result, can be a timestamp string
-  type: 'face-reader' | 'palm-reader' | 'impression-analyzer' | 'astrology-reader' | 'saju-analyzer' | 'tarot-reader' | 'juyeok-reader' | 'yukhyo-analyzer' | 'dream-interpreter' | 'name-generator';
+  type: 'face-reader' | 'palm-reader' | 'impression-analyzer' | 'astrology-reader' | 'saju-analyzer' | 'tarot-reader' | 'juyeok-reader' | 'yukhyo-analyzer' | 'dream-interpreter' | 'newborn-namer' | 'business-namer' | 'personal-name-analyzer' | 'business-name-analyzer' | 'renamer';
   typeName: string; // User-friendly name like "AI 관상가"
   date: string; // ISO string of the save date
   result: any; // The result data object

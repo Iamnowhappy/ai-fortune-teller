@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import type { SavedResult, PhysiognomyResult, PalmistryResult, ImpressionAnalysisResult, AstrologyResult, SajuResult, TarotResult, JuyeokResult, YukhyoResult, DreamInterpretationResult, NameGenerationResult, CardDraw, JuyeokReading, LineType } from '../types';
+import type { SavedResult, PhysiognomyResult, PalmistryResult, ImpressionAnalysisResult, AstrologyResult, SajuResult, TarotResult, JuyeokResult, YukhyoResult, DreamInterpretationResult, NewbornNameResult, BusinessNameResult, PersonalNameAnalysisResult, BusinessNameAnalysisResult, CardDraw, JuyeokReading, LineType } from '../types';
 import { getSavedResults, deleteResult } from '../utils/storage';
 import { Header } from './Header';
 import { AnalysisResultLayout } from './shared/AnalysisResultLayout';
@@ -7,6 +7,10 @@ import { BoxIcon, TrashIcon, EyeIcon, NoseIcon, MouthIcon, ForeheadIcon, ChinIco
 import { TypingResult } from './TypingResult';
 import { motion, Variants } from 'framer-motion';
 import { getCardVisualComponent } from '../utils/tarotUtils';
+import { NameResultDisplay } from './NameResultDisplay';
+import { BusinessNameResultDisplay } from './BusinessNameResultDisplay';
+import { PersonalNameAnalysisResultDisplay } from './PersonalNameAnalysisResultDisplay';
+import { BusinessNameAnalysisResultDisplay } from './BusinessNameAnalysisResultDisplay';
 
 
 const itemVariants: Variants = { hidden: { opacity: 0, y: 20, scale: 0.95 }, visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } } };
@@ -37,7 +41,7 @@ const HexagramVisual: React.FC<{ lines: LineType[], changingLines?: number[] }> 
 );
 
 
-const SavedResultsPage: React.FC<{ onBack: () => void; }> = ({ onBack: navigateToHome }) => {
+const SavedResultsPage: React.FC<{ onBack: () => void; onNavigate: (page: string) => void; }> = ({ onBack: navigateToHome, onNavigate }) => {
   const [savedResults, setSavedResults] = useState<SavedResult[]>([]);
   const [selectedResult, setSelectedResult] = useState<SavedResult | null>(null);
 
@@ -147,19 +151,7 @@ const SavedResultsPage: React.FC<{ onBack: () => void; }> = ({ onBack: navigateT
             content = <AnalysisResultLayout {...props}
                 shareText=''
                 freeContent={
-                    <>
-                        {dreamResult.imageBase64 && (
-                            <div className="mb-8">
-                                <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display text-center">꿈의 시각화</h2>
-                                <img 
-                                    src={`data:image/jpeg;base64,${dreamResult.imageBase64}`} 
-                                    alt="AI가 생성한 꿈 시각화 이미지" 
-                                    className="rounded-2xl shadow-lg w-full max-w-md mx-auto border-2 border-slate-700"
-                                />
-                            </div>
-                        )}
-                        <div className="bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8"><h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display">꿈 해몽 요약</h2><TypingResult text={dreamResult.summary} className="text-slate-300 leading-relaxed whitespace-pre-wrap" /></div>
-                    </>
+                    <div className="bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8"><h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display">꿈 해몽 요약</h2><TypingResult text={dreamResult.summary} className="text-slate-300 leading-relaxed whitespace-pre-wrap" /></div>
                 }
                 premiumContent={<div className="mt-8 space-y-6"><h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-2 text-center font-display">상세 꿈 해몽 리포트</h2><div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6"><h3 className="text-xl font-bold text-white mb-3 font-display">상세 해몽</h3><p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{dreamResult.premium_analysis.detailed_interpretation}</p></div><div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6"><h3 className="text-xl font-bold text-white mb-3 font-display">꿈의 핵심 상징</h3><div className="space-y-4">{dreamResult.premium_analysis.dream_symbols.map((symbol, index) => (<div key={index} className="border-b border-slate-700 pb-3 last:border-b-0"><p className="font-bold text-cyan-400 text-lg">{symbol.symbol}</p><p className="text-slate-400 mt-1">{symbol.meaning}</p></div>))}</div></div><div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 flex items-start gap-4"><div className="flex-shrink-0 pt-1"><LightbulbIcon className="w-8 h-8 text-yellow-400" /></div><div><h3 className="text-xl font-bold text-yellow-300 mb-2 font-display">꿈이 주는 조언</h3><p className="text-slate-400 leading-relaxed">{dreamResult.premium_analysis.advice}</p></div></div>
                 {dreamResult.groundingChunks && dreamResult.groundingChunks.length > 0 && (
@@ -184,49 +176,22 @@ const SavedResultsPage: React.FC<{ onBack: () => void; }> = ({ onBack: navigateT
                 </div>}
             />;
             break;
-        case 'name-generator':
-            const nameResult = selectedResult.result as NameGenerationResult;
-            const lastName = selectedResult.context?.lastName || '';
-            const fullName = `${lastName}${nameResult.premium_analysis.name}`;
-            content = <AnalysisResultLayout {...props}
-                shareText=''
-                freeContent={
-                    <>
-                        <div className="bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8 text-center">
-                            <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-2 font-display">AI 추천 이름</h2>
-                            <p className="text-5xl sm:text-6xl font-bold text-white mb-2">{fullName}</p>
-                            <p className="text-xl text-slate-300">{nameResult.premium_analysis.hanja}</p>
-                        </div>
-                        <div className="space-y-6 mt-8">
-                            <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
-                                <h3 className="text-xl font-bold text-white mb-3 font-display">이름 요약</h3>
-                                <TypingResult text={nameResult.summary} className="text-slate-400 leading-relaxed whitespace-pre-wrap" />
-                            </div>
-                        </div>
-                    </>
-                }
-                premiumContent={
-                    <div className="space-y-6 mt-8">
-                        <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display text-center">작명 상세 해설</h2>
-                        <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
-                            <h3 className="text-xl font-bold text-white mb-3 font-display">이름의 의미</h3>
-                            <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{nameResult.premium_analysis.meaning}</p>
-                        </div>
-                        <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
-                            <h3 className="text-xl font-bold text-white mb-3 font-display">사주와 오행 분석</h3>
-                            <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{nameResult.premium_analysis.five_elements_analysis}</p>
-                        </div>
-                        <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
-                            <h3 className="text-xl font-bold text-white mb-3 font-display">소리(발음) 분석</h3>
-                            <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{nameResult.premium_analysis.sound_analysis}</p>
-                        </div>
-                         <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
-                            <h3 className="text-xl font-bold text-white mb-3 font-display">종합 운세</h3>
-                            <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{nameResult.premium_analysis.overall_fortune}</p>
-                        </div>
-                    </div>
-                }
-            />;
+        case 'newborn-namer':
+        case 'renamer':
+            content = <NameResultDisplay 
+                result={selectedResult.result as NewbornNameResult} 
+                lastName={selectedResult.context?.lastName || ''}
+                resultType={selectedResult.type === 'newborn-namer' ? 'newborn' : 'rename'}
+                {...props} />;
+            break;
+        case 'business-namer':
+            content = <BusinessNameResultDisplay result={selectedResult.result as BusinessNameResult} {...props} />;
+            break;
+        case 'personal-name-analyzer':
+            content = <PersonalNameAnalysisResultDisplay result={selectedResult.result as PersonalNameAnalysisResult} {...props} />;
+            break;
+        case 'business-name-analyzer':
+            content = <BusinessNameAnalysisResultDisplay result={selectedResult.result as BusinessNameAnalysisResult} {...props} />;
             break;
         default:
             return <div className="text-center p-8"><p>알 수 없는 결과 타입입니다.</p><button onClick={() => setSelectedResult(null)} className="mt-4 px-4 py-2 bg-slate-600 rounded-lg">목록으로</button></div>;

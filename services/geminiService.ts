@@ -1,5 +1,5 @@
 import { compressImage, fileToBase64 } from '../utils/imageUtils';
-import type { PhysiognomyResult, PalmistryResult, ImpressionAnalysisResult, AstrologyResult, SajuResult, TarotResult, CardDraw, JuyeokReading, JuyeokResult, Hexagram, YukhyoResult, DailyTarotResult, DreamInterpretationResult, NameGenerationResult } from '../types';
+import type { PhysiognomyResult, PalmistryResult, ImpressionAnalysisResult, AstrologyResult, SajuResult, TarotResult, CardDraw, JuyeokReading, JuyeokResult, Hexagram, YukhyoResult, DailyTarotResult, DreamInterpretationResult, NewbornNameResult, BusinessNameResult, PersonalNameAnalysisResult, BusinessNameAnalysisResult } from '../types';
 import { API_BASE_URL } from '../utils/apiConfig';
 
 /**
@@ -120,8 +120,24 @@ export const analyzeDream = async (dreamText: string): Promise<DreamInterpretati
   return analyze<DreamInterpretationResult>('dream', { dreamText });
 };
 
-export const analyzeName = async (lastName: string, gender: '남성' | '여성', birthDate: string, birthTime: string, requests: string): Promise<NameGenerationResult> => {
-  return analyze<NameGenerationResult>('name-generator', { lastName, gender, birthDate, birthTime, requests });
+export const generateNewbornName = async (lastName: string, gender: '남성' | '여성', birthDate: string, birthTime: string, requests: string): Promise<NewbornNameResult> => {
+  return analyze<NewbornNameResult>('newborn-namer', { lastName, gender, birthDate, birthTime, requests });
+};
+
+export const generateForRename = async (currentName: string, lastName: string, gender: '남성' | '여성', birthDate: string, birthTime: string, requests: string): Promise<NewbornNameResult> => {
+  return analyze<NewbornNameResult>('renamer', { currentName, lastName, gender, birthDate, birthTime, requests });
+};
+
+export const generateBusinessName = async (businessType: string, coreValues: string, exclusions: string): Promise<BusinessNameResult> => {
+  return analyze<BusinessNameResult>('business-namer', { businessType, coreValues, exclusions });
+};
+
+export const analyzePersonalName = async (name: string, birthDate: string, birthTime: string): Promise<PersonalNameAnalysisResult> => {
+  return analyze<PersonalNameAnalysisResult>('personal-name-analyzer', { name, birthDate, birthTime });
+};
+
+export const analyzeBusinessName = async (name: string, businessType: string): Promise<BusinessNameAnalysisResult> => {
+  return analyze<BusinessNameAnalysisResult>('business-name-analyzer', { name, businessType });
 };
 
 export const analyzeDailyTarot = async (card: CardDraw): Promise<DailyTarotResult> => {
