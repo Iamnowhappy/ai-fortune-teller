@@ -1,5 +1,5 @@
 import React from 'react';
-import { HomeIcon, FaceIcon, PalmIcon, SajuIcon, AstrologyIcon, TarotIcon, JuyeokIcon } from './icons';
+import { HomeIcon, FaceIcon, PalmIcon, SajuIcon, AstrologyIcon, TarotIcon, JuyeokIcon, DreamIcon } from './icons';
 
 interface PageProps {
   onBack: () => void;
@@ -39,6 +39,10 @@ export const GuidePage: React.FC<PageProps> = ({ onBack }) => {
 
         <GuideSection icon={<PalmIcon className="w-10 h-10" />} title="AI 손금 분석">
             <p>손금은 손바닥에 나타난 선들을 통해 사람의 운명과 성향을 읽어내는 점술입니다. 대표적인 3대선인 생명선, 감정선, 두뇌선을 중심으로 건강, 애정, 재능 등을 파악합니다. 손금은 정해진 운명이 아닌, 살아오면서 변화하는 삶의 지도로 여겨집니다. AI 손금 분석은 당신의 손에 새겨진 삶의 흔적과 미래의 방향성을 해석해 드립니다.</p>
+        </GuideSection>
+        
+        <GuideSection icon={<DreamIcon className="w-10 h-10" />} title="AI 꿈 해몽 전문가">
+            <p>꿈 해몽은 수면 중에 경험하는 이야기와 이미지를 통해 자신의 무의식적인 생각, 감정, 미래에 대한 암시를 해석하는 과정입니다. 꿈에 등장하는 상징물들은 개인의 심리 상태와 현실의 문제를 반영합니다. AI 꿈 해몽 전문가는 심리학과 상징학 데이터를 기반으로 당신의 꿈이 보내는 메시지를 해석하고, 삶에 대한 깊은 통찰을 제공합니다.</p>
         </GuideSection>
 
         <GuideSection icon={<SajuIcon className="w-10 h-10" />} title="AI 사주 분석">

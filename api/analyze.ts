@@ -255,7 +255,6 @@ const yukhyoAnalysisSchema = {
     required: ["ganji_date", "hexagram_name", "yongsin", "lines", "overall_interpretation"]
 };
 
-
 // --- Serverless Function Handler ---
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     // --- CORS 헤더 ---
@@ -299,48 +298,74 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           });
         }
         
-        // --- Face Stretch (special case with its own error handling) ---
-        if (type === 'face-stretch') {
-            try {
-                if (!payload?.data) return res.status(400).json({ error: "Image data not sent." });
-                const prompt = `사진 속 인물의 얼굴을 세로로 길게, 위아래로 최대한 늘려서 과장되고 재미있는 이미지로 만들어줘. 그리고 이 변형된 얼굴에 대한 재미있는 한 줄 평을 함께 알려줘.`;
-                const response = await ai.models.generateContent({
-                    model: 'gemini-2.5-flash-image-preview',
-                    contents: { parts: [{ text: prompt }, { inlineData: { mimeType: payload.mimeType, data: payload.data } }] },
-                    config: { responseModalities: [Modality.IMAGE, Modality.TEXT] },
-                });
-                let stretchedImageBase64 = '', comment = '';
-                if (response.candidates?.[0]?.content?.parts) {
-                    for (const part of response.candidates[0].content.parts) {
-                        if (part.text) comment = part.text;
-                        else if (part.inlineData) stretchedImageBase64 = part.inlineData.data;
-                    }
-                }
-                if (!stretchedImageBase64 || !comment) throw new Error("AI failed to generate image or comment.");
-                
-                console.log("✅ [API/analyze] Face-stretch successful.");
-                return res.status(200).json({ stretchedImageBase64, comment });
-            } catch (error: any) {
-                // Graceful fallback for any API error during face-stretching.
-                if (error.name === 'ApiError') {
-                    let userMessage = "AI가 이미지를 분석하는 데 실패했습니다. 다른 사진을 사용해보거나, 잠시 후 다시 시도해주세요.";
-                    if (error.status === 429) {
-                        userMessage = "현재 요청이 너무 많아 AI가 잠시 쉬고 있어요. 잠시 후 다시 시도해주세요.";
-                        console.warn("⚠️ face-stretch fallback activated due to API rate limit (429).");
-                    } else if (error.message && (error.message.toLowerCase().includes('safety') || error.message.toLowerCase().includes('blocked'))) {
-                         userMessage = "이미지가 안전 정책에 위배되어 분석할 수 없습니다. 다른 사진을 사용해주세요.";
-                         console.warn("⚠️ face-stretch fallback activated due to safety policy violation.");
-                    } else {
-                        console.warn(`⚠️ face-stretch fallback activated due to a Gemini API error (status: ${error.status || 'N/A'}).`);
-                    }
-                    return res.status(200).json({
-                        stretchedImageBase64: "", // Return empty image
-                        comment: userMessage
-                    });
-                }
-                // For non-API errors (e.g., server-side logic), re-throw to be caught by the main handler
-                throw error;
+        // --- Dream Analysis (special case with grounded search) ---
+        if (type === 'dream') {
+            const dreamPrompt = `당신은 프로이트, 융 심리학 및 전 세계 신화에 정통한 꿈 해몽 전문가입니다. Google 검색을 활용하여 사용자의 꿈에 나타난 상징들의 보편적인 의미를 찾고, 이를 바탕으로 사용자의 꿈 내용 '${payload.dreamText}'을(를) 상세히 분석해주세요. 응답은 다음 형식에 맞춰 명확하게 구분하여 작성해주세요: [요약], [상세 해몽], [핵심 상징], [조언], [이미지 프롬프트]. [핵심 상징] 부분은 '상징: 의미' 형식으로 여러 개를 나열해주세요. [이미지 프롬프트]는 꿈을 묘사하는 초현실적이고 예술적인 영어 프롬프트여야 합니다. 텍스트 외에 다른 어떤 마크다운이나 설명도 추가하지 마세요.`;
+
+            console.log(`📌 [API/analyze] Requesting grounded analysis for dream.`);
+            const analysisResponse = await ai.models.generateContent({
+                model: "gemini-2.5-flash",
+                contents: dreamPrompt,
+                config: {
+                    tools: [{ googleSearch: {} }],
+                },
+            });
+
+            const groundingChunks = analysisResponse.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
+            const analysisText = analysisResponse.text;
+            
+            if (!analysisText) {
+                throw new Error("AI did not return a valid text analysis for the dream.");
             }
+
+            console.log("✅ [API/analyze] Received grounded text response for dream.");
+            
+            // Parse the text response
+            const summary = analysisText.match(/\[요약\]\s*([\s\S]*?)(?=\s*\[상세 해몽\]|$)/)?.[1]?.trim() || '';
+            const detailed_interpretation = analysisText.match(/\[상세 해몽\]\s*([\s\S]*?)(?=\s*\[핵심 상징\]|$)/)?.[1]?.trim() || '';
+            const symbolsText = analysisText.match(/\[핵심 상징\]\s*([\s\S]*?)(?=\s*\[조언\]|$)/)?.[1]?.trim() || '';
+            const advice = analysisText.match(/\[조언\]\s*([\s\S]*?)(?=\s*\[이미지 프롬프트\]|$)/)?.[1]?.trim() || '';
+            const image_prompt = analysisText.match(/\[이미지 프롬프트\]\s*([\s\S]*)/)?.[1]?.trim() || '';
+
+            const dream_symbols = symbolsText.split('\n').map(line => {
+                const parts = line.split(/:\s*/, 2); // Split only on the first colon
+                if (parts.length < 2 || !parts[0] || !parts[1]) return null;
+                return {
+                    symbol: parts[0].trim(),
+                    meaning: parts[1].trim()
+                };
+            }).filter((item): item is { symbol: string, meaning: string } => item !== null);
+
+
+            const finalResult: any = {
+                summary,
+                premium_analysis: {
+                    detailed_interpretation,
+                    dream_symbols,
+                    advice
+                },
+                groundingChunks,
+                imageBase64: null
+            };
+
+            if (image_prompt) {
+                try {
+                    console.log(`🎨 [API/analyze] Generating image for dream with prompt: "${image_prompt}"`);
+                    const imageResponse = await ai.models.generateImages({
+                        model: 'imagen-4.0-generate-001',
+                        prompt: image_prompt,
+                        config: { numberOfImages: 1, outputMimeType: 'image/jpeg', aspectRatio: '3:4' },
+                    });
+                    if (imageResponse.generatedImages?.length > 0) {
+                        finalResult.imageBase64 = imageResponse.generatedImages[0].image.imageBytes;
+                        console.log("✅ [API/analyze] Dream image generated and added to result.");
+                    }
+                } catch (imageError) {
+                    console.warn("⚠️ [API/analyze] Dream image generation failed, returning text analysis only. Error:", imageError);
+                }
+            }
+            
+            return res.status(200).json(finalResult);
         }
 
 

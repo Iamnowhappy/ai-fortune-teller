@@ -151,16 +151,35 @@ export interface YukhyoResult {
     overall_interpretation: string;
 }
 
-// --- Face Stretcher Type ---
-export interface FaceStretchResult {
-  stretchedImageBase64: string;
-  comment: string;
+// --- Dream Interpreter Types ---
+export interface DreamSymbol {
+    symbol: string;
+    meaning: string;
 }
+
+export interface GroundingChunk {
+  web: {
+    uri: string;
+    title: string;
+  };
+}
+
+export interface DreamInterpretationResult {
+    summary: string; // Free
+    imageBase64?: string; // AI-generated image representing the dream
+    premium_analysis: {
+        detailed_interpretation: string;
+        dream_symbols: DreamSymbol[];
+        advice: string;
+    };
+    groundingChunks?: GroundingChunk[];
+}
+
 
 // --- Saved Result Type ---
 export interface SavedResult {
   id: string; // Unique ID for the result, can be a timestamp string
-  type: 'face-reader' | 'palm-reader' | 'impression-analyzer' | 'astrology-reader' | 'saju-analyzer' | 'tarot-reader' | 'juyeok-reader' | 'yukhyo-analyzer';
+  type: 'face-reader' | 'palm-reader' | 'impression-analyzer' | 'astrology-reader' | 'saju-analyzer' | 'tarot-reader' | 'juyeok-reader' | 'yukhyo-analyzer' | 'dream-interpreter';
   typeName: string; // User-friendly name like "AI 관상가"
   date: string; // ISO string of the save date
   result: any; // The result data object

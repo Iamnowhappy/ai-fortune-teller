@@ -1,5 +1,5 @@
 import { compressImage, fileToBase64 } from '../utils/imageUtils';
-import type { PhysiognomyResult, PalmistryResult, ImpressionAnalysisResult, AstrologyResult, SajuResult, TarotResult, CardDraw, JuyeokReading, JuyeokResult, Hexagram, YukhyoResult, DailyTarotResult, FaceStretchResult } from '../types';
+import type { PhysiognomyResult, PalmistryResult, ImpressionAnalysisResult, AstrologyResult, SajuResult, TarotResult, CardDraw, JuyeokReading, JuyeokResult, Hexagram, YukhyoResult, DailyTarotResult, DreamInterpretationResult } from '../types';
 import { API_BASE_URL } from '../utils/apiConfig';
 
 /**
@@ -10,7 +10,7 @@ import { API_BASE_URL } from '../utils/apiConfig';
  */
 async function analyze<T>(type: string, payload: any): Promise<T> {
     try {
-        if (['face', 'palm', 'impression', 'face-stretch'].includes(type) && payload.data) {
+        if (['face', 'palm', 'impression'].includes(type) && payload.data) {
             console.log(`📤 [geminiService] Sending '${type}' request. Image base64 length: ${payload.data.length}`);
         }
 
@@ -96,13 +96,6 @@ export const analyzeImpression = async (imageFile: File): Promise<ImpressionAnal
   return analyze<ImpressionAnalysisResult>('impression', { data, mimeType });
 };
 
-export const stretchFace = async (imageFile: File): Promise<FaceStretchResult> => {
-  const compressedFile = await compressImage(imageFile);
-  const data = await fileToBase64(compressedFile);
-  const mimeType = compressedFile.type;
-  return analyze<FaceStretchResult>('face-stretch', { data, mimeType });
-};
-
 export const analyzeAstrology = async (birthDate: string): Promise<AstrologyResult> => {
     return analyze<AstrologyResult>('astrology', { birthDate });
 };
@@ -121,6 +114,10 @@ export const analyzeJuyeok = async (question: string, reading: JuyeokReading): P
 
 export const analyzeYukhyo = async (question: string): Promise<YukhyoResult> => {
   return analyze<YukhyoResult>('yukhyo', { question });
+};
+
+export const analyzeDream = async (dreamText: string): Promise<DreamInterpretationResult> => {
+  return analyze<DreamInterpretationResult>('dream', { dreamText });
 };
 
 export const analyzeDailyTarot = async (card: CardDraw): Promise<DailyTarotResult> => {

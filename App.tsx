@@ -13,10 +13,10 @@ import { PrivacyPolicyPage } from './components/PrivacyPolicyPage';
 import { TermsOfServicePage } from './components/TermsOfServicePage';
 import { GuidePage } from './components/GuidePage';
 import { Loader } from './components/Loader';
-import { analyzeFace, analyzePalm, analyzeImpression, analyzeAstrology, analyzeSaju, analyzeTarotReading, analyzeJuyeok, analyzeYukhyo } from './services/geminiService';
-import type { PhysiognomyResult, PalmistryResult, ImpressionAnalysisResult, AstrologyResult, SajuResult, TarotResult, JuyeokResult, YukhyoResult, CardDraw, JuyeokReading, SavedResult, LineType } from './types';
+import { analyzeFace, analyzePalm, analyzeImpression, analyzeAstrology, analyzeSaju, analyzeTarotReading, analyzeJuyeok, analyzeYukhyo, analyzeDream } from './services/geminiService';
+import type { PhysiognomyResult, PalmistryResult, ImpressionAnalysisResult, AstrologyResult, SajuResult, TarotResult, JuyeokResult, YukhyoResult, CardDraw, JuyeokReading, SavedResult, LineType, DreamInterpretationResult } from './types';
 import { Footer } from './components/Footer';
-import { FaceIcon, PalmIcon, ImpressionIcon, AstrologyIcon, SajuIcon, TarotIcon, JuyeokIcon, YukhyoIcon, BoxIcon, TheSunIcon, StarIcon, LockIcon, HappyFaceIcon, EyeIcon, NoseIcon, MouthIcon, ForeheadIcon, ChinIcon, EarIcon, LifeLineIcon, HeartLineIcon, HeadLineIcon, LineIcon, LightbulbIcon, HomeIcon, RefreshIcon, SaveIcon } from './components/icons';
+import { FaceIcon, PalmIcon, ImpressionIcon, AstrologyIcon, SajuIcon, TarotIcon, JuyeokIcon, YukhyoIcon, BoxIcon, TheSunIcon, StarIcon, LockIcon, HappyFaceIcon, EyeIcon, NoseIcon, MouthIcon, ForeheadIcon, ChinIcon, EarIcon, LifeLineIcon, HeartLineIcon, HeadLineIcon, LineIcon, LightbulbIcon, HomeIcon, RefreshIcon, SaveIcon, DreamIcon } from './components/icons';
 import { generateIChingReading, getDailyFortune } from './utils/divinationUtils';
 import { saveResult } from './utils/storage';
 import { TarotReaderPage } from './components/TarotReaderPage';
@@ -31,9 +31,10 @@ import { AstrologyResultDisplay } from './components/AstrologyResultDisplay';
 import { SajuResultDisplay } from './components/SajuResultDisplay';
 import { JuyeokResultDisplay } from './components/JuyeokResultDisplay';
 import { YukhyoResultDisplay } from './components/YukhyoResultDisplay';
+import { DreamResultDisplay } from './components/DreamResultDisplay';
 
 
-type Page = 'home' | 'face-reader' | 'palm-reader' | 'impression-analyzer' | 'astrology-reader' | 'saju-analyzer' | 'tarot-reader' | 'juyeok-reader' | 'yukhyo-analyzer' | 'daily-tarot' | 'saved-results' | 'about' | 'privacy' | 'terms' | 'guide' | 'changelog' | 'face-stretcher';
+type Page = 'home' | 'face-reader' | 'palm-reader' | 'impression-analyzer' | 'astrology-reader' | 'saju-analyzer' | 'tarot-reader' | 'juyeok-reader' | 'yukhyo-analyzer' | 'dream-interpreter' | 'daily-tarot' | 'saved-results' | 'about' | 'privacy' | 'terms' | 'guide' | 'changelog' | 'face-stretcher';
 
 // --- HomePage Component ---
 const HomePage: React.FC<{ onNavigate: (page: Page) => void; }> = ({ onNavigate }) => {
@@ -185,6 +186,20 @@ const HomePage: React.FC<{ onNavigate: (page: Page) => void; }> = ({ onNavigate 
           <ImpressionIcon className="w-16 h-16 text-white transition-transform duration-500 group-hover:rotate-12 group-hover:scale-110" />
           <h2 className="text-2xl font-bold text-white">AI 첫인상 분석</h2>
           <p className="text-slate-200">사진 속 당신의 첫인상은 어떨까요? AI가 알려드립니다.</p>
+        </div>
+        
+        {/* Dream Interpreter Card */}
+        <div
+          onClick={() => onNavigate('dream-interpreter')}
+          className="bg-[#6D28D9]/80 border border-[#5B21B6] rounded-2xl p-6 flex flex-col items-center gap-4 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:border-[#8B5CF6] cursor-pointer group shadow-lg"
+          role="button"
+          tabIndex={0}
+          aria-label="AI 꿈 해몽 전문가 실행하기"
+          onKeyDown={(e) => e.key === 'Enter' && onNavigate('dream-interpreter')}
+        >
+          <DreamIcon className="w-16 h-16 text-white transition-transform duration-500 group-hover:rotate-12 group-hover:scale-110" />
+          <h2 className="text-2xl font-bold text-white">AI 꿈 해몽 전문가</h2>
+          <p className="text-slate-200">간밤의 꿈이 궁금하신가요? AI가 해석해 드립니다.</p>
         </div>
 
         {/* Astrology Reader Card */}
@@ -720,6 +735,73 @@ const YukhyoAnalyzerPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
     );
 };
 
+// --- DreamInterpreterPage Component ---
+const DreamInterpreterPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
+    const [dreamText, setDreamText] = useState<string>('');
+    const [isSaved, setIsSaved] = useState(false);
+    const { result, isLoading, error, runAnalysis, reset } = useAnalysis(analyzeDream);
+
+    const handleAnalyze = useCallback(() => {
+        if (dreamText.trim()) {
+            runAnalysis(dreamText);
+        }
+    }, [dreamText, runAnalysis]);
+
+    const handleSave = useCallback(() => {
+        if (!result) return;
+        saveResult({
+            id: new Date().toISOString(), type: 'dream-interpreter', typeName: 'AI 꿈 해몽 전문가',
+            date: new Date().toISOString(), result, context: { dreamText }
+        });
+        setIsSaved(true);
+        setTimeout(() => setIsSaved(false), 2000);
+    }, [result, dreamText]);
+    
+    const handleReset = useCallback(() => {
+        setDreamText(''); reset(); setIsSaved(false);
+    }, [reset]);
+
+    return (
+        <>
+            <Header
+                icon={<DreamIcon className="w-10 h-10 text-cyan-400" />}
+                title="AI 꿈 해몽 전문가"
+                description="꿈 내용을 입력하면 AI가 그 의미를 심층적으로 분석해 드립니다."
+                onBack={onBack}
+            />
+            <main className="flex-grow flex flex-col items-center justify-center text-center py-10">
+                {isLoading ? ( <Loader type="dream" /> )
+                : result ? (
+                    <DreamResultDisplay
+                        result={result}
+                        dreamText={dreamText}
+                        onReset={handleReset}
+                        onBack={onBack}
+                        onSave={handleSave}
+                        isSaved={isSaved}
+                        isSavedView={false}
+                    />
+                ) : (
+                    <div className="w-full max-w-md flex flex-col items-center gap-8 p-6 bg-slate-800/50 rounded-2xl shadow-lg border border-slate-700">
+                        <div className="w-full flex flex-col gap-4">
+                            <label htmlFor="dream-text" className="block text-lg font-medium text-slate-300">어떤 꿈을 꾸셨나요?</label>
+                            <textarea 
+                                id="dream-text" 
+                                value={dreamText} 
+                                onChange={(e) => setDreamText(e.target.value)} 
+                                placeholder="예) 높은 산 정상에 올라 세상을 내려다보는 꿈을 꿨어요." 
+                                className="w-full p-3 h-48 bg-slate-700/50 border border-slate-600 rounded-lg text-white resize-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                            />
+                        </div>
+                        <button onClick={handleAnalyze} disabled={!dreamText.trim()} className="w-full py-3 px-6 bg-cyan-500 text-slate-900 font-bold text-lg rounded-lg shadow-md transition-all duration-300 hover:bg-cyan-400 disabled:bg-slate-600 disabled:cursor-not-allowed">꿈 해몽하기</button>
+                    </div>
+                )}
+                <ErrorMessage message={error} />
+            </main>
+        </>
+    );
+};
+
 
 // --- Main App Component (Router) ---
 const App: React.FC = () => {
@@ -760,6 +842,8 @@ const App: React.FC = () => {
         return <JuyeokReaderPage onBack={() => navigateTo('home')} />;
       case 'yukhyo-analyzer':
         return <YukhyoAnalyzerPage onBack={() => navigateTo('home')} />;
+      case 'dream-interpreter':
+        return <DreamInterpreterPage onBack={() => navigateTo('home')} />;
       case 'daily-tarot':
         return <DailyTarotPage onBack={() => navigateTo('home')} />;
       case 'face-stretcher':

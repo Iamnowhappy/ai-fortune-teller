@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import type { SavedResult, PhysiognomyResult, PalmistryResult, ImpressionAnalysisResult, AstrologyResult, SajuResult, TarotResult, JuyeokResult, YukhyoResult, CardDraw, JuyeokReading, LineType } from '../types';
+import type { SavedResult, PhysiognomyResult, PalmistryResult, ImpressionAnalysisResult, AstrologyResult, SajuResult, TarotResult, JuyeokResult, YukhyoResult, DreamInterpretationResult, CardDraw, JuyeokReading, LineType } from '../types';
 import { getSavedResults, deleteResult } from '../utils/storage';
 import { Header } from './Header';
 import { AnalysisResultLayout } from './shared/AnalysisResultLayout';
@@ -140,6 +140,48 @@ const SavedResultsPage: React.FC<{ onBack: () => void; }> = ({ onBack: navigateT
                 shareText=''
                 freeContent={<><div className="bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8"><h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-1 font-display">육효 분석</h2><p className="text-slate-400 mb-4">{yukhyoResult.ganji_date} 기준</p><div className="overflow-x-auto"><table className="w-full text-center text-white border-collapse"><thead className="bg-slate-700/50"><tr><th className="p-3 border border-slate-600">괘</th><th className="p-3 border border-slate-600">효</th><th className="p-3 border border-slate-600">세/응</th><th className="p-3 border border-slate-600">육친</th><th className="p-3 border border-slate-600">지지</th></tr></thead><tbody className="bg-slate-800">{yukhyoResult.lines.sort((a,b)=>b.line_number-a.line_number).map(l=><tr key={l.line_number}>{l.line_number===6 && <td rowSpan={6} className="p-3 border border-slate-600 font-bold text-xl">{yukhyoResult.hexagram_name}</td>}<td className="p-3 border border-slate-600">{l.line_number}효</td><td className={`p-3 border border-slate-600 font-bold ${l.marker==='세(世)'?'text-cyan-400':l.marker==='응(應)'?'text-yellow-400':''}`}>{l.marker||'-'}</td><td className="p-3 border border-slate-600">{l.six_relatives}</td><td className="p-3 border border-slate-600">{l.earthly_branch}</td></tr>)}</tbody></table></div></div><div className="space-y-6 mt-8"><div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6"><h3 className="text-xl font-bold text-white mb-3 font-display">핵심 분석 (용신)</h3><TypingResult text={yukhyoResult.yongsin} className="text-slate-400 leading-relaxed whitespace-pre-wrap" /></div></div></>}
                 premiumContent={<div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 mt-8"><h3 className="text-xl font-bold text-white mb-3 font-display">종합 해설 및 조언</h3><p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{yukhyoResult.overall_interpretation}</p></div>}
+            />;
+            break;
+        case 'dream-interpreter':
+            const dreamResult = selectedResult.result as DreamInterpretationResult;
+            content = <AnalysisResultLayout {...props}
+                shareText=''
+                freeContent={
+                    <>
+                        {dreamResult.imageBase64 && (
+                            <div className="mb-8">
+                                <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display text-center">꿈의 시각화</h2>
+                                <img 
+                                    src={`data:image/jpeg;base64,${dreamResult.imageBase64}`} 
+                                    alt="AI가 생성한 꿈 시각화 이미지" 
+                                    className="rounded-2xl shadow-lg w-full max-w-md mx-auto border-2 border-slate-700"
+                                />
+                            </div>
+                        )}
+                        <div className="bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8"><h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display">꿈 해몽 요약</h2><TypingResult text={dreamResult.summary} className="text-slate-300 leading-relaxed whitespace-pre-wrap" /></div>
+                    </>
+                }
+                premiumContent={<div className="mt-8 space-y-6"><h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-2 text-center font-display">상세 꿈 해몽 리포트</h2><div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6"><h3 className="text-xl font-bold text-white mb-3 font-display">상세 해몽</h3><p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{dreamResult.premium_analysis.detailed_interpretation}</p></div><div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6"><h3 className="text-xl font-bold text-white mb-3 font-display">꿈의 핵심 상징</h3><div className="space-y-4">{dreamResult.premium_analysis.dream_symbols.map((symbol, index) => (<div key={index} className="border-b border-slate-700 pb-3 last:border-b-0"><p className="font-bold text-cyan-400 text-lg">{symbol.symbol}</p><p className="text-slate-400 mt-1">{symbol.meaning}</p></div>))}</div></div><div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 flex items-start gap-4"><div className="flex-shrink-0 pt-1"><LightbulbIcon className="w-8 h-8 text-yellow-400" /></div><div><h3 className="text-xl font-bold text-yellow-300 mb-2 font-display">꿈이 주는 조언</h3><p className="text-slate-400 leading-relaxed">{dreamResult.premium_analysis.advice}</p></div></div>
+                {dreamResult.groundingChunks && dreamResult.groundingChunks.length > 0 && (
+                    <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+                        <h3 className="text-xl font-bold text-white mb-3 font-display">참고 자료</h3>
+                        <ul className="list-disc list-inside space-y-2 text-sm">
+                        {dreamResult.groundingChunks.map((chunk, index) => (
+                            <li key={index}>
+                            <a 
+                                href={chunk.web.uri} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-cyan-400 hover:text-cyan-300 hover:underline transition-colors break-all"
+                            >
+                                {chunk.web.title || chunk.web.uri}
+                            </a>
+                            </li>
+                        ))}
+                        </ul>
+                    </div>
+                )}
+                </div>}
             />;
             break;
         default:

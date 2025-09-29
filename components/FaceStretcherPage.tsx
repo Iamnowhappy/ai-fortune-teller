@@ -1,57 +1,88 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { Header } from './Header';
 import { ImageUploader } from './ImageUploader';
 import { Loader } from './Loader';
-import { stretchFace } from '../services/geminiService';
-import type { FaceStretchResult } from '../types';
 import { HappyFaceIcon, HomeIcon, RefreshIcon } from './icons';
 import { motion } from 'framer-motion';
 import { ErrorMessage } from './shared/ErrorMessage';
 import { ShareButtons } from './ShareButtons';
 
+
+const funnyComments = [
+    "중력을 거스르는 자가 되셨군요!",
+    "얼굴에서 초고층 빌딩이 보입니다.",
+    "이 얼굴, 왠지 모르게 지적인데요?",
+    "세상 모든 번뇌를 초월한 표정입니다.",
+    "길어서 슬픈 얼굴이여... 하지만 웃기군요!",
+    "다음 프로필 사진은 이걸로 정했습니다."
+];
+
 export const FaceStretcherPage: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [originalImageUrl, setOriginalImageUrl] = useState<string | null>(null);
-    const [analysisResult, setAnalysisResult] = useState<FaceStretchResult | null>(null);
+    const [stretchedImageUrl, setStretchedImageUrl] = useState<string | null>(null);
+    const [comment, setComment] = useState<string>('');
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
+    const canvasRef = useRef<HTMLCanvasElement>(null);
 
     const handleImageSelect = (file: File) => {
         setImageFile(file);
         setOriginalImageUrl(URL.createObjectURL(file));
-        setAnalysisResult(null);
+        setStretchedImageUrl(null);
+        setComment('');
         setError(null);
     };
 
-    const handleAnalyze = useCallback(async () => {
-        if (!imageFile) {
+    const handleAnalyze = useCallback(() => {
+        if (!originalImageUrl) {
             setError('분석할 이미지를 먼저 선택해주세요.');
             return;
         }
         setIsLoading(true);
         setError(null);
-        setAnalysisResult(null);
+        setStretchedImageUrl(null);
 
-        try {
-            const result = await stretchFace(imageFile);
-            setAnalysisResult(result);
-        } catch (err: any) {
-            console.error(err);
-            setError(err.message || '알 수 없는 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
-        } finally {
+        setComment(funnyComments[Math.floor(Math.random() * funnyComments.length)]);
+
+        const canvas = canvasRef.current;
+        const ctx = canvas?.getContext('2d');
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.src = originalImageUrl;
+
+        img.onload = () => {
+            if (canvas && ctx) {
+                const stretchFactor = 1.5; // Stretch vertically by 50%
+                const { width, height } = img;
+                
+                canvas.width = width;
+                canvas.height = height * stretchFactor;
+
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                setStretchedImageUrl(canvas.toDataURL('image/jpeg'));
+            }
             setIsLoading(false);
-        }
-    }, [imageFile]);
+        };
+        
+        img.onerror = () => {
+            setError('이미지를 처리하는 중 오류가 발생했습니다.');
+            setIsLoading(false);
+        };
+
+    }, [originalImageUrl]);
 
     const handleReset = () => {
         setImageFile(null);
         setOriginalImageUrl(null);
-        setAnalysisResult(null);
+        setStretchedImageUrl(null);
+        setComment('');
         setError(null);
     };
 
     const ResultView = () => {
-        const shareText = `AI 얼굴 늘리기로 제 얼굴이 이렇게 변했어요! 😂\n\nAI의 한 줄 평: "${analysisResult!.comment}"\n\n여러분도 AI 운세 시리즈에서 해보세요!`;
+        const shareText = `AI 얼굴 늘리기로 제 얼굴이 이렇게 변했어요! 😂\n\n한 줄 평: "${comment}"\n\n여러분도 AI 운세 시리즈에서 해보세요!`;
 
         return (
             <motion.div 
@@ -67,8 +98,8 @@ export const FaceStretcherPage: React.FC<{ onBack: () => void; }> = ({ onBack })
                     </div>
                     <div className="flex flex-col items-center gap-2">
                         <h2 className="text-xl font-bold text-cyan-300">변형된 이미지</h2>
-                        {analysisResult!.stretchedImageBase64 ? (
-                            <img src={`data:image/jpeg;base64,${analysisResult!.stretchedImageBase64}`} alt="Stretched" className="rounded-lg shadow-lg w-full" />
+                        {stretchedImageUrl ? (
+                            <img src={stretchedImageUrl} alt="Stretched" className="rounded-lg shadow-lg w-full" />
                         ) : (
                             <div className="w-full h-full min-h-[200px] aspect-[1/1] bg-slate-800/50 border border-slate-700 rounded-lg flex items-center justify-center p-4">
                                 <p className="text-slate-400 text-center">이미지를 생성할 수 없습니다.</p>
@@ -77,8 +108,8 @@ export const FaceStretcherPage: React.FC<{ onBack: () => void; }> = ({ onBack })
                     </div>
                 </div>
                 <div className="mt-8 bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 text-center">
-                    <h3 className="text-2xl font-bold text-cyan-300 mb-2 font-display">AI의 한 줄 평</h3>
-                    <p className="text-slate-300 text-lg leading-relaxed">"{analysisResult!.comment}"</p>
+                    <h3 className="text-2xl font-bold text-cyan-300 mb-2 font-display">한 줄 평</h3>
+                    <p className="text-slate-300 text-lg leading-relaxed">"{comment}"</p>
                 </div>
 
                 <ShareButtons shareText={shareText} />
@@ -112,9 +143,11 @@ export const FaceStretcherPage: React.FC<{ onBack: () => void; }> = ({ onBack })
                 onBack={onBack}
             />
             <main className="flex-grow flex flex-col items-center justify-center text-center py-10">
+                <canvas ref={canvasRef} className="hidden" />
+
                 {isLoading ? (
                     <Loader type="face-stretch" />
-                ) : analysisResult ? (
+                ) : stretchedImageUrl ? (
                     <ResultView />
                 ) : (
                     <ImageUploader
