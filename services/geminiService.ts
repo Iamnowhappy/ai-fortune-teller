@@ -1,5 +1,5 @@
 import { compressImage, fileToBase64 } from '../utils/imageUtils';
-import type { PhysiognomyResult, PalmistryResult, ImpressionAnalysisResult, AstrologyResult, SajuResult, TarotResult, CardDraw, JuyeokReading, JuyeokResult, Hexagram, YukhyoResult, DailyTarotResult, DreamInterpretationResult } from '../types';
+import type { PhysiognomyResult, PalmistryResult, ImpressionAnalysisResult, AstrologyResult, SajuResult, TarotResult, CardDraw, JuyeokReading, JuyeokResult, Hexagram, YukhyoResult, DailyTarotResult, DreamInterpretationResult, NameGenerationResult } from '../types';
 import { API_BASE_URL } from '../utils/apiConfig';
 
 /**
@@ -118,6 +118,10 @@ export const analyzeYukhyo = async (question: string): Promise<YukhyoResult> => 
 
 export const analyzeDream = async (dreamText: string): Promise<DreamInterpretationResult> => {
   return analyze<DreamInterpretationResult>('dream', { dreamText });
+};
+
+export const analyzeName = async (lastName: string, gender: '남성' | '여성', birthDate: string, birthTime: string, requests: string): Promise<NameGenerationResult> => {
+  return analyze<NameGenerationResult>('name-generator', { lastName, gender, birthDate, birthTime, requests });
 };
 
 export const analyzeDailyTarot = async (card: CardDraw): Promise<DailyTarotResult> => {

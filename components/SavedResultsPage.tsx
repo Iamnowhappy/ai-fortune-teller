@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import type { SavedResult, PhysiognomyResult, PalmistryResult, ImpressionAnalysisResult, AstrologyResult, SajuResult, TarotResult, JuyeokResult, YukhyoResult, DreamInterpretationResult, CardDraw, JuyeokReading, LineType } from '../types';
+import type { SavedResult, PhysiognomyResult, PalmistryResult, ImpressionAnalysisResult, AstrologyResult, SajuResult, TarotResult, JuyeokResult, YukhyoResult, DreamInterpretationResult, NameGenerationResult, CardDraw, JuyeokReading, LineType } from '../types';
 import { getSavedResults, deleteResult } from '../utils/storage';
 import { Header } from './Header';
 import { AnalysisResultLayout } from './shared/AnalysisResultLayout';
@@ -182,6 +182,50 @@ const SavedResultsPage: React.FC<{ onBack: () => void; }> = ({ onBack: navigateT
                     </div>
                 )}
                 </div>}
+            />;
+            break;
+        case 'name-generator':
+            const nameResult = selectedResult.result as NameGenerationResult;
+            const lastName = selectedResult.context?.lastName || '';
+            const fullName = `${lastName}${nameResult.premium_analysis.name}`;
+            content = <AnalysisResultLayout {...props}
+                shareText=''
+                freeContent={
+                    <>
+                        <div className="bg-slate-800/50 border border-slate-700 rounded-2xl shadow-lg p-6 sm:p-8 text-center">
+                            <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-2 font-display">AI 추천 이름</h2>
+                            <p className="text-5xl sm:text-6xl font-bold text-white mb-2">{fullName}</p>
+                            <p className="text-xl text-slate-300">{nameResult.premium_analysis.hanja}</p>
+                        </div>
+                        <div className="space-y-6 mt-8">
+                            <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+                                <h3 className="text-xl font-bold text-white mb-3 font-display">이름 요약</h3>
+                                <TypingResult text={nameResult.summary} className="text-slate-400 leading-relaxed whitespace-pre-wrap" />
+                            </div>
+                        </div>
+                    </>
+                }
+                premiumContent={
+                    <div className="space-y-6 mt-8">
+                        <h2 className="text-2xl sm:text-3xl font-bold text-cyan-300 mb-4 font-display text-center">작명 상세 해설</h2>
+                        <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+                            <h3 className="text-xl font-bold text-white mb-3 font-display">이름의 의미</h3>
+                            <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{nameResult.premium_analysis.meaning}</p>
+                        </div>
+                        <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+                            <h3 className="text-xl font-bold text-white mb-3 font-display">사주와 오행 분석</h3>
+                            <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{nameResult.premium_analysis.five_elements_analysis}</p>
+                        </div>
+                        <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+                            <h3 className="text-xl font-bold text-white mb-3 font-display">소리(발음) 분석</h3>
+                            <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{nameResult.premium_analysis.sound_analysis}</p>
+                        </div>
+                         <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+                            <h3 className="text-xl font-bold text-white mb-3 font-display">종합 운세</h3>
+                            <p className="text-slate-400 leading-relaxed whitespace-pre-wrap">{nameResult.premium_analysis.overall_fortune}</p>
+                        </div>
+                    </div>
+                }
             />;
             break;
         default:
