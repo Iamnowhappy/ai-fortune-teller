@@ -275,6 +275,53 @@ const nameGenerationSchema = {
     required: ["summary", "premium_analysis"]
 };
 
+const personalNameAnalysisSchema = {
+    type: Type.OBJECT,
+    properties: {
+        summary: { type: Type.STRING, description: "분석된 이름에 대한 핵심적인 총평을 1~2 문장으로 요약합니다." },
+        premium_analysis: {
+            type: Type.OBJECT,
+            properties: {
+                name_score: { type: Type.INTEGER, description: "이름의 좋고 나쁨을 나타내는 종합 점수 (0-100점)." },
+                five_elements_analysis: { type: Type.STRING, description: "입력된 사주를 바탕으로, 이름의 한자나 발음이 사주의 오행 균형에 어떤 영향을 미치는지 상세히 분석합니다." },
+                sound_analysis: { type: Type.STRING, description: "이름의 발음 오행과 음운적 조화(어감, 발음의 용이성 등)에 대한 분석." },
+                overall_fortune: { type: Type.STRING, description: "이 이름이 개인의 전반적인 운세(성격, 대인관계, 재물 등)에 미치는 영향에 대한 종합 해설." },
+                improvement_suggestion: { type: Type.STRING, description: "이름의 단점을 보완하거나, 더 좋은 운을 위해 개명을 고려할 경우 어떤 방향이 좋은지에 대한 제안. 현재 이름이 매우 좋다면 칭찬으로 대체합니다." }
+            },
+            required: ["name_score", "five_elements_analysis", "sound_analysis", "overall_fortune", "improvement_suggestion"]
+        }
+    },
+    required: ["summary", "premium_analysis"]
+};
+
+// --- Helper function for API calls with retry logic ---
+const generateWithRetry = async (ai: GoogleGenAI, params: any, retries = 3, delay = 1500) => {
+    for (let i = 0; i < retries; i++) {
+        try {
+            const response = await ai.models.generateContent(params);
+            return response;
+        } catch (error: any) {
+            const isOverloadedError = error.name === 'ApiError' && (error.status === 503 || (error.message && error.message.includes('overloaded')));
+
+            if (isOverloadedError) {
+                if (i < retries - 1) {
+                    console.warn(`⚠️ [API/analyze] Model overloaded (503). Retrying in ${delay}ms... (${i + 1}/${retries})`);
+                    await new Promise(res => setTimeout(res, delay));
+                    continue; // Go to next iteration
+                } else {
+                     console.error(`❌ [API/analyze] Model still overloaded after ${retries} retries.`);
+                     // Throw a specific error to be caught by the main handler
+                     throw new Error("AI 모델이 현재 과부하 상태입니다. 잠시 후 다시 시도해주세요.");
+                }
+            }
+            // For other errors, re-throw immediately
+            throw error;
+        }
+    }
+    // This should not be reached, but as a fallback
+    throw new Error("AI 모델 호출에 실패했습니다.");
+};
+
 
 // --- Serverless Function Handler ---
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -321,10 +368,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         
         // --- Dream Analysis (special case with grounded search) ---
         if (type === 'dream') {
-            const dreamPrompt = `당신은 프로이트, 융 심리학 및 전 세계 신화에 정통한 꿈 해몽 전문가입니다. Google 검색을 활용하여 사용자의 꿈에 나타난 상징들의 보편적인 의미를 찾고, 이를 바탕으로 사용자의 꿈 내용 '${payload.dreamText}'을(를) 상세히 분석해주세요. 응답은 다음 형식에 맞춰 명확하게 구분하여 작성해주세요: [요약], [상세 해몽], [핵심 상징], [조언], [이미지 프롬프트]. [핵심 상징] 부분은 '상징: 의미' 형식으로 여러 개를 나열해주세요. [이미지 프롬프트]는 꿈을 묘사하는 초현실적이고 예술적인 영어 프롬프트여야 합니다. 텍스트 외에 다른 어떤 마크다운이나 설명도 추가하지 마세요.`;
+            const dreamPrompt = `당신은 프로이트, 융 심리학 및 전 세계 신화에 정통한 꿈 해몽 전문가입니다. Google 검색을 활용하여 사용자의 꿈에 나타난 상징들의 보편적인 의미를 찾고, 이를 바탕으로 사용자의 꿈 내용 '${payload.dreamText}'을(를) 상세히 분석해주세요. 응답은 다음 형식에 맞춰 명확하게 구분하여 작성해주세요: [요약], [상세 해몽], [핵심 상징], [조언]. [핵심 상징] 부분은 '상징: 의미' 형식으로 여러 개를 나열해주세요. 텍스트 외에 다른 어떤 마크다운이나 설명도 추가하지 마세요.`;
 
             console.log(`📌 [API/analyze] Requesting grounded analysis for dream.`);
-            const analysisResponse = await ai.models.generateContent({
+            const analysisResponse = await generateWithRetry(ai, {
                 model: "gemini-2.5-flash",
                 contents: dreamPrompt,
                 config: {
@@ -345,8 +392,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             const summary = analysisText.match(/\[요약\]\s*([\s\S]*?)(?=\s*\[상세 해몽\]|$)/)?.[1]?.trim() || '';
             const detailed_interpretation = analysisText.match(/\[상세 해몽\]\s*([\s\S]*?)(?=\s*\[핵심 상징\]|$)/)?.[1]?.trim() || '';
             const symbolsText = analysisText.match(/\[핵심 상징\]\s*([\s\S]*?)(?=\s*\[조언\]|$)/)?.[1]?.trim() || '';
-            const advice = analysisText.match(/\[조언\]\s*([\s\S]*?)(?=\s*\[이미지 프롬프트\]|$)/)?.[1]?.trim() || '';
-            const image_prompt = analysisText.match(/\[이미지 프롬프트\]\s*([\s\S]*)/)?.[1]?.trim() || '';
+            const advice = analysisText.match(/\[조언\]\s*([\s\S]*)/)?.[1]?.trim() || '';
 
             const dream_symbols = symbolsText.split('\n').map(line => {
                 const parts = line.split(/:\s*/, 2); // Split only on the first colon
@@ -365,26 +411,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                     dream_symbols,
                     advice
                 },
-                groundingChunks,
-                imageBase64: null
+                groundingChunks
             };
-
-            if (image_prompt) {
-                try {
-                    console.log(`🎨 [API/analyze] Generating image for dream with prompt: "${image_prompt}"`);
-                    const imageResponse = await ai.models.generateImages({
-                        model: 'imagen-4.0-generate-001',
-                        prompt: image_prompt,
-                        config: { numberOfImages: 1, outputMimeType: 'image/jpeg', aspectRatio: '3:4' },
-                    });
-                    if (imageResponse.generatedImages?.length > 0) {
-                        finalResult.imageBase64 = imageResponse.generatedImages[0].image.imageBytes;
-                        console.log("✅ [API/analyze] Dream image generated and added to result.");
-                    }
-                } catch (imageError) {
-                    console.warn("⚠️ [API/analyze] Dream image generation failed, returning text analysis only. Error:", imageError);
-                }
-            }
             
             return res.status(200).json(finalResult);
         }
@@ -449,10 +477,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 schema = sajuAnalysisSchema;
                 contents = `당신은 사주 명리학 전문가입니다. 생년월일시 ${payload.birthDate} ${payload.birthTime}을(를) 바탕으로 사주 분석을 생성하세요. 오늘의 운세 요약(무료)과 프리미엄 심층 분석(종합, 오행, 각종 운세, 조언)을 모두 포함해야 합니다. ${jsonOutputRuleKo}`;
                 break;
-            case 'name-generator':
+            case 'newborn-namer': // Alias for name-generator
+            case 'renamer': // Alias for name-generator
                 schema = nameGenerationSchema;
-                contents = `당신은 한국의 저명한 작명가입니다. 사주 명리학, 성명학, 한자 풀이에 매우 능통합니다. 다음 정보를 바탕으로 최고의 아기 이름을 추천해주세요.
-
+                const namingType = type === 'newborn-namer' ? '신생아 작명' : '개명';
+                const currentNamePrompt = type === 'renamer' ? `- 현재 이름: ${payload.currentName}` : '';
+                contents = `당신은 한국의 저명한 작명가입니다. 사주 명리학, 성명학, 한자 풀이에 매우 능통합니다. 다음 정보를 바탕으로 최고의 ${namingType}을(를) 추천해주세요.
+${currentNamePrompt}
 - 성씨: ${payload.lastName}
 - 성별: ${payload.gender}
 - 생년월일시: ${payload.birthDate} ${payload.birthTime}
@@ -467,6 +498,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 6.  **어감**: 부르기 쉽고 듣기 좋은 이름을 짓습니다.
 
 위 원칙에 따라 최고의 이름 하나를 추천하고, 그 이유를 상세히 설명하세요. ${jsonOutputRuleKo}`;
+                break;
+            case 'personal-name-analyzer':
+                schema = personalNameAnalysisSchema;
+                contents = `당신은 한국의 저명한 성명학 전문가입니다. 사주 명리학과 이름 분석에 매우 능통합니다. 다음 정보를 바탕으로 사용자의 현재 이름이 사주에 얼마나 잘 맞는지 심층적으로 분석해주세요.
+
+- 이름: ${payload.name}
+- 생년월일시: ${payload.birthDate} ${payload.birthTime}
+
+분석 시 다음 원칙을 반드시 준수해야 합니다:
+1.  **사주 분석**: 제공된 생년월일시를 바탕으로 사주팔자를 분석하여, 개인의 타고난 기운과 오행의 분포를 파악합니다.
+2.  **이름의 조화**: 이름의 한자(추정), 발음 오행 등이 사주의 부족한 기운을 보완하는지, 혹은 충돌하는지 분석합니다.
+3.  **종합 평가**: 위 분석을 바탕으로 이름에 대한 종합 점수를 0점에서 100점 사이로 매깁니다.
+4.  **상세 설명**: 각 분석 항목(오행, 소리, 종합 운세)에 대해 상세히 설명하고, 이름 개선을 위한 제안을 포함합니다.
+
+위 원칙에 따라 분석 결과를 제공하세요. ${jsonOutputRuleKo}`;
                 break;
             case 'daily-tarot':
                 schema = dailyTarotAnalysisSchema;
@@ -489,7 +535,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         console.log(`📌 [API/analyze] Requesting analysis for type: ${type}. Model: ${model}.`);
 
         // --- Gemini API Call ---
-        const response = await ai.models.generateContent({
+        const response = await generateWithRetry(ai, {
             model,
             contents,
             config: {
@@ -528,6 +574,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         console.error("Error Message:", error.message);
         if (error.cause) console.error("Error Cause:", error.cause);
         console.error("Full Error Object:", JSON.stringify(error, null, 2));
+        
+        if (error.message.includes("AI 모델이 현재 과부하 상태입니다")) {
+            return res.status(503).json({
+                error: 'AI 모델이 과부하 상태입니다.',
+                details: error.message
+            });
+        }
         
         if (error.name === 'ApiError' && error.status === 429) {
             return res.status(429).json({

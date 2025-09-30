@@ -46,6 +46,8 @@ async function analyze<T>(type: string, payload: any): Promise<T> {
                 userMessage = '업로드한 파일의 용량이 너무 큽니다. 10MB 이하의 이미지를 사용해주세요.';
             } else if (response.status === 429) {
                 userMessage = '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.';
+            } else if (response.status === 503) {
+                userMessage = 'AI 모델 서버가 현재 과부하 상태입니다. 잠시 후 다시 시도해주세요.';
             } else if (response.status >= 500) {
                  userMessage = '서버에 일시적인 문제가 발생했습니다. 잠시 후 다시 시도해주세요.';
                  if (details.includes("AI response was not valid JSON")) {
