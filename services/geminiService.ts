@@ -46,14 +46,15 @@ async function analyze<T>(type: string, payload: any): Promise<T> {
                 userMessage = '업로드한 파일의 용량이 너무 큽니다. 10MB 이하의 이미지를 사용해주세요.';
             } else if (response.status === 429) {
                 userMessage = '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.';
-            } else if (response.status === 503) {
-                userMessage = 'AI 모델 서버가 현재 과부하 상태입니다. 잠시 후 다시 시도해주세요.';
             } else if (response.status >= 500) {
-                 userMessage = '서버에 일시적인 문제가 발생했습니다. 잠시 후 다시 시도해주세요.';
-                 if (details.includes("AI response was not valid JSON")) {
+                 if (response.status === 503 || (details && details.includes('과부하'))) {
+                    userMessage = 'AI 모델 서버가 현재 과부하 상태입니다. 잠시 후 다시 시도해주세요.';
+                 } else if (details.includes("AI response was not valid JSON")) {
                     userMessage = 'AI 모델로부터 유효한 응답을 받지 못했습니다. 다시 시도하면 해결될 수 있습니다.';
                  } else if (details.toLowerCase().includes('timeout')) {
                     userMessage = '분석 시간이 초과되었습니다. 네트워크 상태를 확인하거나 잠시 후 다시 시도해주세요.';
+                 } else {
+                    userMessage = '서버에 일시적인 문제가 발생했습니다. 잠시 후 다시 시도해주세요.';
                  }
             }
             throw new Error(userMessage);
